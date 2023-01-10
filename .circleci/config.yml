@@ -77,8 +77,8 @@ workflows:
   checkout-build-test:
     jobs:
       - test_daml_java:
-          daml_sdk_version: "2.4.0"
+          daml_sdk_version: "2.5.0"
       - blackduck_check:
-          daml_sdk_version: "2.4.0"
+          daml_sdk_version: "2.5.0"
           context:
             - blackduck

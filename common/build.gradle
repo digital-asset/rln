@@ -22,8 +22,8 @@ dependencies {
 
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
 
-    implementation "com.daml:bindings-java:2.4.0"
-    implementation "com.daml:bindings-rxjava:2.4.0"
+    implementation "com.daml:bindings-java:2.5.0"
+    implementation "com.daml:bindings-rxjava:2.5.0"
     implementation "org.slf4j:slf4j-api:1.7.36"
 
     testImplementation "org.mockito:mockito-inline:3.11.2"
