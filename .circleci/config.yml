@@ -1,0 +1,84 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+
+commands:
+  install_sdk:
+    description: "Install Daml SDK"
+    parameters:
+      version:
+        type: string
+    steps:
+      - run:
+          name: Install Daml SDK
+          command: |
+            curl -sSL https://get.daml.com/ | sh /dev/stdin << parameters.version >>
+            # idea from https://circleci.com/docs/2.0/env-vars/
+            >> $BASH_ENV echo 'export PATH="$HOME/.daml/bin:$PATH"'
+jobs:
+  test_daml_java:
+    parameters:
+      daml_sdk_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2022.04.2
+    steps:
+      - checkout
+      - install_sdk:
+          version: << parameters.daml_sdk_version >>
+      - run:
+          name: Daml Tests
+          working_directory: daml-model
+          command: |
+            daml test --junit .daml/daml-tests.xml
+      - store_test_results:
+          path: daml-model/.daml/daml-tests.xml
+      - run:
+          name: Gradle Tests
+          working_directory: .
+          command: |
+            ./gradlew test
+      # See: https://circleci.com/docs/collect-test-data/#gradle-junit-test-results
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/test-results
+  blackduck_check:
+    parameters:
+      daml_sdk_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2022.04.2
+    steps:
+      - checkout
+      - install_sdk:
+          version: << parameters.daml_sdk_version >>
+      - run:
+          name: Gradle build
+          working_directory: .
+          command: |
+            gradle build -x test
+      - run:
+          name: Blackduck detect
+          command: |
+            # TODO remove exclude pip
+            bash <(curl -s https://raw.githubusercontent.com/DACH-NY/security-blackduck/master/synopsys-detect) \
+            ci-build digitalasset_rln_us main \
+            --logging.level.com.synopsys.integration=DEBUG \
+            --detect.excluded.detector.types=pip \
+            --detect.notices.report=false \
+            --detect.timeout=3600
+
+workflows:
+  checkout-build-test:
+    jobs:
+      - test_daml_java:
+          daml_sdk_version: "2.4.0"
+      - blackduck_check:
+          daml_sdk_version: "2.4.0"
+          context:
+            - blackduck
