@@ -1,0 +1,105 @@
+plugins {
+    id "io.quarkus"
+    id "java"
+    id "com.diffplug.spotless" version "6.7.2"
+    id "jacoco"
+    id "org.hidetake.swagger.generator" version "2.19.2"
+    id "io.freefair.lombok" version "6.5.0.2"
+}
+
+repositories {
+    mavenCentral()
+}
+
+def imageVersion = "1.0.0"
+
+group "com.rln"
+version "2"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+def swaggerCodeGenResource = "${buildDir}/swagger-code-setlApi/src/gen/java"
+
+sourceSets {
+    main {
+        java {
+            srcDir swaggerCodeGenResource
+        }
+    }
+}
+
+// Exclusions are present because without them, the wrong version of jakarta.xml.bind etc. may be
+// pulled by Gradle. This results in ClassDefNotFound and similar exceptions (at codegen time or
+// runtime) because the package structure is different in different versions.
+dependencies {
+    implementation project(":daml-model")
+    implementation (project(":common"))
+
+    implementation "io.quarkus:quarkus-resteasy-reactive-jackson"
+
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:3.0.1'
+    implementation "jakarta.activation:jakarta.activation-api:2.1.0"
+
+    implementation "com.daml:bindings-java:2.4.0"
+    implementation "com.daml:bindings-rxjava:2.4.0"
+    implementation "io.quarkus:quarkus-hibernate-validator"
+    implementation "io.quarkus:quarkus-arc"
+    implementation "org.slf4j:slf4j-api:1.7.36"
+
+    testImplementation files("${rootDir}/testlib/junit5-support.jar")
+    testImplementation "io.quarkus:quarkus-junit5"
+    testImplementation "io.quarkus:quarkus-junit5-mockito:2.9.2.Final"
+    testImplementation "org.mockito:mockito-inline:3.11.2"
+    testImplementation "io.rest-assured:rest-assured:5.1.1"
+
+    swaggerCodegen "org.openapitools:openapi-generator-cli:6.0.1"
+}
+
+swaggerSources {
+  setlApi {
+    inputFile = file("src/SETL_API-RLN-2.0-swagger.yaml")
+    code {
+      language = "jaxrs-spec"
+      configFile = file("swagger-codegen-config.json")
+      dependsOn validation
+    }
+  }
+}
+
+compileJava {
+    options.encoding = "UTF-8"
+    options.compilerArgs << "-parameters"
+    dependsOn ":daml-model:damlCodegen"
+}
+
+compileTestJava {
+    options.encoding = "UTF-8"
+}
+
+clean {
+    dependsOn ":daml-model:damlClean"
+}
+
+compileJava {
+    dependsOn generateSwaggerCode
+}
+
+task dockerBuild(type: Exec) {
+    workingDir "${rootDir}"
+    commandLine "docker", "build", "-t", "rln-gui-backend:latest", "-t", "rln-gui-backend:${imageVersion}", "-f", "docker/Dockerfile-gui-backend", "."
+    dependsOn compileJava
+}
+
+task dockerSave(type: Exec) {
+    workingDir "${rootDir}"
+    commandLine "docker", "save", "rln-gui-backend:latest", "-o", "build/rln-gui-backend.img"
+    dependsOn dockerBuild
+}
+
+build {
+    dependsOn dockerBuild
+}

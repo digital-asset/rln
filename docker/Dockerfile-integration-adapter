@@ -1,0 +1,5 @@
+FROM adoptopenjdk/openjdk11:ubi
+RUN mkdir /opt/app
+ADD integration-adapter/build/quarkus-app /opt/app/rln-adapter
+CMD ["java", "-jar", "/opt/app/rln-adapter/quarkus-run.jar"]
+LABEL version="1.0.1-3"

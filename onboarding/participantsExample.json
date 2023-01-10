@@ -1,0 +1,23 @@
+{
+  "participants": {
+      "usfrParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "boeParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "citiusParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "citiukParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "mrmdusParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "hbukParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "bofausParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "nsctusParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "irvtusParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "goldusParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "loydgbParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "barcgbParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "paymgb1Participant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "paymgb2Participant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "csdhqlaParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "cust1Participant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "cust2Participant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "schedulerParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"},
+      "assemblerParticipant": {"host": "localhost", "port": 6865, "application_id": "rln"}
+  }
+}

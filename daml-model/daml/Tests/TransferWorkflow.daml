@@ -1,0 +1,179 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Tests.TransferWorkflow where
+import DA.Action (void)
+import DA.Optional (whenSome)
+import Daml.Script
+import Model.Balance
+import Tests.PartyAlloc
+import Workflow.Data
+import Workflow.InitiateTransfer
+import Workflow.TransferProposal
+import Workflow.Instruction
+import Workflow.TransactionManifest
+
+{-
+       CB
+    B11  B12
+  B21     B22
+Alice      Bob
+
+The flow captures when Alice wants to transfer 100 USD to Bob
+-}
+
+singleCashLegTransfer: Script ()
+singleCashLegTransfer = script do
+  SingleCashLegTransfer with
+    banks = Banks{..}
+    serviceParties = ServiceParties{assembler}
+    .. <- initAndCreateProposals
+
+  (_, Some instruction21Cid) <- approveProposalAndHandleBalances bank21 proposal21Cid True
+  approveProposalAndHandleBalances bank11 proposal11Cid False
+  (_, Some instructionCBCid) <- approveProposalAndHandleBalances cb proposalCBCid True
+  approveProposalAndHandleBalances bank12 proposal12Cid False
+  (_, Some instruction22Cid) <- approveProposalAndHandleBalances bank22 proposal22Cid True
+
+  evidence <- assembler `submit` exerciseCmd manifestCid FinalizeSettlement with reason = None; ..
+
+  bank21 `submit` exerciseCmd instruction21Cid Settle with evidence
+  cb `submit` exerciseCmd instructionCBCid Settle with evidence
+  bank22 `submit` exerciseCmd instruction22Cid Settle with evidence
+
+  assertBalance bank21 "Alice" 900.0
+  assertBalance cb "Bank11" 900.0
+  assertBalance cb "Bank12" 1100.0
+  assertBalance bank22 "Bob" 1100.0
+
+cancelledCashLegTransfer: Script ()
+cancelledCashLegTransfer = script do
+  SingleCashLegTransfer with
+    banks = Banks{..}
+    serviceParties = ServiceParties{assembler}
+    .. <- initAndCreateProposals
+
+  approveProposalAndHandleBalances bank11 proposal11Cid False
+  (_, Some instruction21Cid) <- approveProposalAndHandleBalances bank21 proposal21Cid True
+  (_, Some instructionCBCid) <- approveProposalAndHandleBalances cb proposalCBCid True
+  (_, Some instruction22Cid) <- approveProposalAndHandleBalances bank22 proposal22Cid True
+  bank12 `submit` exerciseCmd proposal12Cid RejectProposal with reason = Some "Regulator reasons."; ..
+
+  evidence <- assembler `submit` exerciseCmd manifestCid RejectSettlement with reason = None; ..
+
+  bank21 `submit` exerciseCmd instruction21Cid Cancel with evidence
+  cb `submit` exerciseCmd instructionCBCid Cancel with evidence
+  bank22 `submit` exerciseCmd instruction22Cid Cancel with evidence
+
+  assertBalance bank21 "Alice" 1000.0
+  assertBalance cb "Bank11" 1000.0
+  assertBalance cb "Bank12" 1000.0
+  assertBalance bank22 "Bob" 1000.0
+
+data SingleCashLegTransfer =
+  SingleCashLegTransfer with
+    manifestCid : ContractId TransactionManifest
+    proposal21Cid : ContractId TransferProposal
+    proposal11Cid : ContractId TransferProposal
+    proposalCBCid : ContractId TransferProposal
+    proposal12Cid : ContractId TransferProposal
+    proposal22Cid : ContractId TransferProposal
+    dummyData : DummyData
+    banks : Banks
+    serviceParties : ServiceParties
+
+initAndCreateProposals : Script SingleCashLegTransfer
+initAndCreateProposals = do
+  let dummyData@DummyData{..} = initialDummyData
+
+  serviceParties@ServiceParties with .. <- servicePartyAllocation
+  banks@Banks with .. <- actionPartyAllocation
+
+  createUsdBalance cb (Some bank11) "Bank11" 1000.0
+  createUsdBalance cb (Some bank12) "Bank12" 1000.0
+  createUsdBalance bank21 None "Alice" 1000.0
+  createUsdBalance bank22 None "Bob" 1000.0
+
+  initiateTransferCid <- bank21 `submit` createCmd
+    InitiateTransfer with
+     initiator = bank21
+     ..
+
+  (manifestCid, transferProposalCids) <-
+    createProposalsAliceToBob serviceParties banks initiateTransferCid
+      Instrument with amount = 100.0, label = usdCurrency
+
+  assertMsg "Unexpected number of transfer proposal." $ 5 == length transferProposalCids
+  let [proposal21Cid, proposal11Cid, proposalCBCid, proposal12Cid, proposal22Cid] = transferProposalCids
+
+  pure SingleCashLegTransfer with ..
+
+data DummyData =
+  DummyData with
+    groupId : Text
+    payload : Text
+    currency : Text
+
+initialDummyData : DummyData
+initialDummyData =
+  DummyData with
+    groupId = "G1"
+    payload = "dummy payload"
+    currency = usdCurrency
+
+usdCurrency : Text
+usdCurrency = "USD"
+
+createUsdBalance : Party -> Optional Party -> Text -> Decimal -> Script (ContractId Balance)
+createUsdBalance provider owner iban amount = do
+  provider `submit` createCmd Balance with
+    currency = usdCurrency
+    ..
+
+assertBalance : Party -> Text -> Decimal -> Script ()
+assertBalance provider iban expectedBalance = do
+  Some (_, finalBalance) <- queryContractKey @Balance provider BalanceKey with ..
+  assertMsg "Balance does not match." $ finalBalance.amount == expectedBalance
+
+createProposalsAliceToBob : ServiceParties -> Banks -> ContractId InitiateTransfer -> Instrument -> Script (ContractId TransactionManifest, [ContractId TransferProposal])
+createProposalsAliceToBob ServiceParties{..} Banks{..} initiateTransferCid delivery = do
+  scheduler `submit` exerciseCmd initiateTransferCid
+      CreateProposals with
+      messageIdToLegs = [("Leg1",
+        Leg with
+          approversToSettlementSteps = [
+              (bank21, SettlementStep with sender = Some "Alice", receiver = None, ..),
+              (bank11, SettlementStep with sender = Some "Bank21", receiver = None, ..),
+              (cb, SettlementStep with sender = Some "Bank11", receiver = Some "Bank12", ..),
+              (bank12, SettlementStep with sender = None, receiver = Some "Bank22", ..),
+              (bank22, SettlementStep with sender = None, receiver = Some "Bob", ..)
+            ]
+          ..
+        )]
+      ..
+  where
+    legPayload = "dummy leg payload"
+
+getBalanceOwnerFromKey: BalanceKey -> Script BalanceOwner
+getBalanceOwnerFromKey balanceKey = do
+  Some (_, Balance{..}) <- queryContractKey @Balance balanceKey.provider balanceKey
+  pure owner
+
+{--
+In actual flow, for daml participant we can use AutoApprove trigger
+to listen to TransferProposal and decide whether to approve/reject and lock/createIncoming balances
+--}
+approveProposalAndHandleBalances: Party -> ContractId TransferProposal -> Bool -> Script (ContractId ApprovedTransferProposal, Optional (ContractId Instruction))
+approveProposalAndHandleBalances provider transferProposalCid settleOnLedger = do
+  Some transferProposal@TransferProposal{step = SettlementStep{delivery = Instrument{..}; ..}, owner} <- queryContractId provider transferProposalCid
+  let
+    identifier = toIdentifier transferProposal
+  if settleOnLedger then do
+    whenSome sender (\iban -> void $ provider `submit` exerciseByKeyCmd @Balance (BalanceKey with provider = owner; ..) (Lock with amountToLock = amount; ..))
+    whenSome receiver (\iban -> do
+      balanceOwner <- getBalanceOwnerFromKey (BalanceKey with provider = owner; iban)
+      void $ provider `submit` createCmd IncomingBalance with balance = (Balance with currency = label; owner = balanceOwner; ..); identifier)
+  else pure ()
+  provider `submit` exerciseCmd transferProposalCid ApproveProposal with reason = None; settleOnLedger

@@ -1,0 +1,108 @@
+plugins {
+    id "io.quarkus"
+    id "java"
+    id "io.freefair.lombok" version "6.5.0.2"
+    id "com.diffplug.spotless" version "6.7.2"
+    id "jacoco"
+}
+
+repositories {
+    mavenCentral()
+}
+
+group "com.rln"
+version "2"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+def imageVersion = "1.0.1-3"
+
+dependencies {
+    implementation project(":daml-model")
+    implementation project(":common")
+
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+
+    implementation "com.daml:bindings-java:2.4.0"
+    implementation "com.daml:bindings-rxjava:2.4.0"
+    implementation "io.quarkus:quarkus-arc"
+    implementation "io.quarkus:quarkus-hibernate-validator"
+    implementation "io.quarkus:quarkus-smallrye-reactive-messaging-kafka"
+    implementation "org.slf4j:slf4j-api:1.7.36"
+
+    testImplementation files("${rootDir}/testlib/junit5-support.jar")
+    testImplementation "io.quarkus:quarkus-junit5"
+    testImplementation "io.quarkus:quarkus-junit5-mockito:2.9.2.Final"
+    testImplementation "io.quarkus:quarkus-test-kafka-companion:2.9.0.Final"
+    testImplementation "org.mockito:mockito-inline:3.11.2"
+    testImplementation "org.testcontainers:kafka:1.16.3"
+}
+
+compileJava {
+    options.encoding = "UTF-8"
+    options.compilerArgs << "-parameters"
+    dependsOn ":daml-model:damlCodegen"
+}
+
+compileTestJava {
+    options.encoding = "UTF-8"
+}
+
+task dockerBuild(type: Exec) {
+    workingDir "${rootDir}"
+    commandLine "docker", "build", "-t", "rln-adapter:latest", "-t", "rln-adapter:${imageVersion}", "-f", "docker/Dockerfile-integration-adapter", "."
+    dependsOn compileJava
+}
+
+task dockerSave(type: Exec) {
+    workingDir "${rootDir}"
+    commandLine "docker", "save", "rln-adapter:latest", "-o", "build/rln-adapter-docker.img"
+    dependsOn dockerBuild
+}
+
+build {
+    dependsOn ":daml-model:copyDarForStagingTesting"
+    dependsOn dockerBuild
+}
+
+clean {
+    dependsOn ":daml-model:damlClean"
+}
+
+spotless {
+    // optional: limit format enforcement to just the files changed by this feature branch
+    ratchetFrom "master"
+    format "misc", {
+        // define the files to apply `misc` to
+        target "*.gradle", "**/*.daml"
+
+        // define the steps to apply to those files
+        trimTrailingWhitespace()
+        indentWithSpaces(2)
+        endWithNewline()
+    }
+    java {
+        targetExclude(fileTree("../daml-model") { include("**/*.java") })
+        // define the steps to apply to JAVA files
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        indentWithSpaces(2)
+        endWithNewline()
+    }
+}
+
+jacoco {
+    toolVersion = "0.8.7"
+    reportsDirectory = layout.buildDirectory.dir("jacocoReportDir")
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
+    }
+}

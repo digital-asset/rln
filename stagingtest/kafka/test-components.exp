@@ -1,0 +1,127 @@
+#!/usr/bin/env expect
+
+# In case of inexpiclable errors:
+#
+# - Make sure you are loading the correct Docker image. For example:
+#   - Remove previously cached `rln-adapter` images using Docker Dashboard
+#   - Rerun `./gradlew clean build dockerSave -x test`
+# - Manually kill previous Docker Compose instances from Docker Dashboard
+
+expect_before {
+  timeout { puts "💣 Tests timed out"; exit 1 }
+}
+
+set timeout 90
+
+#
+# Remove previous Docker Compose setup if it's still running.
+#
+
+spawn docker compose --profile "ia" --profile "ledger" --profile "kafka" down
+interact
+
+#
+# Launch Docker Compose setup. See ../README.md
+#
+
+spawn docker compose --profile "kafka" up
+expect "kafka-setup exited with code 0"
+
+spawn docker compose --profile "ledger" up
+expect "stagingtest-ledger-script-1 exited with code 0"
+expect "stagingtest-before-integration-adapters-1 exited with code 0"
+
+spawn docker compose --profile "ia" up
+expect "Daml ledger host/port: ledger 50"
+expect "Daml ledger host/port: ledger 50"
+expect "Daml ledger host/port: ledger 50"
+expect "Daml ledger host/port: ledger 50"
+
+#
+# Tests as described in ../TESTING.md
+#
+
+puts "Test 1. Send an initiation message with BankA"
+spawn ./publish.sh step1-init.txt initiation broker-bankA 9090
+expect "Done."
+sleep 5
+puts "Check contracts"
+spawn docker compose run --rm ledger-script /bin/sh
+expect "$"
+send "daml repl /canton/rln/rln.dar --ledger-host ledger --ledger-port 5011\n"
+expect "daml>"
+send "import Model.BankBIC\n"
+expect "daml>"
+send "Some p <- find (\\d -> d.displayName == Some \"bankA\") <$> listKnownParties\n"
+expect "daml>"
+send "bankBICs <- query @BankBIC p.party\n"
+expect "daml>"
+send "debug bankBICs\n"
+expect "bankABic"
+
+puts "Test 2. See the initiation message with Scheduler"
+spawn ./consume.sh initiation broker-scheduler 9090
+expect "groupId1"
+expect "groupId2"
+
+puts "Test 3. Send an enriched message with Scheduler"
+spawn ./publish.sh step3-enriched.txt enriched broker-scheduler 9090
+expect "Done."
+sleep 5
+puts "Check contracts"
+spawn docker compose run --rm ledger-script /bin/sh
+expect "$"
+send "daml repl /canton/rln/rln.dar --ledger-host ledger --ledger-port 5031\n"
+expect "daml>"
+send "import Workflow.TransferProposal\n"
+expect "daml>"
+send "Some p <- find (\\d -> d.displayName == Some \"scheduler\") <$> listKnownParties\n"
+expect "daml>"
+send "proposals <- query @TransferProposal p.party\n"
+expect "daml>"
+send "debug proposals\n"
+expect "6000.0"
+
+puts "Test 4.1. See the transfer proposals with the bank"
+spawn ./consume.sh transfer-proposal broker-bankA 9090
+expect "\{\"groupId\":\"groupId1\",\"messageId\":\"messageId1\",\"payload\":\"stringified xml for each transfer1/messageId1\"\}"
+expect "\{\"groupId\":\"groupId2\",\"messageId\":\"messageId2\",\"payload\":\"stringified xml for each transfer1/messageId2\"\}"
+spawn ./consume.sh transaction-manifest broker-assembler 9090
+expect "groupId1"; expect "bankBBic"; expect "bankABic"
+expect "groupId2"; expect "bankBBic"; expect "bankABic"
+
+puts "Test 5. Send Approval/Rejection from the bank"
+spawn ./publish.sh step5-approval.txt approve-reject broker-bankA 9090
+expect "Done."
+sleep 5
+
+puts "Test 5.1 See the approvals as Assembler"
+spawn ./consume.sh approve-reject broker-assembler 9090
+expect "APPROVE"; expect "\"settleOnLedger\":true"
+expect "APPROVE"; expect "\"settleOnLedger\":false"
+
+puts "Test 5.2 Check Instruction contract for the on ledger settlement (messageId1 only)"
+spawn docker compose run --rm ledger-script /bin/sh
+expect "$"
+send "daml repl /canton/rln/rln.dar --ledger-host ledger --ledger-port 5011\n"
+expect "daml>"
+send "import Workflow.Instruction\n"
+expect "daml>"
+send "Some p <- find (\\d -> d.displayName == Some \"bankA\") <$> listKnownParties\n"
+expect "daml>"
+send "instructions <- query @Instruction p.party\n"
+expect "daml>"
+send "debug instructions\n"
+expect "3000.0"
+
+puts "Test 6. Send a finalized message as Assembler"
+spawn ./publish.sh step6-finalize.txt finalize-reject broker-assembler 9090
+expect "Done."
+sleep 5
+
+puts "Test 7. See the finalized message with the bank"
+spawn ./consume.sh finalize-reject broker-bankA 9090
+expect "The settlement is Finalised"
+expect "The settlement is Finalised"
+
+puts "✅ Tests succeeded"

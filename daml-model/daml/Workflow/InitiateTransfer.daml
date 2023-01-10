@@ -1,0 +1,38 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Workflow.InitiateTransfer where
+
+import Workflow.Data
+import Workflow.TransferProposal
+import Workflow.TransactionManifest
+
+template InitiateTransfer
+  with
+    groupId: Text
+    initiator: Party
+    scheduler: Party
+    payload: Pacs008
+  where
+    signatory initiator
+    observer scheduler
+
+
+    choice CreateProposals : (ContractId TransactionManifest, [ContractId TransferProposal])
+      with
+        messageIdToLegs: [(Text, Leg)]
+        assembler: Party
+      controller scheduler
+        do
+          proposalTime <- getTime
+          let createTransferProposalsForLeg: (Text, Leg) -> Update [ContractId TransferProposal]
+              createTransferProposalsForLeg (messageId, Leg{legPayload, approversToSettlementSteps}) =
+                let approvers = map fst approversToSettlementSteps in
+                mapA (\(owner, step) -> create TransferProposal with ..) $ approversToSettlementSteps
+          transferProposalCids <- concat <$> mapA createTransferProposalsForLeg messageIdToLegs
+
+          let messageIdToApprovers = map (\(msgId, Leg{approversToSettlementSteps}) -> (msgId, map fst approversToSettlementSteps)) messageIdToLegs
+          transactionManifestCid <- create TransactionManifest with creationTime = proposalTime, ..
+          pure (transactionManifestCid, transferProposalCids)

@@ -1,0 +1,28 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Workflow.Data where
+
+type Pacs008 = Text
+
+data Instrument = Instrument with
+    amount: Decimal
+    label: Text
+  deriving (Eq, Show)
+
+data SettlementStep = SettlementStep with
+    sender: Optional Text -- sender account iban
+    receiver: Optional Text -- receiver account iban
+    delivery: Instrument
+  deriving (Show, Eq)
+
+data Leg = Leg with
+    legPayload: Text
+    approversToSettlementSteps: [(Party, SettlementStep)]
+  deriving (Eq, Show)
+
+toIdentifier : (DA.Internal.Record.HasField "groupId" r Text, DA.Internal.Record.HasField "messageId" r Text) => r -> Text
+toIdentifier record =
+  record.groupId <> ":" <> record.messageId

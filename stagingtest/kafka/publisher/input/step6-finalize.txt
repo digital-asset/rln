@@ -1,0 +1,2 @@
+{"groupId":"groupId1","status":"APPROVE","reason":"The settlement is Finalised"}
+{"groupId":"groupId2","status":"APPROVE","reason":"The settlement is Finalised"}

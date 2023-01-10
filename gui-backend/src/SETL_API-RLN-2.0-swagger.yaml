@@ -1,0 +1,745 @@
+components:
+  schemas:
+    Approval:
+      properties:
+        bankBic:
+          type: string
+        groupId:
+          type: string
+        messageId:
+          type: string
+        reason:
+          type: string
+        status:
+          enum:
+            - APPROVE
+            - REJECT
+          type: string
+      type: object
+    ApprovalProperties:
+      description: The properties associated with an auto-approver.
+      properties:
+        address:
+          description: The address
+          type: string
+        approvalMode:
+          description: How auto-approval is decided
+          enum:
+            - AUTO
+            - LIMIT
+            - MANUAL
+          type: string
+        limit:
+          description: The limit for limited approvals
+          type: number
+      type: object
+    Balance:
+      properties:
+        address:
+          type: string
+        assetId:
+          format: int64
+          type: integer
+        assetName:
+          type: string
+        assetOrLiability:
+          enum:
+            - ASSET
+            - LIABILITY
+          type: string
+        balance:
+          type: number
+        client:
+          type: string
+        error:
+          enum:
+            - UNAUTHORIZED
+            - UNKNOWN_HOST
+            - CONNECTION_REFUSED
+            - UNKNOWN
+          type: string
+        party:
+          type: string
+        type:
+          type: string
+      type: object
+    BalanceChange:
+      description: A change to apply to an address's balance
+      properties:
+        assetId:
+          description: The ID of of the asset. Either this or the asset name must be specified.
+          format: int64
+          type: integer
+        assetName:
+          description: The name or code of the asset. Either this or the asset ID must be specified.
+          type: string
+        change:
+          description: The amount by which to change the balance. Use positive values to increase the balance, and negative values to decrease it.
+          type: number
+      required:
+        - change
+      type: object
+    ClientDTO:
+      properties:
+        id:
+          format: int64
+          type: integer
+        name:
+          type: string
+      required:
+        - name
+      type: object
+    Finalised:
+      properties:
+        groupId:
+          type: string
+        reason:
+          type: string
+        status:
+          enum:
+            - APPROVE
+            - REJECT
+          type: string
+      type: object
+    LedgerAddressDTO:
+      properties:
+        address:
+          type: string
+        approvalLimit:
+          format: double
+          type: number
+        approvalMode:
+          type: string
+        bearerToken:
+          type: string
+        clientId:
+          format: int64
+          type: integer
+        id:
+          format: int64
+          type: integer
+        isIBAN:
+          type: boolean
+      required:
+        - address
+        - approvalLimit
+        - approvalMode
+        - bearerToken
+      type: object
+    PartyDTO:
+      properties:
+        baseUrl:
+          type: string
+        bic:
+          type: string
+        id:
+          format: int64
+          type: integer
+        name:
+          type: string
+      required:
+        - baseUrl
+        - bic
+        - name
+      type: object
+    Transaction:
+      description: A Transactions requiring approval or rejection
+      properties:
+        address:
+          description: The address of the creditor or debtor.
+          type: string
+        assetCode:
+          description: The code associated with the asset.
+          type: string
+        assetId:
+          description: The internal numerical ID of the asset.
+          format: int64
+          type: integer
+        balance:
+          description: The balance change from this transaction.
+          type: number
+        groupId:
+          description: The ID of the enclosing transaction group.
+          type: string
+        id:
+          description: The internal string ID of this transaction
+          type: string
+        messageId:
+          description: The ID of the message that enclosed this transaction.
+          type: string
+        partyCode:
+          description: The code for the acting party
+          type: string
+        status:
+          description: The status of this transaction
+          type: string
+        transactionId:
+          description: The ID of this transaction
+          type: string
+      type: object
+    TransactionStatusUpdate:
+      properties:
+        id:
+          type: string
+        status:
+          enum:
+            - WAITING
+            - APPROVE
+            - REJECT
+          type: string
+      type: object
+    TransferProposal:
+      properties:
+        groupId:
+          type: string
+        messageId:
+          type: string
+        payload:
+          type: string
+      type: object
+    WalletAddressDTO:
+      properties:
+        address:
+          type: string
+        bearerToken:
+          type: string
+        partyId:
+          format: int64
+          type: integer
+        walletId:
+          format: int64
+          type: integer
+      required:
+        - address
+        - bearerToken
+        - partyId
+      type: object
+    WalletAddressTestDTO:
+      properties:
+        bearerToken:
+          type: string
+        partyId:
+          format: int64
+          type: integer
+      required:
+        - bearerToken
+        - partyId
+      type: object
+    WalletDTO:
+      properties:
+        data:
+          type: string
+        id:
+          format: int64
+          type: integer
+      type: object
+  securitySchemes:
+    RLNBearer:
+      bearerFormat: jwt
+      scheme: bearer
+      type: http
+info:
+  description: API provided by the RLN Participant
+  title: RLN Participant
+  version: '2.0'
+openapi: 3.0.1
+paths:
+  /api/addresses/{address}/balance:
+    get:
+      description: Get the balances for an address. This reports that 'hot', 'pessimistic' and 'actual' balances for all assets.
+      operationId: getAddressBalance
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Balance'
+                type: array
+          description: default response
+    post:
+      description: Change a balance. This affects the 'hot', 'pessimistic', and 'actual' balances
+      operationId: changeBalance
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BalanceChange'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Balance'
+                type: array
+  /api/addresses/{address}/test:
+    post:
+      description: Test if balances can be retrieved for a proposed wallet address
+      operationId: testWalletAddress
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletAddressTestDTO'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: The address's balances were retrievable
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: The address's balances were NOT retrievable
+        '412':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: The party associated with the address was not recognised
+  /api/approval:
+    post:
+      description: Update the approval or rejection status of a specific transaction
+      operationId: updateTransactionApprovalStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionStatusUpdate'
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                format: object
+                type: string
+  /api/approval/list:
+    get:
+      description: Get approval list
+      operationId: getRequiredApprovals
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Transaction'
+                type: array
+          description: default response
+  /api/approval/properties:
+    post:
+      description: Update an approval
+      operationId: updateApprovalProperties
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalProperties'
+      responses:
+        '204':
+          description: Success response
+          content:
+            application/json: {}
+  /api/balance/{walletId}:
+    get:
+      description: Get all the balances for all addresses in a wallet
+      operationId: getBalances
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            format: int64
+            type: integer
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Balance'
+                type: array
+          description: default response
+  /api/getLocalBalance:
+    get:
+      description: Get the balance for an address, provided the address is local to this participant
+      operationId: getLocalBalance
+      parameters:
+        - in: query
+          name: address
+          schema:
+            type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Balance'
+                type: array
+          description: default response
+  /api/ledger/addresses:
+    get:
+      description: Get all the known ledger addresses
+      operationId: get
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/LedgerAddressDTO'
+                type: array
+          description: default response
+    post:
+      description: Create a new ledger address
+      operationId: post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LedgerAddressDTO'
+        required: true
+      responses:
+        '201':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                format: object
+                type: string
+        '400':
+          content:
+            application/json:
+              schema:
+                format: object
+                type: string
+          description: If address is not an IBAN, or the ledger address already exists.
+  /api/ledger/addresses/{address}:
+    delete:
+      description: Delete the specified ledger address. The address's balance must be zero.
+      operationId: delete
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Success response
+          content:
+            '*/*': {}
+  /api/ledger/clients:
+    get:
+      description: Get all the clients
+      operationId: get_1
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ClientDTO'
+                type: array
+          description: default response
+    post:
+      description: Create a new client. Returns the internal ID assigned to the new client.
+      operationId: post_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientDTO'
+        required: true
+      responses:
+        '201':
+          description: Success response
+          content:
+            application/json: {}
+  /api/ledger/clients/{clientId}:
+    delete:
+      description: Delete a ledger client
+      operationId: delete_1
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            format: int64
+            type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              format: int64
+              type: integer
+      responses:
+        '204':
+          description: Success response
+          content:
+            application/json: {}
+  /api/parties:
+    get:
+      description: Get all the known parties
+      operationId: get_2
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PartyDTO'
+                type: array
+          description: default response
+    post:
+      description: Create a new party
+      operationId: post_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartyDTO'
+        required: true
+      responses:
+        '201':
+          description: Success response
+          content:
+            application/json: {}
+  /api/parties/me:
+    get:
+      description: Get the 'id'', 'name', and 'bic' of this party
+      operationId: getMyParty
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json: {}
+  /api/test/kafka/pause:
+    post:
+      description: TEST ONLY - pause collection of messages from Kafka
+      operationId: pause
+      responses:
+        default:
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: default response
+      tags:
+        - TEST
+  /api/test/kafka/resume:
+    post:
+      description: TEST ONLY - resume collection of messages from Kafka
+      operationId: resume
+      responses:
+        default:
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: default response
+      tags:
+        - TEST
+  /api/test/kafka/status:
+    get:
+      description: TEST ONLY - Get the status of the Kafka listeners
+      operationId: status
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  additionalProperties:
+                    type: object
+                  type: object
+                type: array
+          description: default response
+      tags:
+        - TEST
+  /api/transactions:
+    get:
+      description: Get a page of transactions matching the criteria
+      operationId: getTransactions
+      parameters:
+        - in: query
+          name: incompleteOnly
+          schema:
+            type: boolean
+        - in: query
+          name: address
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            format: int64
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            format: int64
+            type: integer
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Transaction'
+                type: array
+          description: default response
+  /api/wallets:
+    get:
+      description: Get all the wallets
+      operationId: getWallets
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/WalletDTO'
+                type: array
+          description: default response
+    post:
+      description: Create a new wallet
+      operationId: postWallets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletDTO'
+        required: true
+      responses:
+        '201':
+          description: Success response
+          content:
+            application/json: {}
+  /api/wallets/{walletId}/addresses:
+    get:
+      description: Get all the wallet addresses in the specified wallet
+      operationId: get_3
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            format: int64
+            type: integer
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/WalletAddressDTO'
+                type: array
+          description: default response
+    post:
+      description: Create a new wallet address
+      operationId: post_3
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            format: int64
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletAddressDTO'
+        required: true
+      responses:
+        '201':
+          description: Success response
+          content:
+            application/json: {}
+  /api/wallets/{walletId}/addresses/{address}:
+    delete:
+      description: Delete an address from a wallet
+      operationId: delete_2
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            format: int64
+            type: integer
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Success response
+          content:
+            application/json: {}
+  /finalised:
+    post:
+      description: Inform the participant of a decision on a group of messages
+      operationId: finalised
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Finalised'
+      responses:
+        default:
+          content:
+            '*/*': {}
+          description: default response
+  /transferProposal:
+    post:
+      description: Inform the participant of a new proposal. Returns the results of any automatic decisions
+      operationId: transferProposal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferProposal'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Approval'
+                type: array
+          description: default response
+security:
+  - RLNBearer: []
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/SETL_API/RLN/2.0

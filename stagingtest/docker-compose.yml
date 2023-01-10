@@ -1,0 +1,178 @@
+---
+version: '2.0.1'
+
+volumes:
+    publisher:
+    config:
+    canton:
+
+services:
+  zookeeper-scheduler:
+    image: confluentinc/cp-zookeeper:7.1.0
+    profiles: ["kafka"]
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2180
+      ZOOKEEPER_TICK_TIME: 2000
+
+  zookeeper-assembler:
+    image: confluentinc/cp-zookeeper:7.1.0
+    profiles: ["kafka"]
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2180
+      ZOOKEEPER_TICK_TIME: 2000
+
+  zookeeper-bankA:
+    image: confluentinc/cp-zookeeper:7.1.0
+    profiles: ["kafka"]
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2180
+      ZOOKEEPER_TICK_TIME: 2000
+
+  zookeeper-bankB:
+    image: confluentinc/cp-zookeeper:7.1.0
+    profiles: ["kafka"]
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2180
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker-scheduler:
+    image: confluentinc/cp-kafka:7.1.0
+    profiles: ["kafka"]
+    depends_on:
+      - zookeeper-scheduler
+    volumes:
+      - ./kafka/publisher:/publisher
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-scheduler:2180'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-scheduler:9090,PLAINTEXT_HOST://localhost:29090
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  broker-assembler:
+    image: confluentinc/cp-kafka:7.1.0
+    profiles: ["kafka"]
+    depends_on:
+      - zookeeper-assembler
+    volumes:
+      - ./kafka/publisher:/publisher
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-assembler:2180'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-assembler:9090,PLAINTEXT_HOST://localhost:29090
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  broker-bankA:
+    image: confluentinc/cp-kafka:7.1.0
+    profiles: ["kafka"]
+    depends_on:
+      - zookeeper-bankA
+    volumes:
+      - ./kafka/publisher:/publisher
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-bankA:2180'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-bankA:9090,PLAINTEXT_HOST://localhost:29090
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  broker-bankB:
+    image: confluentinc/cp-kafka:7.1.0
+    profiles: ["kafka"]
+    depends_on:
+      - zookeeper-bankB
+    volumes:
+      - ./kafka/publisher:/publisher
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-bankB:2180'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-bankB:9090,PLAINTEXT_HOST://localhost:29090
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  ledger:
+    image: digitalasset/canton-open-source
+    profiles: ["ledger"]
+    volumes:
+      - ./canton:/canton/rln
+    ports:
+      - 5021:5021
+    command:
+      daemon -c /canton/rln/rln.conf --bootstrap /canton/rln/rln.canton
+
+  ledger-script:
+      image: digitalasset/daml-sdk:2.4.0
+      profiles: ["ledger"]
+      depends_on:
+        - ledger
+      volumes:
+        - ./canton:/canton/rln
+        - ./config:/canton/rln/config
+      command: "bash -c /canton/rln/onboarding.sh"
+
+  before-integration-adapters:
+    image: alpine:latest
+    profiles: ["ledger"]
+    depends_on:
+      ledger-script:
+        condition: service_completed_successfully
+    volumes:
+      - ./config:/config
+    command: "/bin/sh -c 'apk add jq && \
+                        /config/env-gen.sh BANK ledger 5011 broker-bankA:9090 bankA > /config/env-bankA && sync && \
+                        /config/env-gen.sh BANK ledger 5021 broker-bankB:9090 bankB > /config/env-bankB && sync && \
+                        /config/env-gen.sh SCHEDULER ledger 5031 broker-scheduler:9090 scheduler > /config/env-scheduler && sync && \
+                        /config/env-gen.sh ASSEMBLER ledger 5041 broker-assembler:9090 assembler > /config/env-assembler && sync'"
+
+  integration-adapter-bankA:
+    image: rln-adapter:latest
+    profiles: ["ia"]
+    volumes:
+      - ./config:/config
+    env_file: ./config/env-bankA
+
+  integration-adapter-bankB:
+    image: rln-adapter:latest
+    profiles: ["ia"]
+    volumes:
+      - ./config:/config
+    env_file: ./config/env-bankB
+
+  integration-adapter-assembler:
+    image: rln-adapter:latest
+    profiles: ["ia"]
+    volumes:
+      - ./config:/config
+    env_file: ./config/env-assembler
+
+  integration-adapter-scheduler:
+    image: rln-adapter:latest
+    profiles: ["ia"]
+    volumes:
+      - ./config:/config
+    env_file: ./config/env-scheduler
+
+  # This "container" is a workaround to pre-create topics
+  kafka-setup:
+    image: confluentinc/cp-kafka:7.1.0
+    profiles: ["kafka"]
+    volumes:
+      - ./config:/config
+    hostname: kafka-setup
+    container_name: kafka-setup
+    depends_on:
+      - broker-scheduler
+      - broker-assembler
+      - broker-bankA
+      - broker-bankB
+    command: "/config/setup-kafka-topics.sh"
+    environment:
+      # The following settings are listed here only to satisfy the image's requirements.
+      # We override the image's `command` anyways, hence this container will not start a broker.
+      KAFKA_BROKER_ID: ignored
+      KAFKA_ZOOKEEPER_CONNECT: ignored

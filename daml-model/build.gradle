@@ -1,0 +1,62 @@
+plugins {
+    id "base"
+    id "java"
+}
+
+repositories {
+    mavenCentral()
+}
+
+group "com.rln"
+version "2"
+
+def damlOutput = "${buildDir}/daml/rln.dar"
+def damlCodeGenResource = "${buildDir}/daml-codegen-model/src/gen/java"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir damlCodeGenResource
+        }
+    }
+}
+
+dependencies {
+    implementation "com.daml:bindings-java:2.4.0"
+}
+
+task compileDaml(type: Exec) {
+    onlyIf { !file(damlOutput).exists() }
+    workingDir "${rootDir}/daml-model/daml"
+    commandLine "daml", "build", "-o", damlOutput
+}
+
+task damlCodegen(type: Exec) {
+    onlyIf { !file(damlCodeGenResource).exists() }
+    workingDir "${rootDir}/daml-model/daml"
+    commandLine "daml", "codegen", "java", damlOutput + "=com.rln.damlCodegen", "--output-directory", damlCodeGenResource
+    dependsOn compileDaml
+}
+
+task copyDarForStagingTesting(type: Copy) {
+    from damlOutput
+    into "${rootDir}/stagingtest/canton/"
+    dependsOn compileDaml
+}
+
+task damlClean {
+    delete damlOutput
+}
+
+clean {
+    dependsOn damlClean
+}
+
+compileJava {
+    dependsOn damlCodegen
+}

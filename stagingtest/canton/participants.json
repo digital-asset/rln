@@ -1,0 +1,10 @@
+{
+  "default_participant": {"host": "ledger", "port": 5031, "application_id": "rln"},
+  "participants": {
+      "bankAParticipant": {"host": "ledger", "port": 5011, "application_id": "rln"},
+      "bankBParticipant": {"host": "ledger", "port": 5021, "application_id": "rln"},
+      "schedulerParticipant": {"host": "ledger", "port": 5031, "application_id": "rln"},
+      "assemblerParticipant": {"host": "ledger", "port": 5041, "application_id": "rln"}
+  },
+  "party_participants": {"bankA": "bankAParticipant", "bankB": "bankBParticipant", "scheduler": "schedulerParticipant", "assembler": "assemblerParticipant"}
+}

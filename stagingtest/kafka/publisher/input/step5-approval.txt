@@ -1,0 +1,2 @@
+{ "groupId": "groupId1", "messageId": "messageId1", "bankBic": "bankABic", "status": "APPROVE", "reason" : "just approving", "settleOnLedger": true }
+{ "groupId": "groupId2", "messageId": "messageId2", "bankBic": "bankABic", "status": "APPROVE", "reason" : "just approving", "settleOnLedger": false }

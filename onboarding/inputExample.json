@@ -1,0 +1,87 @@
+[
+  {
+    "_1": "USFR",
+    "_2": "FRNYUS3A",
+    "_3": "usfrParticipant"
+  },
+  {
+    "_1": "BoE",
+    "_2": "BKENGB54",
+    "_3": "boeParticipant"
+  },
+  {
+    "_1": "CitibankNY",
+    "_2": "CITIUS33",
+    "_3": "citiusParticipant"
+  },
+  {
+    "_1": "CitibankLON",
+    "_2": "CIUKGB2L",
+    "_3": "citiukParticipant"
+  },
+  {
+    "_1": "HSBCNY",
+    "_2": "MRMDUS33",
+    "_3": "mrmdusParticipant"
+  },
+  {
+    "_1": "HSBCLON",
+    "_2": "HBUKGB4B",
+    "_3": "hbukParticipant"
+  },
+  {
+    "_1": "BofA",
+    "_2": "BOFAUS3N",
+    "_3": "bofausParticipant"
+  },
+  {
+    "_1": "NSBWIS",
+    "_2": "NSCTUS44",
+    "_3": "nsctusParticipant"
+  },
+  {
+    "_1": "BoNY",
+    "_2": "IRVTUS3N",
+    "_3": "irvtusParticipant"
+  },
+  {
+    "_1": "GS",
+    "_2": "GOLDUS33",
+    "_3": "goldusParticipant"
+  },
+  {
+    "_1": "Lloyds",
+    "_2": "LOYDGB22",
+    "_3": "loydgbParticipant"
+  },
+  {
+    "_1": "Barclays",
+    "_2": "BARCGBKA",
+    "_3": "barcgbParticipant"
+  },
+  {
+    "_1": "Payment1",
+    "_2": "PAYMGB01X01",
+    "_3": "paymgb1Participant"
+  },
+  {
+    "_1": "Payment2",
+    "_2": "PAYMGB01X02",
+    "_3": "paymgb2Participant"
+  },
+  {
+    "_1": "CSDHQLA",
+    "_2": "SETL00HQLAROOTCSD094",
+    "_3": "csdhqlaParticipant"
+  },
+  {
+    "_1": "Cust1",
+    "_2": "SETL00HQLACUST000118",
+    "_3": "cust1Participant"
+  },
+  {
+    "_1": "Cust2",
+    "_2": "SETL00HQLACUST000215",
+    "_3": "cust2Participant"
+  }
+]

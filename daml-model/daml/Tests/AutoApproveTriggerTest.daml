@@ -1,0 +1,156 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Tests.AutoApproveTriggerTest where
+
+import DA.Map qualified as M
+import Daml.Trigger.Assert (toACS, testRule, flattenCommands, assertExerciseCmd)
+import Daml.Script
+import Model.Balance
+import Model.Blacklist
+import Tests.PartyAlloc
+import Trigger.AutoApprove
+import Workflow.Data
+import Workflow.TransferProposal
+import Daml.Trigger (Command)
+
+
+data Metadata = Metadata with
+  currency: Text
+  amount: Decimal
+  iban: Text
+
+setup : Script (Banks, ServiceParties, TransferProposal, Metadata)
+setup = do
+  proposalTime <- getTime
+  banks@Banks{..} <- actionPartyAllocation
+  schedulerAndAssembler@ServiceParties{..} <- servicePartyAllocation
+
+  let
+    approvers = [cb, bank11, bank12, bank21, bank22]
+    initiator = bank11
+    owner = initiator
+    amount = 100.0
+    label = "USD"
+    currency = label
+    delivery = Instrument with ..
+    iban = "alice iban"
+    step = SettlementStep with sender = Some iban; receiver = None; ..
+    legPayload = "LegPayload"
+    messageId = "messageId"
+    groupId = "groupId"
+    transferProposal = TransferProposal with ..
+  pure (banks, schedulerAndAssembler, transferProposal, Metadata with ..)
+
+given_enough_balance_and_no_one_blacklisted_but_no_autoapprove_marker_nothing_happens : Script ()
+given_enough_balance_and_no_one_blacklisted_but_no_autoapprove_marker_nothing_happens = do
+  (Banks{..}, ServiceParties{..}, transferProposal, Metadata{..}) <- setup
+
+  transferProposalCid <- submit scheduler do createCmd transferProposal
+  blacklistCid <- submit bank11 do createCmd Blacklist with owner = bank11; accounts = []; banks = []
+  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = None; ..
+
+  commands <- getAutoApproveTriggerResult bank11 None transferProposalCid blacklistCid aliceBalanceCid
+  assertMsg "No approve exercise command should be created" $ null commands
+
+given_enough_balance_and_no_one_blacklisted_then_approve : Script ()
+given_enough_balance_and_no_one_blacklisted_then_approve = do
+  (Banks{..}, ServiceParties{..}, transferProposal, Metadata{..}) <- setup
+
+  creationTime <- getTime
+  autoApproveMarkerCid <- submit transferProposal.owner $ do createCmd
+      AutoApproveTransferProposalMarker with
+        owner = transferProposal.owner
+        address = iban
+        autoApproveType = LimitedMaxAmount transferProposal.step.delivery.amount
+        creationTime
+  transferProposalCid <- submit scheduler do createCmd transferProposal
+  blacklistCid <- submit bank11 do createCmd Blacklist with owner = bank11; accounts = []; banks = []
+  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = None; ..
+
+  commands <- getAutoApproveTriggerResult bank11 (Some autoApproveMarkerCid) transferProposalCid blacklistCid aliceBalanceCid
+  verifyProposalApproved transferProposalCid commands
+
+
+given_not_enough_balance_and_no_one_blacklisted_then_reject : Script ()
+given_not_enough_balance_and_no_one_blacklisted_then_reject = do
+  (Banks{..}, ServiceParties{..}, transferProposal, Metadata{..}) <- setup
+
+  let overBalanceAmount = amount + 1.0
+      overBalanceDelivery = transferProposal.step.delivery with amount = overBalanceAmount
+      overBalanceStep = transferProposal.step with delivery = overBalanceDelivery
+  creationTime <- getTime
+  autoApproveMarkerCid <- submit transferProposal.owner $ do createCmd
+      AutoApproveTransferProposalMarker with
+        owner = transferProposal.owner
+        address = iban
+        autoApproveType = LimitedMaxAmount overBalanceDelivery.amount
+        creationTime
+  transferProposalCid <- submit scheduler do createCmd transferProposal with step = overBalanceStep
+  blacklistCid <- submit bank11 do createCmd Blacklist with owner = bank11; accounts = []; banks = []
+  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = None; ..
+
+  commands <- getAutoApproveTriggerResult bank11 (Some autoApproveMarkerCid) transferProposalCid blacklistCid aliceBalanceCid
+  verifyProposalRejected transferProposalCid commands
+
+given_enough_balance_and_one_agent_blacklisted_then_reject : Script ()
+given_enough_balance_and_one_agent_blacklisted_then_reject = do
+  (Banks{..}, ServiceParties{..}, transferProposal, Metadata{..}) <- setup
+
+  creationTime <- getTime
+  autoApproveMarkerCid <- submit transferProposal.owner $ do createCmd
+      AutoApproveTransferProposalMarker with
+        owner = transferProposal.owner
+        address = iban
+        autoApproveType = LimitedMaxAmount transferProposal.step.delivery.amount
+        creationTime
+  transferProposalCid <- submit scheduler do createCmd transferProposal
+  blacklistCid <- submit bank11 do createCmd Blacklist with owner = bank11; accounts = []; banks = [bank12]
+  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = None; ..
+
+  commands <- getAutoApproveTriggerResult bank11 (Some autoApproveMarkerCid) transferProposalCid blacklistCid aliceBalanceCid
+  verifyProposalRejected transferProposalCid commands
+
+given_enough_balance_and_sender_iban_blacklisted_then_reject : Script ()
+given_enough_balance_and_sender_iban_blacklisted_then_reject = do
+  (Banks{..}, ServiceParties{..}, transferProposal, Metadata{..}) <- setup
+
+  creationTime <- getTime
+  autoApproveMarkerCid <- submit transferProposal.owner $ do createCmd
+      AutoApproveTransferProposalMarker with
+        owner = transferProposal.owner
+        address = iban
+        autoApproveType = LimitedMaxAmount transferProposal.step.delivery.amount
+        creationTime
+  transferProposalCid <- submit scheduler do createCmd transferProposal
+  blacklistCid <- submit bank11 do createCmd Blacklist with owner = bank11; accounts = [iban]; banks = []
+  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = None; ..
+
+  commands <- getAutoApproveTriggerResult bank11 (Some autoApproveMarkerCid) transferProposalCid blacklistCid aliceBalanceCid
+  verifyProposalRejected transferProposalCid commands
+
+-- helper functions
+getAutoApproveTriggerResult: Party -> Optional (ContractId AutoApproveTransferProposalMarker) -> ContractId TransferProposal -> ContractId Blacklist -> ContractId Balance -> Script [Command]
+getAutoApproveTriggerResult triggerParty autoApproveMarker transferProposalCid blacklistCid balanceCid = do
+  let marker = optional mempty toACS autoApproveMarker
+      acs = marker <> toACS transferProposalCid <> toACS blacklistCid <> toACS balanceCid
+  (flattenCommands . snd) <$> testRule autoApproveTrigger triggerParty [] acs M.empty ()
+
+verifyProposalApproved: ContractId TransferProposal -> [Command] -> Script ()
+verifyProposalApproved transferProposalCid commands = do
+  assertMsg "only one approve exercise command should be created" $ length commands == 2 -- approve proposal command + create inconming or lock balance command
+  assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
+    assertMsg "TransferProposal contractId used in approve exercise is incorrect" $ cid == transferProposalCid
+    case exercisedChoice of
+      ApproveProposal _  True -> Right ()
+      _ -> Left "transfer proposal did not settle on ledger"
+
+verifyProposalRejected: ContractId TransferProposal -> [Command] -> Script ()
+verifyProposalRejected transferProposalCid commands = do
+  assertMsg "Only one reject exercise command should be created" $ length commands == 1
+  assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
+    assertMsg "TransferProposal contractId used in reject exercise is incorrect" $ cid == transferProposalCid
+    case exercisedChoice of
+      RejectProposal _ -> Right ()

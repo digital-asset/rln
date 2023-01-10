@@ -1,0 +1,60 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Trigger.BalanceManagement where
+
+import DA.Foldable
+import DA.Optional (whenSome)
+import Daml.Trigger
+import Workflow.TransactionManifest
+import Workflow.Instruction
+
+
+balanceManagementTrigger : Trigger UnProcessedSettlements
+balanceManagementTrigger = Trigger
+  { initialize = pure []
+  , updateState = addToUnProcessedTransactions
+  , rule = updateBalance
+  , registeredTemplates = RegisteredTemplates [
+      registeredTemplate @SettlementFinalized,
+      registeredTemplate @SettlementRejected,
+      registeredTemplate @Instruction
+    ]
+  , heartbeat = None
+  }
+
+type GroupId = Text
+data Settlement =
+    Finalized with groupId : GroupId, finalizationId : (ContractId SettlementFinalized)
+  | Rejected with groupId : GroupId, rejectionId : (ContractId SettlementRejected)
+type UnProcessedSettlements = [Settlement]
+
+addToUnProcessedTransactions : Message -> TriggerUpdateA UnProcessedSettlements ()
+addToUnProcessedTransactions (MTransaction Transaction{events}) =
+    forA_ events markedAsProcessed
+  where
+    markedAsProcessed (CreatedEvent created) = do
+      whenSome (fromCreated @SettlementFinalized created) $
+        \(_, evidence, SettlementFinalized{groupId}) -> modify (Finalized groupId evidence ::)
+      whenSome (fromCreated @SettlementRejected created) $
+        \(_, evidence, SettlementRejected{groupId}) -> modify (Rejected groupId evidence ::)
+    markedAsProcessed _else = pure ()
+addToUnProcessedTransactions _any = pure ()
+
+updateBalance: Party -> TriggerA UnProcessedSettlements ()
+updateBalance provider = do 
+  let 
+    settleInstructionsForTransaction: Settlement -> TriggerA UnProcessedSettlements ()
+    settleInstructionsForTransaction transaction = do 
+      case transaction of 
+       Finalized groupId evidence -> mapA_ (`dedupExercise` Settle with evidence) =<< getAllInstructionsForGroupId groupId
+       Rejected groupId evidence -> mapA_ (`dedupExercise` Cancel with evidence) =<< getAllInstructionsForGroupId groupId
+       where getAllInstructionsForGroupId: GroupId -> TriggerA UnProcessedSettlements [ContractId Instruction]
+             getAllInstructionsForGroupId targetGroupId = do 
+               map fst <$> queryFilter @Instruction ((==targetGroupId) . (.groupId))
+  unprocessedTransactions <- get
+  forA_ unprocessedTransactions settleInstructionsForTransaction
+  put []
+  pure ()

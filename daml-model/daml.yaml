@@ -1,0 +1,20 @@
+# for config file options, refer to
+# https://docs.daml.com/tools/assistant.html#project-config-file-daml-yaml
+
+sdk-version: 2.4.0
+name: rln
+source: daml
+init-script: Tests.TransferWorkflow:testWorkflow
+version: 1.0.1
+dependencies:
+  - daml-prim
+  - daml-stdlib
+  - daml-script
+  - daml-trigger
+start-navigator: no
+json-api-port: 7578
+codegen:
+  java:
+    package-prefix: com.rln.damlCodegen
+    output-directory: ../../build/generated/main/java
+    verbosity: 2

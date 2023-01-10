@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 											
+THE MESSAGE WILL WORK “AS IS” IN THE READINESS PORTAL. IT IS ESSENTIAL THAT USERS REMOVE THE ENVELOPE AND REPLACE IT WITH THEIR OWN TRANSPORT HEADER (FOR EXAMPLE FOR ALLIANCE ACCESS YOU WOULD USE THE XML V2 HEADERS).											
+=========================================================================================================================================================================================											
+Legal Disclaimer:											
+=================											
+SWIFT © 2020. All rights reserved. 											
+This publication contains SWIFT or third-party confidential information. Do not disclose this publication outside your organisation without SWIFT’s prior written consent.											
+The use of this document is governed by the legal notices appearing at the end of this document. By using this document, you will be deemed to have accepted those legal notices.											
+=================================================================================================================================================================================											
+Use Case C.53.1.a		Debtor Agent (A) Adam & Co initiates a serial payment towards the Creditor Agent (D) AND Bank using Agents B RBS & C Close Bros as intermediaries									
+========================================================================================================================											
+Change Log											
+2020-10-16 - Original version 											
+=============================											
+-->
+<!-- Manish's comment 
+   Scenario: The Debtor, Mr Geez wishes to settle a EUR 35,000 obligation with Julius Baer in Luxembourg. 
+
+   Serial pacs.008 are remitted from the debtor agent through the chain of agents to the creditor agent AND Bank in Luxembourg. 
+
+   Creditor agent remits a statement to the account owner.
+
+   Contract: 456464-9663 35000 EUR Settlement date 2020-08-04
+
+   Debtor = Mr Geex has account with IBAN: BE54988858148300
+
+   Debtor  Agent (bank A) = ADAGGB2S; also called sender bank and instructing agent for this message
+
+   Intermediary  (bank B) = RBOSGB2L ; also called receiver bank and instructed agent for this message
+
+   Intermediary (bank C) = CBRLGB2LXXX; also called Intermediary 1 for this message; message from B to C will have B as instructing agent and C as instructed agent.
+
+   Creditor Agent(bank D) = BACALULLXXX ; also called creditor agent 
+
+   Creditor = Julius Baer has account with bank D with IBAN:BE15849613415938
+
+   All messages in this chain are PACS.008
+
+-->
+<Envelope xmlns="urn:swift:xsd:envelope" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:swift:xsd:envelope ../../../../March21Schemas/Translator_envelope.xsd">
+  <AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.02">
+    <Fr>
+      <FIId>
+        <FinInstnId>
+          <BICFI>ADAGGB2S</BICFI>
+        </FinInstnId>
+      </FIId>
+    </Fr>
+    <To>
+      <FIId>
+        <FinInstnId>
+          <BICFI>RBOSGB2L</BICFI>
+        </FinInstnId>
+      </FIId>
+    </To>
+    <BizMsgIdr>pacs8bizmsgidr01</BizMsgIdr>
+    <MsgDefIdr>pacs.008.001.08</MsgDefIdr>
+    <BizSvc>swift.cbprplus.02</BizSvc>
+    <CreDt>2020-08-04T10:00:47+01:00</CreDt>
+  </AppHdr>
+  <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+    <FIToFICstmrCdtTrf>
+      <GrpHdr>
+        <MsgId>pacs8bizmsgidr01</MsgId>
+        <CreDtTm>2020-08-04T10:00:47+01:00</CreDtTm>
+        <NbOfTxs>1</NbOfTxs>
+        <SttlmInf>
+          <SttlmMtd>INDA</SttlmMtd>
+        </SttlmInf>
+      </GrpHdr>
+      <CdtTrfTxInf>
+        <PmtId>
+          <InstrId>pacs8bizmsgidr01</InstrId>
+          <EndToEndId>pacs008EndToEndId-001</EndToEndId>
+          <UETR>8a562c67-ca16-48ba-b074-65581be6f001</UETR>
+        </PmtId>
+        <IntrBkSttlmAmt Ccy="EUR">35000</IntrBkSttlmAmt>
+        <IntrBkSttlmDt>2020-08-04</IntrBkSttlmDt>
+        <ChrgBr>DEBT</ChrgBr>
+        <InstgAgt>
+          <FinInstnId>
+            <BICFI>ADAGGB2S</BICFI>
+          </FinInstnId>
+        </InstgAgt>
+        <InstdAgt>
+          <FinInstnId>
+            <BICFI>RBOSGB2L</BICFI>
+          </FinInstnId>
+        </InstdAgt>
+        <IntrmyAgt1>
+          <FinInstnId>
+            <BICFI>CBRLGB2LXXX</BICFI>
+          </FinInstnId>
+        </IntrmyAgt1>
+        <Dbtr>
+          <Nm>Mr Geez</Nm>
+          <PstlAdr>
+            <StrtNm>6 Adelaide St</StrtNm>
+            <TwnNm>London</TwnNm>
+            <Ctry>GB</Ctry>
+          </PstlAdr>
+        </Dbtr>
+        <DbtrAcct>
+          <Id>
+            <IBAN>BE54988858148300</IBAN>
+          </Id>
+        </DbtrAcct>
+        <DbtrAgt>
+          <FinInstnId>
+            <BICFI>ADAGGB2S</BICFI>
+          </FinInstnId>
+        </DbtrAgt>
+        <DbtrAgtAcct>
+          <Id>
+            <IBAN>BE86199467768950</IBAN>
+          </Id>
+        </DbtrAgtAcct>
+        <CdtrAgt>
+          <FinInstnId>
+            <BICFI>BACALULLXXX</BICFI>
+          </FinInstnId>
+        </CdtrAgt>
+        <CdtrAgtAcct>
+          <Id>
+            <IBAN>BE10878922461504</IBAN>
+          </Id>
+        </CdtrAgtAcct>
+        <Cdtr>
+          <Nm>Julius Baer</Nm>
+          <PstlAdr>
+            <StrtNm>25 Rue Edward Steichen</StrtNm>
+            <TwnNm>Luxembourg</TwnNm>
+            <Ctry>LU</Ctry>
+          </PstlAdr>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>BE15849613415938</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>Contract: 456464-9663</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </FIToFICstmrCdtTrf>
+  </Document>
+</Envelope>	

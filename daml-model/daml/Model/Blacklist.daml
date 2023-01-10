@@ -1,0 +1,64 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Model.Blacklist where
+
+import DA.List
+
+
+template Blacklist
+  with
+    owner: Party
+    banks: [Party] -- blacklist on bank entity level
+    accounts: [Text] -- blacklist on account level
+  where
+    signatory owner
+
+    key owner : Party
+    maintainer key
+
+    choice ResetBankList : ContractId Blacklist
+      with
+        newBankList: [Party]
+     controller owner
+        do
+          create this with banks = newBankList
+
+    choice ResetAccountList: ContractId Blacklist
+      with
+        newAccountList: [Text]
+      controller owner
+        do
+          create this with accounts = newAccountList
+
+    choice AddBanks: ContractId Blacklist
+      with
+        toBeAdded: [Party]
+      controller owner
+        do
+          create this with banks = banks <> toBeAdded
+
+    choice AddAccounts: ContractId Blacklist
+      with
+        toBeAdded: [Text]
+      controller owner
+        do
+          create this with accounts = accounts <> toBeAdded
+
+    choice RemoveBanks: ContractId Blacklist
+      with
+        toBeRemoved: [Party]
+      controller owner
+        do
+          let newBankBlacklist = foldl (\currentList p -> delete p currentList) banks toBeRemoved
+          create this with banks = newBankBlacklist
+
+    choice RemoveAccounts: ContractId Blacklist
+        with
+          toBeRemoved: [Text]
+        controller owner
+          do
+            let newAccountBlacklist = foldl (\currentList p -> delete p currentList) accounts toBeRemoved
+            create this with accounts = newAccountBlacklist

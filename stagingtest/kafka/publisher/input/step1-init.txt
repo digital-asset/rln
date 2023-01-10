@@ -1,0 +1,2 @@
+{ "groupId":"groupId1", "initiator" : "bankABic", "payload": "uri or stringified pac008 xml" }
+{ "groupId":"groupId2", "initiator" : "bankABic", "payload": "uri or stringified pac008 xml" }

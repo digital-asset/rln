@@ -1,0 +1,69 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Tests.BalanceManagementTriggerTest where
+
+import DA.Map qualified as M
+import Daml.Script
+import Daml.Trigger.Assert (toACS, testRule, flattenCommands, assertExerciseCmd)
+import Tests.PartyAlloc
+import Trigger.BalanceManagement
+import Workflow.Data
+import Workflow.Instruction
+import Workflow.TransactionManifest
+
+balanceManagementTriggerTest: Script ()
+balanceManagementTriggerTest = do
+  Banks{bank11} <- actionPartyAllocation
+  ServiceParties{assembler} <- servicePartyAllocation
+
+  let
+    provider = bank11
+    groupId = "groupId"
+    messageId1 = "messageId1"
+    messageId2 = "messageId2"
+    amount = 100.0
+    label = "USD"
+    delivery = Instrument with ..
+    step = SettlementStep with sender = Some "senderIban"; receiver = None; delivery
+
+  instructionCid1 <- submit bank11 do createCmd Instruction with messageId = messageId1; ..
+  instructionCid2 <- submit bank11 do createCmd Instruction with messageId = messageId2; ..
+  -- instruction in different groups, should not be Settle/Cancel
+  instructionCid3 <- submit bank11 do createCmd Instruction with groupId = "other groupdId"; messageId = "other messageId"; ..
+
+  -- case 1 received SettlementFinalized, instructions of current group Settled
+  evidence <- assembler `submit` createCmd SettlementFinalized with assembler, groupId = "groupId", approvers = [bank11]
+  verifyInstructions bank11 2 $ Finalized groupId evidence
+
+  -- case 2 receive SettlementRejected, instructions of current group Canceled
+  evidence <- assembler `submit` createCmd SettlementRejected with assembler, groupId = "groupId", approvers = [bank11]
+  verifyInstructions bank11 2 $ Rejected groupId evidence
+
+verifyInstructions: Party -> Int -> Settlement -> Script ()
+verifyInstructions triggerSender expectedNumberOfInstruction settlement = do
+  instructions <- query @Instruction triggerSender
+  let
+    acs = mconcat $ map  (toACS . fst) instructions
+    (currentGroupId, isSettled) = case settlement of
+      Finalized gid _ -> (gid, True)
+      Rejected gid _ -> (gid, False)
+    expectedInstructionCids: [ContractId Instruction] = map fst $ filter ((== currentGroupId) . (.groupId) . snd) instructions
+
+  (unProcessedTransactions, commands') <- testRule balanceManagementTrigger triggerSender [] acs M.empty [settlement]
+
+  let
+    commands = flattenCommands commands'
+
+  assertMsg "All Transactions should be processed" $ null unProcessedTransactions
+  assertMsg "Number of commands does not match with expected number of instructions" $ (length commands == expectedNumberOfInstruction)
+  if isSettled then assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
+    assertMsg "Instruction contractId used in Settle exercise is incorrect" $ cid `elem` expectedInstructionCids
+    case exercisedChoice of
+      Settle _ -> Right ()
+  else assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
+    assertMsg "Instruction contractId used in Cancel exercise is incorrect" $ cid `elem` expectedInstructionCids
+    case exercisedChoice of
+      Cancel _ -> Right ()

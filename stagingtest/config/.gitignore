@@ -1,0 +1,6 @@
+env-bankA
+env-bankB
+env-assembler
+env-scheduler
+ledger-parties.json
+*.config

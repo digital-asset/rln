@@ -1,0 +1,93 @@
+<!-- Manish's Comments
+
+  Customer Credit Xfer msg from AABBGB2X to AABBIE2X for service swift.cbprplus.02 with transaction ID e2eid/02/03/2022/001 and UETR e686ce75-5bab-4710-91f6-8e95a627b4cc
+  Settlement amount 100Eur, Instructed amount 110 Eur as Debtor pays charges of 10 Euro for the payment
+  Direct relationship (2 branches of same bank involved) so Sending Bank = Intructing Agent/Debtor Agent and Recieving bank = Instructed Agent/creditor agent
+  Debtor and Creditor identified by name and not by IBAN or Account number
+
+-->
+<Envelope xmlns="urn:swift:xsd:envelope" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:swift:xsd:envelope ../../../../March21Schemas/Translator_envelope.xsd">
+  <AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.02">
+    <Fr>
+      <FIId>
+        <FinInstnId>
+          <BICFI>AABBGB2X</BICFI>
+        </FinInstnId>
+      </FIId>
+    </Fr>
+    <To>
+      <FIId>
+        <FinInstnId>
+          <BICFI>AABBIE2X</BICFI>
+        </FinInstnId>
+      </FIId>
+    </To>
+    <BizMsgIdr>Buzmsgidtfr/020322/001</BizMsgIdr>
+    <MsgDefIdr>Msgidtfr/020322/001</MsgDefIdr>
+    <BizSvc>swift.cbprplus.02</BizSvc>
+    <CreDt>2022-03-03T08:22:08+01:00</CreDt>
+  </AppHdr>
+  <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>Msgidetfcn/02/03/2022/001</MsgId>
+      <CreDtTm>2022-03-02T09:24:16+01:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>INDA</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>Instrid-001</InstrId>
+        <EndToEndId>e2eid/02/03/2022/001</EndToEndId>
+        <UETR>e686ce75-5bab-4710-91f6-8e95a627b4cc</UETR>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="EUR">100.</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2022-03-04+01:00</IntrBkSttlmDt>
+      <InstdAmt Ccy="EUR">110.</InstdAmt>
+      <ChrgBr>DEBT</ChrgBr>
+      <InstgAgt>
+        <FinInstnId>
+          <BICFI>AABBGB2X</BICFI>
+        </FinInstnId>
+      </InstgAgt>
+      <InstdAgt>
+        <FinInstnId>
+          <BICFI>AABBIE2X</BICFI>
+        </FinInstnId>
+      </InstdAgt>
+      <Dbtr>
+        <Nm>Mr. Debtor </Nm>
+        <PstlAdr>
+          <StrtNm>EAST 45TH ST</StrtNm>
+          <BldgNb>25</BldgNb>
+          <PstCd>834009</PstCd>
+          <TwnNm>Manhattan</TwnNm>
+          <Ctry>US</Ctry>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>AABBGB2X</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>AABBIE2X</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+      <Cdtr>
+        <Nm>Mr. Creditor </Nm>
+        <PstlAdr>
+          <StrtNm>Cable Walk </StrtNm>
+          <BldgNb>89</BldgNb>
+          <PstCd>SE120</PstCd>
+          <TwnNm>California</TwnNm>
+          <Ctry>US</Ctry>
+        </PstlAdr>
+      </Cdtr>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+  </Document>
+</Envelope>

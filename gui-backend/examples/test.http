@@ -1,0 +1,43 @@
+GET http://localhost:8080/api/approval/list
+Accept: */*
+Cache-Control: no-cache
+
+###
+
+GET http://localhost:8080/api/transactions
+Accept: */*
+Cache-Control: no-cache
+
+###
+
+POST http://localhost:8080/api/create
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{
+  "groupid": "group1",
+  "from": "someFrom",
+  "messages": [
+    {
+      "messageid": "message1",
+      "transactions": [
+        {
+          "txnid": "tx1",
+          "amount": 10.0,
+          "currency": "USD",
+          "creditor": {
+            "account": "",
+            "agent": "CHASUS33XXX",
+            "isAddress": false
+          },
+          "debtor": {
+            "account": "",
+            "agent": "CHASUS33XXX",
+            "isAddress": false
+          }
+        }
+      ]
+    }
+  ]
+}

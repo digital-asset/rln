@@ -1,0 +1,12 @@
+{
+    "apiPackage": "com.rln.gui.backend.api",
+    "modelPackage": "com.rln.gui.backend.model",
+    "invokerPackage": "com.rln.gui.backend",
+    "generatePom": false,
+    "interfaceOnly": true,
+    "additionalModelTypeAnnotations": ";@lombok.Builder;@lombok.AllArgsConstructor",
+    "hideGenerationTimestamp": true,
+    "useSwaggerAnnotations": false,
+    "openApiSpecFileLocation": "",
+    "useTags": true
+}

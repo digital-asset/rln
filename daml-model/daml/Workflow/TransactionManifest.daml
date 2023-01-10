@@ -1,0 +1,51 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Workflow.TransactionManifest where
+
+import DA.List (dedup)
+
+template TransactionManifest
+  with
+    assembler: Party
+    scheduler: Party
+    groupId: Text
+    messageIdToApprovers: [(Text, [Party])] -- just message id to approvers should be enough
+    creationTime: Time
+  where
+    signatory scheduler
+    observer assembler, allApprovers
+
+    let allApprovers = (dedup . concatMap snd) messageIdToApprovers
+
+    choice FinalizeSettlement : ContractId SettlementFinalized
+      with reason: Optional Text
+      controller assembler
+        do
+          create SettlementFinalized with approvers = allApprovers; ..
+
+    choice RejectSettlement : ContractId SettlementRejected
+      with reason: Optional Text
+      controller assembler
+        do
+          create SettlementRejected with approvers = allApprovers; ..
+
+template SettlementFinalized
+  with
+    assembler: Party
+    groupId: Text
+    approvers: [Party]
+  where
+    signatory assembler
+    observer approvers
+
+template SettlementRejected
+  with
+    assembler: Party
+    groupId: Text
+    approvers: [Party]
+  where
+    signatory assembler
+    observer approvers

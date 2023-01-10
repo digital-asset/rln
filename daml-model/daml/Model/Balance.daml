@@ -1,0 +1,119 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Model.Balance where
+
+import DA.Optional (optionalToList)
+
+data BalanceKey =
+    BalanceKey with
+        provider: Party
+        iban: Text
+  deriving (Eq, Show)
+
+type BalanceOwner = Optional Party
+
+template Balance
+  with
+    iban: Text -- iban is identifer for account
+    provider: Party
+    owner: BalanceOwner -- None if the Balance is provided for non-bank individuals v.s. Some bankParty
+
+    currency: Text
+    amount: Decimal
+  where
+    signatory provider
+    observer optionalToList owner
+
+    ensure amount >= 0.0
+    let balanceKey = BalanceKey with ..
+
+    key balanceKey : BalanceKey
+    maintainer key.provider
+    choice Increase : ContractId Balance
+      with
+       increment: Decimal
+     controller provider
+        do
+          create this with amount = amount + increment
+
+    choice Decrease: ContractId Balance
+      with
+        decrement: Decimal
+      controller provider
+        do
+          create this with amount = amount - decrement
+
+    choice Lock : (ContractId Balance, ContractId LockedBalance)
+      with
+        amountToLock: Decimal
+        identifier: Text
+     controller provider
+        do
+          assertMsg "Amount must be positive." $ amountToLock > 0.0
+          assertMsg "Cannot lock, amount not available." $ amountToLock <= amount
+
+          lockedBalance <- create LockedBalance with balance = (this with amount = amountToLock); ..
+          balanceCid <- create this with amount = amount - amountToLock
+          pure (balanceCid, lockedBalance)
+
+data PendingBalanceKey =
+    PendingBalanceKey with
+        balanceKey: BalanceKey
+        identifier: Text
+  deriving (Eq, Show)
+
+template LockedBalance
+  with
+    balance: Balance
+
+    identifier: Text
+    -- ^ identifier is used to identify what the balance is locked for
+  where
+    signatory provider
+
+    let
+      balanceKey = key balance
+      provider = balance.provider
+      lockedAmount = balance.amount
+    key PendingBalanceKey with .. : PendingBalanceKey
+    maintainer key.balanceKey.provider
+
+    choice Refund: ContractId Balance
+      controller provider
+        do
+         exerciseByKey @Balance balanceKey with Increase with increment = lockedAmount
+
+    choice Burn: ()
+      controller provider
+        do
+          pure ()
+
+template IncomingBalance
+  with
+    balance: Balance
+
+    identifier: Text
+    -- ^ identifier is used to identify the reason of the incoming balance
+  where
+    signatory provider
+
+    key PendingBalanceKey with .. : PendingBalanceKey
+    maintainer key.balanceKey.provider
+
+    let
+      balanceKey = key balance
+      provider = balance.provider
+      incomingAmount = balance.amount
+
+    choice Deposit: ContractId Balance
+      controller provider
+      do
+        exerciseByKey @Balance balanceKey with Increase with increment = balance.amount
+
+    choice CancelIncoming: ()
+      controller provider
+      do
+        pure ()

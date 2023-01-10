@@ -1,0 +1,74 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Workflow.Instruction where
+
+import DA.Action (void)
+import DA.Optional(whenSome)
+import Model.Balance
+import Workflow.Data
+import Workflow.TransactionManifest
+
+
+template Instruction
+  with
+    provider: Party
+    groupId: Text
+    messageId: Text
+    step: SettlementStep
+  where
+    signatory provider
+    let identifier = toIdentifier this
+
+    choice Settle: ()
+      with
+        evidence : ContractId SettlementFinalized
+      controller provider
+       do
+          verifySettlement groupId evidence
+          {-
+            1. has sender -> burn locked balance
+            2. has receiver -> deposit incoming balance
+          -}
+          whenSome step.sender (\senderIban -> void $ exerciseByKey
+                                        @LockedBalance
+                                        (PendingBalanceKey with balanceKey = (BalanceKey with iban = senderIban; ..); ..)
+                                        Burn)
+
+          whenSome step.receiver (\receiverIban -> void $ exerciseByKey
+                                              @IncomingBalance
+                                              (PendingBalanceKey with balanceKey = (BalanceKey with iban = receiverIban; ..); ..)
+                                              Deposit)
+    choice Cancel: ()
+      with
+        evidence : ContractId SettlementRejected
+      controller provider
+       do
+        verifyRejection groupId evidence
+        {-
+         case 1. has sender -> cancel the instruction will refund the LockedBalance back into Balance
+         case 2. has receiver -> cancel the instruction will cancel the incoming Balance
+        -}
+        whenSome step.sender (\senderIban -> void $ exerciseByKey
+                                                  @LockedBalance
+                                                  (PendingBalanceKey with balanceKey = (BalanceKey with iban = senderIban; ..); ..)
+                                                  Refund)
+        whenSome step.receiver (\receiverIban -> void $ exerciseByKey
+                                              @IncomingBalance
+                                              (PendingBalanceKey with balanceKey = (BalanceKey with iban = receiverIban; ..); ..)
+                                              CancelIncoming)
+
+
+
+verifySettlement : Text -> ContractId SettlementFinalized -> Update ()
+verifySettlement groupId evidenceCid = do
+  evidence <- fetch evidenceCid
+  assertMsg "Provided evidence cannot prove that settlement has not been finialized." $ groupId == evidence.groupId
+
+
+verifyRejection : Text -> ContractId SettlementRejected -> Update ()
+verifyRejection groupId evidenceCid = do
+  evidence <- fetch evidenceCid
+  assertMsg "SProvided evidence cannot prove that settlement has not been rejected." $ groupId == evidence.groupId

@@ -1,0 +1,105 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Workflow.TransferProposal where
+
+import Workflow.Data
+import Workflow.Instruction
+
+template TransferProposal
+  with
+    owner: Party
+    scheduler: Party
+    assembler: Party
+    proposalTime: Time
+
+    step: SettlementStep
+    approvers: [Party]
+    -- for each leg we will have a legPayload identified by unique message id, can be uri/stringified xml
+    legPayload: Text
+
+    messageId: Text
+    groupId: Text
+  where
+    signatory scheduler
+    observer owner, assembler
+
+    let identifier: Text
+        identifier = toIdentifier this
+        delivery: Instrument
+        delivery = step.delivery
+
+    choice ApproveProposal : (ContractId ApprovedTransferProposal, Optional (ContractId Instruction))
+      with
+        reason: Optional Text
+        settleOnLedger: Bool
+      controller owner
+        do
+          now <- getTime
+          approvedProposal <- create ApprovedTransferProposal with approvalTime = now, ..
+          maybeInstruction <- if settleOnLedger
+            then Some <$> create Instruction with provider = owner; ..
+            else pure None
+          pure (approvedProposal, maybeInstruction)
+    choice RejectProposal : ContractId RejectedTransferProposal
+      with
+        reason: Optional Text
+      controller owner
+        do
+          now <- getTime
+          create RejectedTransferProposal with rejectionTime = now, ..
+
+
+template ApprovedTransferProposal
+  with
+    owner: Party
+    proposalTime: Time
+    approvalTime: Time
+
+    step: SettlementStep
+    approvers: [Party]
+    -- for each leg we will have a legPayload identified by unique message id, can be uri/stringified xml
+    legPayload: Text
+
+    messageId: Text
+    groupId: Text
+  where
+    signatory owner
+
+template RejectedTransferProposal
+  with
+    owner: Party
+    proposalTime: Time
+    rejectionTime: Time
+
+    step: SettlementStep
+    approvers: [Party]
+    -- for each leg we will have a legPayload identified by unique message id, can be uri/stringified xml
+    legPayload: Text
+
+    messageId: Text
+    groupId: Text
+  where
+    signatory owner
+
+data AutoApproveType = FullAuto | LimitedMaxAmount Decimal
+  deriving (Eq, Show)
+
+template AutoApproveTransferProposalMarker
+  with
+    owner: Party
+    creationTime: Time
+    address: Text
+    autoApproveType: AutoApproveType
+  where
+    signatory owner
+
+    choice UpdateMarker : ContractId AutoApproveTransferProposalMarker
+      with
+        updateTime: Time
+        newAutoApproveType: AutoApproveType
+      controller owner
+        do
+          create this with creationTime = updateTime, autoApproveType = newAutoApproveType

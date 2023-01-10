@@ -1,0 +1,29 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Tests.Onboarding where
+
+import Daml.Script
+import Model.BankBIC
+import DA.Set qualified as S
+import DA.Foldable (mapA_)
+
+type EntityNameBicParticipantName = (Text, Text, Text)
+type EntityToBicMapping = [EntityNameBicParticipantName]
+type Parties = [Party]
+
+onboarding: EntityToBicMapping -> Script Parties
+onboarding mapping = script do 
+  -- allocate parties with entityName as displayName and Hint
+  partyToBicMapping <- mapA (\(entityName, bic, participantName) -> do 
+                                          p <- allocatePartyWithHintOn entityName (PartyIdHint entityName) (ParticipantName participantName)
+                                          pure (p, bic)) mapping
+  -- allocate scheduler and assembler
+  scheduler <- allocatePartyWithHintOn "scheduler" (PartyIdHint "scheduler") (ParticipantName "schedulerParticipant")
+  assembler <- allocatePartyWithHintOn "assembler" (PartyIdHint "assembler") (ParticipantName "assemblerParticipant")
+
+  -- create BankBic for each party
+  mapA_ (\(p, bic) -> submit p do createCmd BankBIC with bic; banks = S.singleton p; schedulers = S.singleton scheduler; assemblers = S.singleton assembler) partyToBicMapping
+  pure $ scheduler :: assembler :: map fst partyToBicMapping
