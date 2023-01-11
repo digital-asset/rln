@@ -4,7 +4,6 @@
  */
 package com.rln.client.damlClient;
 
-import com.daml.ledger.javaapi.data.Command;
 import com.daml.ledger.javaapi.data.CreatedEvent;
 import com.daml.ledger.javaapi.data.Event;
 import com.daml.ledger.javaapi.data.FiltersByParty;
@@ -16,6 +15,7 @@ import com.daml.ledger.javaapi.data.NoFilter;
 import com.daml.ledger.javaapi.data.Transaction;
 import com.daml.ledger.javaapi.data.TransactionFilter;
 import com.daml.ledger.javaapi.data.TransactionTree;
+import com.daml.ledger.javaapi.data.codegen.Update;
 import com.daml.ledger.rxjava.DamlLedgerClient;
 import com.google.protobuf.Empty;
 import com.rln.client.damlClient.commandId.RandomGenerator;
@@ -29,9 +29,6 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -40,6 +37,8 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RLNDamlClient implements RLNClient {
 
@@ -74,7 +73,7 @@ public class RLNDamlClient implements RLNClient {
 
     private Single<Empty> sendCommands(String party, Collection<ClientCommand> clientCommands) {
         var commandId = commandIdGenerator.generate();
-        var commands =  clientCommands.stream().map(clientCommand -> clientCommand.command).collect(Collectors.toList());
+        var commands =  clientCommands.stream().map(clientCommand -> clientCommand.update).collect(Collectors.toList());
 
         logStartOfSubmission(commandId, clientCommands);
         return ledger
@@ -94,10 +93,10 @@ public class RLNDamlClient implements RLNClient {
 
   @Override
   public void createOrUpdateAutoApproveMarker(AutoApproveParameters autoApproveParameters) {
-    autoApproveParameters.createOrUpdate().ifPresent(command ->
+    autoApproveParameters.createOrUpdate().ifPresent(update ->
         commandPublisher.onNext(new ClientCommand(
             autoApproveParameters.event(),
-            command,
+            update,
             autoApproveParameters.getOwner(),
             autoApproveParameters)
         )
@@ -107,7 +106,7 @@ public class RLNDamlClient implements RLNClient {
   @Override
     public void exerciseCreateProposalsChoice(String groupId, CreateProposalsChoiceParameters createProposalChoiceParameters) {
         var event = String.format("Exercise Create Proposal (%s, %s)", groupId, createProposalChoiceParameters.getInitiateTransferCid());
-        Command exerciseCreateProposals = createProposalChoiceParameters.getInitiateTransferCid().exerciseCreateProposals(
+        Update exerciseCreateProposals = createProposalChoiceParameters.getInitiateTransferCid().exerciseCreateProposals(
             createProposalChoiceParameters.getMessageIdToLegs(), createProposalChoiceParameters.getAssemblerPartyId());
         commandPublisher.onNext(new ClientCommand(event, exerciseCreateProposals, createProposalChoiceParameters.getSchedulerPartyId(), createProposalChoiceParameters));
     }
@@ -116,26 +115,26 @@ public class RLNDamlClient implements RLNClient {
     public void exerciseApproveRejectProposalChoice(String groupId, ApproveRejectProposalChoiceParameters acceptRejectChoiceParameters) {
         var event = String.format("Exercise Approve Reject Proposal (%s, %s)", groupId, acceptRejectChoiceParameters.getContractId());
         TransferProposal.ContractId contractId = acceptRejectChoiceParameters.getContractId();
-        final Command exerciseCommand;
+        final Update<?> exerciseUpdate;
         if (acceptRejectChoiceParameters.isApproved()) {
-            exerciseCommand = contractId.exerciseApproveProposal(Optional.ofNullable(acceptRejectChoiceParameters.getReason()), acceptRejectChoiceParameters.isSettleOnLedger());
+            exerciseUpdate = contractId.exerciseApproveProposal(Optional.ofNullable(acceptRejectChoiceParameters.getReason()), acceptRejectChoiceParameters.isSettleOnLedger());
         } else {
-            exerciseCommand = contractId.exerciseRejectProposal(Optional.ofNullable(acceptRejectChoiceParameters.getReason()));
+            exerciseUpdate = contractId.exerciseRejectProposal(Optional.ofNullable(acceptRejectChoiceParameters.getReason()));
         }
-        commandPublisher.onNext(new ClientCommand(event, exerciseCommand, acceptRejectChoiceParameters.getBankPartyId(), acceptRejectChoiceParameters));
+        commandPublisher.onNext(new ClientCommand(event, exerciseUpdate, acceptRejectChoiceParameters.getBankPartyId(), acceptRejectChoiceParameters));
     }
 
     @Override
     public void exerciseFinalizeRejectSettlement(String groupId, FinalizeRejectSettlementChoiceParameters finalizeRejectSettlementChoiceParameters) {
         var event = String.format("Exercise Finalize Reject Settlement (%s, %s)", groupId, finalizeRejectSettlementChoiceParameters.getTransactionManifestCid());
         TransactionManifest.ContractId contractId = finalizeRejectSettlementChoiceParameters.getTransactionManifestCid();
-        final Command exerciseCommand;
+        final Update<?> exerciseUpdate;
         if (finalizeRejectSettlementChoiceParameters.isApproved()) {
-            exerciseCommand = contractId.exerciseFinalizeSettlement(Optional.ofNullable(finalizeRejectSettlementChoiceParameters.getReason()));
+            exerciseUpdate = contractId.exerciseFinalizeSettlement(Optional.ofNullable(finalizeRejectSettlementChoiceParameters.getReason()));
         } else {
-            exerciseCommand = contractId.exerciseRejectSettlement(Optional.ofNullable(finalizeRejectSettlementChoiceParameters.getReason()));
+            exerciseUpdate = contractId.exerciseRejectSettlement(Optional.ofNullable(finalizeRejectSettlementChoiceParameters.getReason()));
         }
-        commandPublisher.onNext(new ClientCommand(event, exerciseCommand, finalizeRejectSettlementChoiceParameters.getAssemblerPartyId(), finalizeRejectSettlementChoiceParameters));
+        commandPublisher.onNext(new ClientCommand(event, exerciseUpdate, finalizeRejectSettlementChoiceParameters.getAssemblerPartyId(), finalizeRejectSettlementChoiceParameters));
     }
 
   @Override
@@ -212,13 +211,13 @@ public class RLNDamlClient implements RLNClient {
 
     private static class ClientCommand {
         public final String event;
-        public final Command command;
+        public final Update<?> update;
         public final String party;
         public final Parameters parameters;
 
-        ClientCommand(String event, Command command, String party, Parameters parameters) {
+        ClientCommand(String event, Update<?> update, String party, Parameters parameters) {
             this.event = event;
-            this.command = command;
+            this.update = update;
             this.party = party;
             this.parameters = parameters;
         }

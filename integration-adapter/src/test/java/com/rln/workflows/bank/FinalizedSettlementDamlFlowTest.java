@@ -9,6 +9,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.CommonBaseTest;
 import com.rln.LedgerBaseTest;
 import com.rln.cache.ContractCache.TransactionManifestCache;
+import com.rln.client.damlClient.TestUtils;
 import com.rln.client.damlClient.listeners.exercise.FinalizeRejectSettlementDamlListener;
 import com.rln.client.damlClient.partyManagement.ShardPartyPlainTextListReader;
 import com.rln.common.IAConstants;
@@ -62,8 +63,10 @@ class FinalizedSettlementDamlFlowTest extends LedgerBaseTest {
         TransactionManifest.ContractId transferManifest1 = SANDBOX.getLedgerAdapter().getCreatedContractId(getSchedulerPartyId(), TransactionManifest.TEMPLATE_ID, TransactionManifest.ContractId::new);
         TransactionManifest.ContractId transferManifest2 = SANDBOX.getLedgerAdapter().getCreatedContractId(getSchedulerPartyId(), TransactionManifest.TEMPLATE_ID, TransactionManifest.ContractId::new);
 
-        exerciseFinalizeSettlementCommand1 = transferManifest1.exerciseFinalizeSettlement(Optional.of(REASON));
-        exerciseFinalizeSettlementCommand2 = transferManifest2.exerciseFinalizeSettlement(Optional.of(REASON));
+        exerciseFinalizeSettlementCommand1 = TestUtils
+            .toExerciseCommand(transferManifest1.exerciseFinalizeSettlement(Optional.of(REASON)));
+        exerciseFinalizeSettlementCommand2 = TestUtils.
+            toExerciseCommand(transferManifest2.exerciseFinalizeSettlement(Optional.of(REASON)));
 
         finalizeSettlements = new FinalizeSettlement[]{
                 new FinalizeSettlement(Optional.of(REASON))

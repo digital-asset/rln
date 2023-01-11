@@ -26,8 +26,8 @@ dependencies {
 
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
 
-    implementation "com.daml:bindings-java:2.4.0"
-    implementation "com.daml:bindings-rxjava:2.4.0"
+    implementation "com.daml:bindings-java:2.5.0"
+    implementation "com.daml:bindings-rxjava:2.5.0"
     implementation "io.quarkus:quarkus-arc"
     implementation "io.quarkus:quarkus-hibernate-validator"
     implementation "io.quarkus:quarkus-smallrye-reactive-messaging-kafka"
@@ -74,7 +74,7 @@ clean {
 
 spotless {
     // optional: limit format enforcement to just the files changed by this feature branch
-    ratchetFrom "master"
+    ratchetFrom "main"
     format "misc", {
         // define the files to apply `misc` to
         target "*.gradle", "**/*.daml"

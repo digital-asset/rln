@@ -10,6 +10,7 @@ import com.daml.ledger.javaapi.data.ExerciseCommand;
 import com.daml.ledger.javaapi.data.Identifier;
 import com.daml.ledger.javaapi.data.Party;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.rln.client.damlClient.TestUtils;
 import com.rln.client.damlClient.partyManagement.RandomShardPartyPicker;
 import com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer;
 import com.rln.damlCodegen.workflow.transferproposal.ApprovedTransferProposal;
@@ -127,8 +128,8 @@ class TransactionsApiImplTest extends LedgerBaseTest {
 
     SANDBOX.getLedgerAdapter().exerciseChoice(
         getCurrentBankPartyId(),
-        new TransferProposal.ContractId(transferProposalCid)
-            .exerciseApproveProposal(Optional.empty(), true));
+        TestUtils.toExerciseCommand(new TransferProposal.ContractId(transferProposalCid)
+            .exerciseApproveProposal(Optional.empty(), true)));
     var approvedCid = SANDBOX.getLedgerAdapter().getCreatedContractId(
         getCurrentBankPartyId(),
         ApprovedTransferProposal.TEMPLATE_ID,
@@ -159,8 +160,8 @@ class TransactionsApiImplTest extends LedgerBaseTest {
 
     SANDBOX.getLedgerAdapter().exerciseChoice(
         getCurrentBankPartyId(),
-        new TransferProposal.ContractId(transferProposalCid)
-            .exerciseRejectProposal(Optional.empty()));
+        TestUtils.toExerciseCommand(new TransferProposal.ContractId(transferProposalCid)
+            .exerciseRejectProposal(Optional.empty())));
     var rejectedCid = SANDBOX.getLedgerAdapter().getCreatedContractId(
         getCurrentBankPartyId(),
         RejectedTransferProposal.TEMPLATE_ID,

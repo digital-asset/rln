@@ -106,7 +106,7 @@ services:
       daemon -c /canton/rln/rln.conf --bootstrap /canton/rln/rln.canton
 
   ledger-script:
-      image: digitalasset/daml-sdk:2.4.0
+      image: digitalasset/daml-sdk:2.5.0
       profiles: ["ledger"]
       depends_on:
         - ledger
