@@ -5,13 +5,16 @@
 package com.rln.gui.backend.ods;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 
 public interface TransferProposalRepository {
   void save(TransferProposal proposal);
 
-  Collection<TransferProposal> findAllWaiting();
+  default Collection<TransferProposal> findAllWaiting() {
+    return findAll(TransferProposal::isWaiting, null, null);
+  }
 
-  Collection<TransferProposal> findAll(Long limit, Long offset);
+  Collection<TransferProposal> findAll(Predicate<TransferProposal> filter, Long limit, Long offset);
 
   void deleteAllByContractId(Collection<String> contractIds);
 }

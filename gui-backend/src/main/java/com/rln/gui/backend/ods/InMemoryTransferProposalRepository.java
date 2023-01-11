@@ -4,6 +4,8 @@
  */
 package com.rln.gui.backend.ods;
 
+import java.util.Objects;
+import java.util.function.Predicate;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Named;
 import java.util.Collection;
@@ -22,18 +24,14 @@ public class InMemoryTransferProposalRepository implements TransferProposalRepos
   }
 
   @Override
-  public Collection<TransferProposal> findAllWaiting() {
-    return proposals.stream()
-      .filter(TransferProposal::isWaiting)
-      .collect(Collectors.toList());
-  }
-
-  @Override
-  public Collection<TransferProposal> findAll(Long limit, Long offset) {
-    return proposals.stream()
-      .skip(offset)
-      .limit(limit)
-      .collect(Collectors.toList());
+  public Collection<TransferProposal> findAll(Predicate<TransferProposal> filter, Long limit, Long offset) {
+    var elements = proposals.stream()
+      .filter(Objects.requireNonNullElse(filter, t -> true))
+      .skip(Objects.requireNonNullElse(offset, 0L));
+    if (limit != null) {
+      elements = elements.limit(limit);
+    }
+    return elements.collect(Collectors.toList());
   }
 
   @Override

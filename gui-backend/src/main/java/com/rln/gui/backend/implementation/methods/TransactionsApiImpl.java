@@ -4,7 +4,6 @@
  */
 package com.rln.gui.backend.implementation.methods;
 
-import com.rln.gui.backend.model.TransactionStatusUpdate;
 import com.rln.client.damlClient.ApproveRejectProposalChoiceParameters;
 import com.rln.client.damlClient.RLNClient;
 import com.rln.client.damlClient.partyManagement.RandomShardPartyPicker;
@@ -18,15 +17,16 @@ import com.rln.gui.backend.model.Approval;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.Finalised;
 import com.rln.gui.backend.model.Transaction;
+import com.rln.gui.backend.model.TransactionStatusUpdate;
 import com.rln.gui.backend.model.TransactionStatusUpdate.StatusEnum;
 import com.rln.gui.backend.model.TransferProposal;
 import com.rln.gui.backend.ods.TransferProposalRepository;
-
 import java.util.Collections;
-import javax.validation.Valid;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.validation.Valid;
 
 public class TransactionsApiImpl {
   // GUI Backend is run for a Daml participant, it communicates directly with the ledger, so it settles on the ledger
@@ -73,13 +73,18 @@ public class TransactionsApiImpl {
 
   public List<Transaction> getTransactions(Boolean incompleteOnly, String address, Long limit,
       Long offset) {
-    // TODO: Decide if parameters are required and if not how to handle their absence.
-    var actualLimit = Objects.requireNonNullElse(limit, Long.MAX_VALUE);
-    var actualOffset = Objects.requireNonNullElse(offset, 0L);
     return transferProposals
-        .findAll(actualLimit, actualOffset).stream()
+        .findAll(byAddress(address).and(byIsWaiting(incompleteOnly)), limit, offset).stream()
         .map(converter::transferProposalToTransaction)
         .collect(Collectors.toList());
+  }
+
+  private static Predicate<com.rln.gui.backend.ods.TransferProposal> byIsWaiting(Boolean incompleteOnly) {
+    return transferProposal -> !Objects.requireNonNullElse(incompleteOnly, false) || transferProposal.isWaiting();
+  }
+
+  private static Predicate<com.rln.gui.backend.ods.TransferProposal> byAddress(String address) {
+    return transferProposal -> address == null || address.equals(transferProposal.getAddress());
   }
 
   public void updateApprovalProperties(@Valid ApprovalProperties approvalProperties) {
