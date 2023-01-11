@@ -55,7 +55,7 @@ class TransferProposalRepositoryTest {
     transferProposals.save(createRejectedTransferProposal());
     transferProposals.save(createApprovedTransferProposal());
 
-    var proposals = transferProposals.findAll(3L, 3L);
+    var proposals = transferProposals.findAll(t -> true, 3L, 3L);
 
     Assertions.assertIterableEquals(
       List.of(proposal1, proposal2, proposal3),
