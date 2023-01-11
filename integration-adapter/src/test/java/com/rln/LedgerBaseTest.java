@@ -10,6 +10,7 @@ import com.daml.extensions.testing.ledger.SandboxManager;
 import com.daml.ledger.javaapi.data.*;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.cache.ContractCache.InitiateTransferCache;
+import com.rln.client.damlClient.TestUtils;
 import com.rln.client.damlClient.partyManagement.PartyManager;
 import com.rln.client.kafkaClient.message.fields.MessageIdWithStepsAndPayload;
 import com.rln.client.kafkaClient.message.fields.Step;
@@ -176,7 +177,7 @@ public class LedgerBaseTest extends CommonBaseTest {
 
     protected static ExerciseCommand prepareLedgerAndGetCreateProposalCommand(Party initiator, String groupId, List<Tuple2<String, Leg>> legs) throws InvalidProtocolBufferException {
         InitiateTransferCache.InitiatorAndContractId initiateTransferCid = createInitiateTransferContractOnLedger(initiator, getInitiateTransferRecord(groupId));
-        return initiateTransferCid.contractId.exerciseCreateProposals(legs, assemblerPartyId.getValue());
+        return TestUtils.toExerciseCommand(initiateTransferCid.contractId.exerciseCreateProposals(legs, assemblerPartyId.getValue()));
     }
 
     protected static void populateLedgerWithTransferProposalsAndManifest(Party initiator, String groupId, List<Tuple2<String, Leg>> legs) throws InvalidProtocolBufferException {

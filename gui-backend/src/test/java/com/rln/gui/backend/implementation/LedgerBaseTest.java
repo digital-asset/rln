@@ -10,13 +10,17 @@ import com.daml.ledger.javaapi.data.ContractId;
 import com.daml.ledger.javaapi.data.DamlRecord;
 import com.daml.ledger.javaapi.data.ExerciseCommand;
 import com.daml.ledger.javaapi.data.Party;
+import com.daml.ledger.javaapi.data.codegen.Exercised;
+import com.daml.ledger.javaapi.data.codegen.Update;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.rln.client.damlClient.TestUtils;
 import com.rln.client.damlClient.partyManagement.PartyManager;
 import com.rln.damlCodegen.da.types.Tuple2;
 import com.rln.damlCodegen.workflow.data.Instrument;
 import com.rln.damlCodegen.workflow.data.Leg;
 import com.rln.damlCodegen.workflow.data.SettlementStep;
 import com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer;
+import com.rln.damlCodegen.workflow.transactionmanifest.TransactionManifest;
 import com.rln.damlCodegen.workflow.transferproposal.TransferProposal;
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import io.quarkus.test.Mock;
@@ -190,7 +194,7 @@ public class LedgerBaseTest {
     var initiateTransferCid =
         createInitiateTransferContractOnLedger(
             initiator, getInitiateTransferRecord(groupId, initiator, scheduler));
-    return initiateTransferCid.exerciseCreateProposals(legs, assembler.getValue());
+    return TestUtils.toExerciseCommand(initiateTransferCid.exerciseCreateProposals(legs, assembler.getValue()));
   }
 
   protected static void populateLedgerWithTransferProposalsAndManifest(

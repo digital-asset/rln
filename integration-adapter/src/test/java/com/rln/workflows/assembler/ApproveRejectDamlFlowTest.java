@@ -4,6 +4,7 @@
  */
 package com.rln.workflows.assembler;
 
+import com.rln.client.damlClient.TestUtils;
 import com.daml.ledger.javaapi.data.ExerciseCommand;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.CommonBaseTest;
@@ -74,8 +75,10 @@ class ApproveRejectDamlFlowTest extends LedgerBaseTest {
                 TransferProposal.TEMPLATE_ID,
                 TransferProposal.ContractId::new);
 
-        exerciseApproveProposalsCommand1 = proposalCid1.exerciseApproveProposal(Optional.of(REASON), false);
-        exerciseApproveProposalsCommand2 = proposalCid2.exerciseApproveProposal(Optional.of(REASON2), false);
+        exerciseApproveProposalsCommand1 = TestUtils
+            .toExerciseCommand(proposalCid1.exerciseApproveProposal(Optional.of(REASON), false));
+        exerciseApproveProposalsCommand2 = TestUtils
+            .toExerciseCommand(proposalCid2.exerciseApproveProposal(Optional.of(REASON2), false));
 
         TransferProposalCache cache = Mockito.mock(TransferProposalCache.class);
         ShardPartyPlainTextListReader reader = Mockito.mock(ShardPartyPlainTextListReader.class);
