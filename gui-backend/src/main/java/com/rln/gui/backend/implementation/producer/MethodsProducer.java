@@ -31,8 +31,9 @@ public class MethodsProducer {
   public BalancesApiImpl getBalancesApiImpl(LiquidBalanceCache liquidBalanceCache,
       IncomingBalanceCache incomingBalanceCache,
       LockedBalanceCache lockedBalanceCache,
-      AccountCache accountCache) {
-    return new BalancesApiImpl(liquidBalanceCache, incomingBalanceCache, lockedBalanceCache, accountCache);
+      AccountCache accountCache,
+      RLNClient rlnClient) {
+    return new BalancesApiImpl(liquidBalanceCache, incomingBalanceCache, lockedBalanceCache, accountCache, rlnClient);
   }
 
   @Singleton

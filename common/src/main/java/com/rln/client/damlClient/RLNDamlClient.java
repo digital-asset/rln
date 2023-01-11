@@ -19,7 +19,10 @@ import com.daml.ledger.javaapi.data.codegen.Update;
 import com.daml.ledger.rxjava.DamlLedgerClient;
 import com.google.protobuf.Empty;
 import com.rln.client.damlClient.commandId.RandomGenerator;
+import com.rln.damlCodegen.da.internal.template.Archive;
 import com.rln.damlCodegen.da.types.Tuple2;
+import com.rln.damlCodegen.model.balance.Balance;
+import com.rln.damlCodegen.model.balance.BalanceKey;
 import com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer;
 import com.rln.damlCodegen.workflow.transactionmanifest.TransactionManifest;
 import com.rln.damlCodegen.workflow.transferproposal.TransferProposal;
@@ -176,7 +179,14 @@ public class RLNDamlClient implements RLNClient {
             .forEach(consumer);
     }
 
-    // helper functions
+    @Override
+    public void archiveBalance(ArchiveBalanceParameters parameters) {
+        var event = String.format("Archive balance %s (provider: %s)", parameters.getIban(), parameters.getProvider());
+        var update = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban())).exerciseArchive(new Archive());
+        commandPublisher.onNext(new ClientCommand(event, update, parameters.getProvider(), parameters));
+    }
+
+  // helper functions
     private Tuple2<Flowable<CreatedEvent>, LedgerOffset> getActiveContractsAndOffset(TransactionFilter filter) {
         Flowable<GetActiveContractsResponse> responses = ledger.getActiveContractSetClient()
             .getActiveContracts(filter, true);

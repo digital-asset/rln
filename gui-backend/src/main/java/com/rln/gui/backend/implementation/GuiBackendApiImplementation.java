@@ -1,5 +1,8 @@
 package com.rln.gui.backend.implementation;
 import com.rln.gui.backend.api.DefaultApi;
+import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFoundException;
+import com.rln.gui.backend.implementation.balanceManagement.exception.NonZeroBalanceException;
+import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.implementation.methods.AutoapproveApiImpl;
 import com.rln.gui.backend.implementation.methods.BalancesApiImpl;
 import com.rln.gui.backend.implementation.methods.TransactionsApiImpl;
@@ -17,6 +20,7 @@ import com.rln.gui.backend.model.TransferProposal;
 import com.rln.gui.backend.model.WalletAddressDTO;
 import com.rln.gui.backend.model.WalletAddressTestDTO;
 import com.rln.gui.backend.model.WalletDTO;
+import java.math.BigDecimal;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -25,14 +29,17 @@ import javax.ws.rs.core.Response.Status;
 
 public class GuiBackendApiImplementation implements DefaultApi {
 
+  private final GuiBackendConfiguration configuration;
   private final AutoapproveApiImpl autoApproveApi;
   private final TransactionsApiImpl transactionsApi;
   private final BalancesApiImpl balancesApi;
 
   public GuiBackendApiImplementation(
+      GuiBackendConfiguration configuration,
       AutoapproveApiImpl autoApproveApi,
       TransactionsApiImpl transactionsApi,
       BalancesApiImpl balancesApi) {
+    this.configuration = configuration;
 
     this.autoApproveApi = autoApproveApi;
     this.transactionsApi = transactionsApi;
@@ -70,7 +77,11 @@ public class GuiBackendApiImplementation implements DefaultApi {
 
   @Override
   public List<Balance> getAddressBalance(String address) {
-    return balancesApi.getAddressBalance(address);
+    try {
+      return balancesApi.getAddressBalance(address);
+    } catch (IbanNotFoundException e) {
+      throw new WebApplicationException(Status.NOT_FOUND);
+    }
   }
 
   // Endpoints that are new:
@@ -93,7 +104,14 @@ public class GuiBackendApiImplementation implements DefaultApi {
   // Delete the specified ledger address. The address's balance must be zero.
   @Override
   public void delete(String address) {
-    throw notImplemented();
+    try {
+      // Provider is always the party the GUI backend is acting in the name of
+      balancesApi.delete(configuration.partyId(), address);
+    } catch (IbanNotFoundException e) {
+      throw new WebApplicationException(Status.NOT_FOUND);
+    } catch (NonZeroBalanceException e) {
+      throw new WebApplicationException(Status.FORBIDDEN);
+    }
   }
 
   // * what is the body?

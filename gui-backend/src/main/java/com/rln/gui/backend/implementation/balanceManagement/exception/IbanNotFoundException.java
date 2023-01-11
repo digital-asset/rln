@@ -4,7 +4,7 @@
  */
 package com.rln.gui.backend.implementation.balanceManagement.exception;
 
-public class IbanNotFoundException extends RuntimeException{
+public class IbanNotFoundException extends RuntimeException {
     private static final long serialVersionUID = 12345674L;
 
     public IbanNotFoundException(String iban) {

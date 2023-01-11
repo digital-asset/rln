@@ -39,9 +39,8 @@ class BalanceCacheTest {
         cache.updateBalanceUponCreation(balanceAccount2, cid3);
 
         // THEN
-        Map<String, BigDecimal> balances = cache.getBalance();
-        MatcherAssert.assertThat(balances.get(BalanceTestUtil.IBAN1).doubleValue(), Matchers.is(amount1InAccount1 + amount2InAccount1));
-        MatcherAssert.assertThat(balances.get(BalanceTestUtil.IBAN2).doubleValue(), Matchers.is(amountInAccount2));
+        MatcherAssert.assertThat(cache.getBalance(BalanceTestUtil.IBAN1).doubleValue(), Matchers.is(amount1InAccount1 + amount2InAccount1));
+        MatcherAssert.assertThat(cache.getBalance(BalanceTestUtil.IBAN2).doubleValue(), Matchers.is(amountInAccount2));
     }
 
     @Test
@@ -53,11 +52,11 @@ class BalanceCacheTest {
         BalanceCache<Balance> cache = new LiquidBalanceCache();
         cache.updateBalanceUponCreation(balance, cid);
 
-        MatcherAssert.assertThat(cache.getBalance().get(BalanceTestUtil.IBAN1).doubleValue(), Matchers.is(amount));
+        MatcherAssert.assertThat(cache.getBalance(BalanceTestUtil.IBAN1).doubleValue(), Matchers.is(amount));
 
         // WHEN existing balance cid archived
         cache.updateBalanceUponArchived(cid);
-        MatcherAssert.assertThat(cache.getBalance().get(BalanceTestUtil.IBAN1).doubleValue(), Matchers.is(0.0d));
+        MatcherAssert.assertThat(cache.getBalance(BalanceTestUtil.IBAN1).doubleValue(), Matchers.is(0.0d));
 
         // WHEN non-existing balance cid archived
         Assertions.assertThrows(ContractIdNotFoundException.class,

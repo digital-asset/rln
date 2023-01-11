@@ -52,7 +52,7 @@ public abstract class BalanceCache<T extends Template> {
     }
 
     // map from iban to total balanceAmount
-    public Map<String, BigDecimal> getBalance() {
+    public BigDecimal getBalance(String address) {
         return ibanToContractIds.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -63,7 +63,8 @@ public abstract class BalanceCache<T extends Template> {
                                         throw new ContractIdNotFoundException(cid);
                                     }
                                     return getBalanceAmount(balance);
-                                }).reduce(BigDecimal.ZERO, BigDecimal::add)));
+                                }).reduce(BigDecimal.ZERO, BigDecimal::add)))
+                .get(address);
     }
 
     abstract protected String getIban(T balance);

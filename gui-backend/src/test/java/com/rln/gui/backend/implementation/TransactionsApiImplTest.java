@@ -179,7 +179,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
     cleanup(getCurrentBankPartyId(), RejectedTransferProposal.TEMPLATE_ID, rejectedCid);
   }
 
-  private void cleanup(Party partyId, Identifier identifier, String contractId)
+  public static void cleanup(Party partyId, Identifier identifier, String contractId)
       throws InvalidProtocolBufferException {
     SANDBOX.getLedgerAdapter().exerciseChoice(partyId,
         new ExerciseCommand(identifier, contractId, "Archive", new DamlRecord()));
