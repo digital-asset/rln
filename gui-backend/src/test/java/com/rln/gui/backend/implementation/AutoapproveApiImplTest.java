@@ -13,6 +13,8 @@ import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposal
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxAmount;
 import com.rln.gui.backend.implementation.GuiBackendTest;
 import com.rln.gui.backend.implementation.LedgerBaseTest;
+import com.rln.gui.backend.implementation.balanceManagement.AutoApproveEventListener;
+import com.rln.gui.backend.implementation.balanceManagement.BalanceEventListener;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.ApprovalProperties.ApprovalModeEnum;
 import io.quarkus.test.junit.QuarkusTest;
@@ -23,12 +25,16 @@ import io.restassured.http.ContentType;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import javax.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 @TestProfile(GuiBackendTest.class)
 @QuarkusTest
 class AutoapproveApiImplTest extends LedgerBaseTest {
+
+  @Inject
+  AutoApproveEventListener autoApproveEventListener;
 
   // TODO the corresponding endpoint seems to be deleted from the Swagger definition
 //  @Test
@@ -77,7 +83,7 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiAutoapprovePostUpdate() throws InvalidProtocolBufferException {
-    publishMarker(getCurrentBankPartyId(), USD, TRANSACTION_AMOUNT);
+    publishMarker(getCurrentBankPartyId(), SENDER_IBAN, TRANSACTION_AMOUNT);
     RestAssured.given()
         .accept(ContentType.JSON)
         .contentType(ContentType.JSON)
@@ -87,7 +93,7 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
         .statusCode(204);
 
     var autoApproveContractWithId= SANDBOX.getLedgerAdapter().getMatchedContract(
-      getCurrentBankPartyId(),
+        getCurrentBankPartyId(),
         AutoApproveTransferProposalMarker.TEMPLATE_ID,
         ContractId::new);
     var autoApprove = AutoApproveTransferProposalMarker.fromValue(autoApproveContractWithId.record);
@@ -100,9 +106,9 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     cleanupMarker(getCurrentBankPartyId(), autoApproveContractWithId.contractId);
   }
 
-  private ContractId publishMarker(Party party, String label, BigDecimal amount)
+  private ContractId publishMarker(Party party, String address, BigDecimal amount)
       throws InvalidProtocolBufferException {
-    var autoApproveMarker = new AutoApproveTransferProposalMarker(party.getValue(), Instant.now(), label, new LimitedMaxAmount(amount));
+    var autoApproveMarker = new AutoApproveTransferProposalMarker(party.getValue(), Instant.now(), address, new LimitedMaxAmount(amount));
     SANDBOX.getLedgerAdapter().createContract(getCurrentBankPartyId().asParty().get(),
         AutoApproveTransferProposalMarker.TEMPLATE_ID, autoApproveMarker.toValue());
     return SANDBOX.getLedgerAdapter().getCreatedContractId(party, AutoApproveTransferProposalMarker.TEMPLATE_ID, ContractId::new);

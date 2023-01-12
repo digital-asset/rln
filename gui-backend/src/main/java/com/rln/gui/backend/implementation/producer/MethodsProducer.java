@@ -3,6 +3,7 @@ package com.rln.gui.backend.implementation.producer;
 import com.rln.client.damlClient.RLNClient;
 import com.rln.client.damlClient.partyManagement.RandomShardPartyPicker;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
+import com.rln.gui.backend.implementation.balanceManagement.cache.AutoApproveCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.IncomingBalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.LiquidBalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.LockedBalanceCache;
@@ -22,8 +23,8 @@ public class MethodsProducer {
 
   @Singleton
   @Produces
-  public AutoapproveApiImpl getAutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration, RLNClient rlnClient) {
-    return new AutoapproveApiImpl(guiBackendConfiguration, rlnClient);
+  public AutoapproveApiImpl getAutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration, RLNClient rlnClient, AutoApproveCache autoApproveCache) {
+    return new AutoapproveApiImpl(guiBackendConfiguration, autoApproveCache, rlnClient);
   }
 
   @Singleton

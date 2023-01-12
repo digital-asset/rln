@@ -5,15 +5,14 @@
 package com.rln.gui.backend.implementation.methods;
 
 import com.daml.ledger.javaapi.data.Filter;
-import com.daml.ledger.javaapi.data.FiltersByParty;
 import com.daml.ledger.javaapi.data.InclusiveFilter;
 import com.rln.client.damlClient.AutoApproveParameters;
 import com.rln.client.damlClient.AutoApproveParameters.ApprovalMode;
 import com.rln.client.damlClient.RLNClient;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker;
+import com.rln.gui.backend.implementation.balanceManagement.cache.AutoApproveCache;
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.model.ApprovalProperties;
-import io.reactivex.Flowable;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
@@ -26,10 +25,12 @@ public class AutoapproveApiImpl {
     Set.of(AutoApproveTransferProposalMarker.TEMPLATE_ID), Map.of());
 
   private final GuiBackendConfiguration guiBackendConfiguration;
+  private final AutoApproveCache autoApproveCache;
   private final RLNClient rlnClient;
 
-  public AutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration, RLNClient rlnClient) {
+  public AutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration, AutoApproveCache autoApproveCache, RLNClient rlnClient) {
     this.guiBackendConfiguration = guiBackendConfiguration;
+    this.autoApproveCache = autoApproveCache;
     this.rlnClient = rlnClient;
   }
 
@@ -42,7 +43,8 @@ public class AutoapproveApiImpl {
 //  }
 
   public void updateApprovalProperties(@Valid @NotNull ApprovalProperties autoApprove) {
-    var markerId = findAutoApproveMarker(autoApprove);
+    var marker = autoApproveCache.getMarker(autoApprove.getAddress());
+    var markerId = marker != null ? marker.id : null;
     var now = Instant.now();
     // What happens, when username is NOT the current party (in the name of which the GUI backend is running)?
     var parameters = new AutoApproveParameters(
@@ -65,19 +67,5 @@ public class AutoapproveApiImpl {
       default:
         return ApprovalMode.MANUAL;
     }
-  }
-
-  private AutoApproveTransferProposalMarker.ContractId findAutoApproveMarker(ApprovalProperties autoapprove) {
-    return getAutoApproveMarkers()
-      .filter(marker -> marker.data.address.equals(autoapprove.getAddress()))
-      .map(x -> x.id)
-      .blockingFirst(null);
-  }
-
-  private Flowable<AutoApproveTransferProposalMarker.Contract> getAutoApproveMarkers() {
-    var filter = new FiltersByParty(Map.of(guiBackendConfiguration.partyId(), AUTO_APPROVE_MARKER_FILTER));
-    return rlnClient
-      .getActiveContracts(filter)
-      .map(AutoApproveTransferProposalMarker.Contract::fromCreatedEvent);
   }
 }

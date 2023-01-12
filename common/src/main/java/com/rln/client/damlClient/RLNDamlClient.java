@@ -30,6 +30,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
+import io.reactivex.internal.functions.Functions;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 import java.math.BigDecimal;
@@ -72,7 +73,8 @@ public class RLNDamlClient implements RLNClient {
                 Single.just(Empty.getDefaultInstance())
                     .flatMap(_empty -> sendCommands(partyAndClientCommands.getKey(), partyAndClientCommands.getValue()))
                     .subscribeOn(scheduler))
-            .subscribe();
+            .subscribe(Functions.emptyConsumer(), e -> logger.error(
+                "Error while sending commands: %s%n", e));
     }
 
     private Single<Empty> sendCommands(String party, Collection<ClientCommand> clientCommands) {

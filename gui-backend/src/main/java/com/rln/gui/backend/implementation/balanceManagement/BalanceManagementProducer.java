@@ -6,6 +6,7 @@ package com.rln.gui.backend.implementation.balanceManagement;
 
 import com.rln.client.damlClient.RLNClient;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
+import com.rln.gui.backend.implementation.balanceManagement.cache.AutoApproveCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.IncomingBalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.LiquidBalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.LockedBalanceCache;
@@ -48,12 +49,28 @@ public class BalanceManagementProducer {
         return new AccountEventListener(rlnClient, guiConfig.partyId(), cache);
     }
 
+    @Dependent
+    @Produces
+    public AutoApproveEventListener getAutoApproveEventListener(RLNClient rlnClient,
+        GuiBackendConfiguration guiConfig,
+        AutoApproveCache cache) {
+        logger.info("Created AutoApproveEventListener");
+        return new AutoApproveEventListener(rlnClient, guiConfig.partyId(), cache);
+    }
+
 
     @ApplicationScoped
     @Produces
     public AccountCache getAccountCache() {
         logger.info("Created AccountCache");
         return new AccountCache();
+    }
+
+    @ApplicationScoped
+    @Produces
+    public AutoApproveCache getAutoApproveCache() {
+        logger.info("Created AutoApproveCache");
+        return new AutoApproveCache();
     }
 
     @ApplicationScoped
