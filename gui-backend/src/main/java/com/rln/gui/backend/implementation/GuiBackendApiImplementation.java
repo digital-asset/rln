@@ -97,7 +97,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
   // Change a balance. This affects the 'hot', 'pessimistic', and 'actual' balances
   @Override
   public List<Balance> changeBalance(String address, @Valid @NotNull BalanceChange balanceChange) {
-    throw notImplemented();
+    return balancesApi.changeBalance(configuration.partyId(), address, balanceChange);
   }
 
   // * what is a ledger address?

@@ -137,4 +137,24 @@ class BalancesApiImplTest extends LedgerBaseTest {
             .statusCode(403);
         TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), Balance.TEMPLATE_ID, c1.getValue());
     }
+
+    @Test
+    void GIVEN_balances_on_ledger_WHEN_post_change_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
+        double liquidAmount = 100.0;
+
+        var c1 = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+
+        // WHEN
+        List<com.rln.gui.backend.model.Balance> balances = RestAssured.given()
+            .when().get(String.format("/api/addresses/%s/balance", BalanceTestUtil.IBAN1))
+            .then()
+            .statusCode(200)
+            .extract().body().as(new TypeRef<>() {
+            });
+
+        // THEN
+        MatcherAssert.assertThat(balances.get(0).getBalance().doubleValue(), Matchers.is(liquidAmount));
+
+        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), Balance.TEMPLATE_ID, c1.getValue());
+    }
 }

@@ -32,6 +32,7 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -183,6 +184,21 @@ public class RLNDamlClient implements RLNClient {
     public void archiveBalance(ArchiveBalanceParameters parameters) {
         var event = String.format("Archive balance %s (provider: %s)", parameters.getIban(), parameters.getProvider());
         var update = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban())).exerciseArchive(new Archive());
+        commandPublisher.onNext(new ClientCommand(event, update, parameters.getProvider(), parameters));
+    }
+
+    @Override
+    public void changeBalance(ChangeBalanceParameters parameters) {
+        var event = String.format("Changing balance %s (provider: %s)", parameters.getIban(), parameters.getProvider());
+        if (parameters.getChange().compareTo(BigDecimal.ZERO) == 0) {
+          return;
+        }
+        Update<?> update;
+        if (parameters.getChange().compareTo(BigDecimal.ZERO) < 0) {
+          update = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban())).exerciseDecrease(parameters.getChange().abs());
+        } else {
+          update = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban())).exerciseIncrease(parameters.getChange().abs());
+        }
         commandPublisher.onNext(new ClientCommand(event, update, parameters.getProvider(), parameters));
     }
 

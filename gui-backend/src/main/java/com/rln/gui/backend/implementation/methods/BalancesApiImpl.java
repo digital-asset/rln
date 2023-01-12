@@ -5,6 +5,7 @@
 package com.rln.gui.backend.implementation.methods;
 
 import com.rln.client.damlClient.ArchiveBalanceParameters;
+import com.rln.client.damlClient.ChangeBalanceParameters;
 import com.rln.client.damlClient.RLNClient;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.IncomingBalanceCache;
@@ -96,8 +97,9 @@ public class BalancesApiImpl {
         rlnClient.archiveBalance(new ArchiveBalanceParameters(provider, address));
     }
 
-    public List<Balance> changeBalance(String address, @Valid @NotNull BalanceChange balanceChange) {
-        return null;
+    public List<Balance> changeBalance(String provider, String address, @Valid @NotNull BalanceChange balanceChange) {
+        rlnClient.changeBalance(new ChangeBalanceParameters(provider, address, balanceChange.getChange()));
+        return getAddressBalance(address);
     }
 
     public List<Balance> getBalances(Long walletId) {
