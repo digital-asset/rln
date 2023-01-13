@@ -39,4 +39,6 @@ public interface RLNClient {
     Flowable<GetActiveContractsResponse> getActiveContractsResponse(TransactionFilter filter);
 
     void subscribeForContinuousEvent(String subscriberParty, Set<Identifier> templatesIncluded, Consumer<Event> consumer);
+
+    void archiveBalance(ArchiveBalanceParameters parameters);
 }

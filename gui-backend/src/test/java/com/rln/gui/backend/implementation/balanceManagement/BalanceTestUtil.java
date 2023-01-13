@@ -6,11 +6,11 @@ package com.rln.gui.backend.implementation.balanceManagement;
 
 import com.daml.extensions.testing.ledger.SandboxManager;
 import com.daml.ledger.javaapi.data.ArchivedEvent;
+import com.daml.ledger.javaapi.data.ContractId;
 import com.daml.ledger.javaapi.data.CreatedEvent;
 import com.daml.ledger.javaapi.data.DamlRecord;
 import com.daml.ledger.javaapi.data.Identifier;
 import com.daml.ledger.javaapi.data.Party;
-import com.daml.ledger.javaapi.data.Unit;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.damlCodegen.model.balance.Balance;
 import com.rln.damlCodegen.model.balance.IncomingBalance;
@@ -33,11 +33,13 @@ public class BalanceTestUtil {
     private static final Logger logger = LoggerFactory.getLogger(BalanceTestUtil.class);
     private static final Random rand = new Random();
 
-    public static void populateBalance(double amount, String iban, String assetCode,
+    public static ContractId populateBalance(double amount, String iban, String assetCode,
                                        SandboxManager sandbox, Party currentBank, Identifier balanceTemplate)
             throws InvalidProtocolBufferException {
         var liquidBalance = createBalance(iban, currentBank.getValue(), assetCode, amount, balanceTemplate);
         sandbox.getLedgerAdapter().createContract(currentBank, balanceTemplate, liquidBalance);
+        return sandbox.getLedgerAdapter().getCreatedContractId(currentBank, balanceTemplate,
+            com.daml.ledger.javaapi.data.ContractId::new);
     }
 
     public static ArchivedEvent archiveBalanceEvent(String cid, Identifier templateId) {

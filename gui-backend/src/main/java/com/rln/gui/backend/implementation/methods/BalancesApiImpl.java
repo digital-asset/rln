@@ -4,14 +4,20 @@
  */
 package com.rln.gui.backend.implementation.methods;
 
+import com.rln.client.damlClient.ArchiveBalanceParameters;
+import com.rln.client.damlClient.RLNClient;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.IncomingBalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.LiquidBalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.LockedBalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.data.BalanceType;
+import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFoundException;
+import com.rln.gui.backend.implementation.balanceManagement.exception.NonZeroBalanceException;
 import com.rln.gui.backend.model.Balance;
 import com.rln.gui.backend.model.BalanceChange;
 import com.rln.gui.backend.model.WalletAddressTestDTO;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -22,16 +28,19 @@ public class BalancesApiImpl {
     private final IncomingBalanceCache incomingBalanceCache;
     private final LockedBalanceCache lockedBalanceCache;
     private final AccountCache accountCache;
+    private final RLNClient rlnClient;
 
     public BalancesApiImpl(
         LiquidBalanceCache liquidBalanceCache,
         IncomingBalanceCache incomingBalanceCache,
         LockedBalanceCache lockedBalanceCache,
-        AccountCache accountCache) {
+        AccountCache accountCache,
+        RLNClient rlnClient) {
         this.liquidBalanceCache = liquidBalanceCache;
         this.incomingBalanceCache = incomingBalanceCache;
         this.lockedBalanceCache = lockedBalanceCache;
         this.accountCache = accountCache;
+        this.rlnClient = rlnClient;
     }
 
     /**
@@ -41,29 +50,50 @@ public class BalancesApiImpl {
      *      ACTUAL: liquid + locked
      *      FUTURE: liquid + incoming
      */
-    public List<Balance> getAddressBalance(String address) {
-        var liquidBalanceAmount = liquidBalanceCache.getBalance().get(address);
-        var incomingBalanceAmount = incomingBalanceCache.getBalance().get(address);
-        var lockedBalanceAmount = lockedBalanceCache.getBalance().get(address);
+    public List<Balance> getAddressBalance(String address) throws IbanNotFoundException {
+        var liquidBalanceAmount = liquidBalanceCache
+                .getBalance(address)
+                .orElseThrow(() -> new IbanNotFoundException(address));
+        var incomingBalanceAmount = incomingBalanceCache.getBalance(address);
+        var lockedBalanceAmount = lockedBalanceCache.getBalance(address);
+        var assetName = accountCache
+                .getAssetCode(address)
+                .orElseThrow(() -> new IbanNotFoundException(address));
 
         var builder = Balance.builder()
             .address(address)
             .assetId(0L) // default to 0 now, as we don't have assetId in the system yet
-            .assetName(accountCache.getAssetCode(address));
+            .assetName(assetName);
 
-        var actualBalance = builder
-            .balance(liquidBalanceAmount.add(lockedBalanceAmount))
-            .type(BalanceType.ACTUAL.name()).build();
-
+        var result = new ArrayList<Balance>(3);
         var liquidBalance = builder
             .balance(liquidBalanceAmount)
             .type(BalanceType.LIQUID.name()).build();
+        result.add(liquidBalance);
+        lockedBalanceAmount.ifPresent(actualLockedAmount -> {
+            var actualBalance = builder
+                .balance(liquidBalanceAmount.add(actualLockedAmount))
+                .type(BalanceType.ACTUAL.name()).build();
+            result.add(actualBalance);
+        });
+        incomingBalanceAmount.ifPresent(actualIncomingAmount -> {
+            var futureBalance = builder
+                .balance(liquidBalanceAmount.add(actualIncomingAmount))
+                .type(BalanceType.FUTURE.name()).build();
+            result.add(futureBalance);
+        });
 
-        var futureBalance = builder
-            .balance(liquidBalanceAmount.add(incomingBalanceAmount))
-            .type(BalanceType.FUTURE.name()).build();
+        return result;
+    }
 
-        return List.of(actualBalance, liquidBalance, futureBalance);
+    public void delete(String provider, String address) throws NonZeroBalanceException {
+        var balances = getAddressBalance(address);
+        var allBalancesAreZero= balances.stream()
+            .allMatch(balance -> balance.getBalance().compareTo(BigDecimal.ZERO) == 0);
+        if (!allBalancesAreZero) {
+            throw new NonZeroBalanceException(address);
+        }
+        rlnClient.archiveBalance(new ArchiveBalanceParameters(provider, address));
     }
 
     public List<Balance> changeBalance(String address, @Valid @NotNull BalanceChange balanceChange) {
@@ -75,6 +105,7 @@ public class BalancesApiImpl {
     }
 
     public List<Balance> getLocalBalance(String address) {
+
         return null;
     }
 

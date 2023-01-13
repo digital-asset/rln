@@ -13,6 +13,7 @@ import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFou
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.functions.Consumer;
+import java.util.Optional;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -40,8 +41,13 @@ class AccountCacheTest {
         new AccountEventListener(rlnClient, BalanceTestUtil.BANK_PARTY, cache);
 
         // THEN
-        MatcherAssert.assertThat(cache.getAssetCode(BalanceTestUtil.IBAN1), Matchers.is(BalanceTestUtil.ASSET_CODE1));
-        MatcherAssert.assertThat(cache.getAssetCode(BalanceTestUtil.IBAN2), Matchers.is(BalanceTestUtil.ASSET_CODE2));
+        MatcherAssert.assertThat(getAssetCode(cache, BalanceTestUtil.IBAN1), Matchers.is(BalanceTestUtil.ASSET_CODE1));
+        MatcherAssert.assertThat(getAssetCode(cache, BalanceTestUtil.IBAN2), Matchers.is(BalanceTestUtil.ASSET_CODE2));
+    }
+
+    private String getAssetCode(AccountCache cache, String iban) {
+        return cache.getAssetCode(iban)
+            .orElseThrow(() -> new RuntimeException("Test error, IBAN not in the account cache: " + iban));
     }
 
     @Test
@@ -57,12 +63,12 @@ class AccountCacheTest {
         AccountCache cache = new AccountCache();
         new AccountEventListener(rlnClient, BalanceTestUtil.BANK_PARTY, cache);
 
-        Assertions.assertThrows(IbanNotFoundException.class, () -> cache.getAssetCode(BalanceTestUtil.IBAN1));
+        MatcherAssert.assertThat(cache.getAssetCode(BalanceTestUtil.IBAN1), Matchers.is(Optional.empty()));
 
         // WHEN
         balances.connect();
 
         // THEN
-        MatcherAssert.assertThat(cache.getAssetCode(BalanceTestUtil.IBAN1), Matchers.is(BalanceTestUtil.ASSET_CODE1));
+        MatcherAssert.assertThat(getAssetCode(cache, BalanceTestUtil.IBAN1), Matchers.is(BalanceTestUtil.ASSET_CODE1));
     }
 }
