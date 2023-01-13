@@ -40,7 +40,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
         double lockedAmount = 200.0;
         double incomingAmount = 300.0;
 
-        var balanceId1 = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+        var balanceId = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
 
         var lockedId1 = BalanceTestUtil.populateBalance(lockedAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), LockedBalance.TEMPLATE_ID);
         var lockedId2 = BalanceTestUtil.populateBalance(lockedAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), LockedBalance.TEMPLATE_ID);
@@ -67,14 +67,14 @@ class BalancesApiImplTest extends LedgerBaseTest {
             }
         }
 
-        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balanceId1.getValue());
-        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), LockedBalance.TEMPLATE_ID, lockedId1
+        LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balanceId.getValue());
+        LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), LockedBalance.TEMPLATE_ID, lockedId1
             .getValue());
-        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), LockedBalance.TEMPLATE_ID, lockedId2
+        LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), LockedBalance.TEMPLATE_ID, lockedId2
             .getValue());
-        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), IncomingBalance.TEMPLATE_ID, incomingId1
+        LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), IncomingBalance.TEMPLATE_ID, incomingId1
             .getValue());
-        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), IncomingBalance.TEMPLATE_ID, incomingId2
+        LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), IncomingBalance.TEMPLATE_ID, incomingId2
             .getValue());
     }
 
@@ -82,7 +82,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
     void GIVEN_only_liquid_balance_on_ledger_WHEN_get_request_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
         // GIVEN 1 balance, 2 locked balances, 2 incoming balances
         double liquidAmount = 100.0;
-        var balanceId1 = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+        var balanceId = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
 
         // WHEN
         List<com.rln.gui.backend.model.Balance> balances = RestAssured
@@ -95,7 +95,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
         // THEN
         MatcherAssert.assertThat(balances.get(0).getBalance().doubleValue(), Matchers.is(liquidAmount));
 
-        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balanceId1.getValue());
+        LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balanceId.getValue());
     }
 
     @Test
@@ -130,6 +130,6 @@ class BalancesApiImplTest extends LedgerBaseTest {
             .then()
             .assertThat()
             .statusCode(403);
-        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balanceId.getValue());
+        LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balanceId.getValue());
     }
 }

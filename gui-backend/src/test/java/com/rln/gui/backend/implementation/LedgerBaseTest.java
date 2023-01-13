@@ -9,6 +9,7 @@ import com.daml.extensions.testing.ledger.SandboxManager;
 import com.daml.ledger.javaapi.data.ContractId;
 import com.daml.ledger.javaapi.data.DamlRecord;
 import com.daml.ledger.javaapi.data.ExerciseCommand;
+import com.daml.ledger.javaapi.data.Identifier;
 import com.daml.ledger.javaapi.data.Party;
 import com.daml.ledger.javaapi.data.codegen.Exercised;
 import com.daml.ledger.javaapi.data.codegen.Update;
@@ -91,6 +92,12 @@ public class LedgerBaseTest {
   private static Party currentBankPartyId;
   private static Party schedulerPartyId;
   private static Party assemblerPartyId;
+
+  public static void cleanupContract(Party partyId, Identifier identifier, String contractId)
+      throws InvalidProtocolBufferException {
+    SANDBOX.getLedgerAdapter().exerciseChoice(partyId,
+        new ExerciseCommand(identifier, contractId, "Archive", new DamlRecord()));
+  }
 
   @ApplicationScoped
   @Mock
