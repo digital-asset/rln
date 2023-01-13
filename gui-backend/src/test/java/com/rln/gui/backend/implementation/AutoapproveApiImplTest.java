@@ -7,16 +7,18 @@ package com.rln.gui.backend.implementation;
 import com.daml.ledger.javaapi.data.ContractId;
 import com.daml.ledger.javaapi.data.DamlRecord;
 import com.daml.ledger.javaapi.data.ExerciseCommand;
+import com.daml.ledger.javaapi.data.Identifier;
 import com.daml.ledger.javaapi.data.Party;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.rln.damlCodegen.model.balance.Balance;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxAmount;
-import com.rln.gui.backend.implementation.GuiBackendTest;
-import com.rln.gui.backend.implementation.LedgerBaseTest;
+import com.rln.gui.backend.implementation.balanceManagement.AccountEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.AutoApproveEventListener;
-import com.rln.gui.backend.implementation.balanceManagement.BalanceEventListener;
+import com.rln.gui.backend.implementation.balanceManagement.BalanceTestUtil;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.ApprovalProperties.ApprovalModeEnum;
+import com.rln.gui.backend.model.LedgerAddressDTO;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
@@ -36,10 +38,13 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
   @Inject
   AutoApproveEventListener autoApproveEventListener;
 
+  @Inject
+  AccountEventListener accountEventListener;
+
   // TODO the corresponding endpoint seems to be deleted from the Swagger definition
 //  @Test
 //  void apiAutoapproveListGet() throws InvalidProtocolBufferException {
-//    var createdMarker = publishMarker(getCurrentBankPartyId(), USD, TRANSACTION_AMOUNT);
+//    var createdMarker = publishLimitMarker(getCurrentBankPartyId(), USD, TRANSACTION_AMOUNT);
 //    List<ApprovalProperties> result = RestAssured.given()
 //        .when().get("/api/autoapprove/list")
 //        .then()
@@ -78,12 +83,12 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     LimitedMaxAmount limitedMaxAmount = (LimitedMaxAmount) autoApprove.autoApproveType;
     Assertions.assertEquals(TRANSACTION_AMOUNT, limitedMaxAmount.bigDecimalValue);
 
-    cleanupMarker(getCurrentBankPartyId(), autoApproveContractWithId.contractId);
+    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID, autoApproveContractWithId.contractId);
   }
 
   @Test
   void apiAutoapprovePostUpdate() throws InvalidProtocolBufferException {
-    publishMarker(getCurrentBankPartyId(), SENDER_IBAN, TRANSACTION_AMOUNT);
+    publishLimitMarker(getCurrentBankPartyId(), SENDER_IBAN, TRANSACTION_AMOUNT);
     RestAssured.given()
         .accept(ContentType.JSON)
         .contentType(ContentType.JSON)
@@ -103,10 +108,42 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     LimitedMaxAmount limitedMaxAmount = (LimitedMaxAmount) autoApprove.autoApproveType;
     Assertions.assertEquals(TRANSACTION_AMOUNT_2, limitedMaxAmount.bigDecimalValue);
 
-    cleanupMarker(getCurrentBankPartyId(), autoApproveContractWithId.contractId);
+    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID, autoApproveContractWithId.contractId);
   }
 
-  private ContractId publishMarker(Party party, String address, BigDecimal amount)
+  @Test
+  void apiGetAddressSettingsList() throws InvalidProtocolBufferException {
+    var liquidAmount = 500;
+    var b = BalanceTestUtil
+        .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+    var c = publishLimitMarker(getCurrentBankPartyId(), SENDER_IBAN, TRANSACTION_AMOUNT);
+
+    List<LedgerAddressDTO> result = RestAssured.given()
+        .when().get("/api/ledger/addresses")
+        .then()
+        .statusCode(200)
+        .extract().body().as(new TypeRef<>() {
+        });
+
+
+    Assertions.assertEquals(1, result.size());
+
+    var ledgerAddressInfo = result.get(0);
+
+    Assertions.assertEquals(SENDER_IBAN, ledgerAddressInfo.getAddress());
+    Assertions.assertEquals("LIMIT", ledgerAddressInfo.getApprovalMode());
+    Assertions.assertEquals(TRANSACTION_AMOUNT.doubleValue(), ledgerAddressInfo.getApprovalLimit());
+    Assertions.assertTrue(ledgerAddressInfo.getIsIBAN());
+    // The following fields are just filled with dummy values
+    Assertions.assertEquals(null, ledgerAddressInfo.getId());
+    Assertions.assertEquals(0, ledgerAddressInfo.getClientId());
+    Assertions.assertTrue(ledgerAddressInfo.getBearerToken().isEmpty());
+
+    cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, b);
+    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID, c);
+  }
+
+  private ContractId publishLimitMarker(Party party, String address, BigDecimal amount)
       throws InvalidProtocolBufferException {
     var autoApproveMarker = new AutoApproveTransferProposalMarker(party.getValue(), Instant.now(), address, new LimitedMaxAmount(amount));
     SANDBOX.getLedgerAdapter().createContract(getCurrentBankPartyId().asParty().get(),
@@ -114,8 +151,8 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     return SANDBOX.getLedgerAdapter().getCreatedContractId(party, AutoApproveTransferProposalMarker.TEMPLATE_ID, ContractId::new);
   }
 
-  private void cleanupMarker(Party partyId, ContractId contractId) throws InvalidProtocolBufferException {
+  private void cleanupMarker(Party partyId, Identifier identifier, ContractId contractId) throws InvalidProtocolBufferException {
     SANDBOX.getLedgerAdapter().exerciseChoice(partyId,
-        new ExerciseCommand(AutoApproveTransferProposalMarker.TEMPLATE_ID, contractId.getValue(), "Archive", new DamlRecord()));
+        new ExerciseCommand(identifier, contractId.getValue(), "Archive", new DamlRecord()));
   }
 }

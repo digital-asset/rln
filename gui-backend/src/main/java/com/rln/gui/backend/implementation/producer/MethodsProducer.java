@@ -23,8 +23,8 @@ public class MethodsProducer {
 
   @Singleton
   @Produces
-  public AutoapproveApiImpl getAutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration, RLNClient rlnClient, AutoApproveCache autoApproveCache) {
-    return new AutoapproveApiImpl(guiBackendConfiguration, autoApproveCache, rlnClient);
+  public AutoapproveApiImpl getAutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration, RLNClient rlnClient, AutoApproveCache autoApproveCache, AccountCache accountCache) {
+    return new AutoapproveApiImpl(guiBackendConfiguration, autoApproveCache, accountCache, rlnClient);
   }
 
   @Singleton

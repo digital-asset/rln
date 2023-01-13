@@ -10,10 +10,17 @@ import com.rln.client.damlClient.AutoApproveParameters;
 import com.rln.client.damlClient.AutoApproveParameters.ApprovalMode;
 import com.rln.client.damlClient.RLNClient;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker;
+import com.rln.damlCodegen.workflow.transferproposal.AutoApproveType;
+import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.FullAuto;
+import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxAmount;
+import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AutoApproveCache;
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.model.ApprovalProperties;
+import com.rln.gui.backend.model.LedgerAddressDTO;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.validation.Valid;
@@ -26,11 +33,13 @@ public class AutoapproveApiImpl {
 
   private final GuiBackendConfiguration guiBackendConfiguration;
   private final AutoApproveCache autoApproveCache;
+  private final AccountCache accountCache;
   private final RLNClient rlnClient;
 
-  public AutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration, AutoApproveCache autoApproveCache, RLNClient rlnClient) {
+  public AutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration, AutoApproveCache autoApproveCache, AccountCache accountCache, RLNClient rlnClient) {
     this.guiBackendConfiguration = guiBackendConfiguration;
     this.autoApproveCache = autoApproveCache;
+    this.accountCache = accountCache;
     this.rlnClient = rlnClient;
   }
 
@@ -56,6 +65,42 @@ public class AutoapproveApiImpl {
       autoApprove.getLimit()
     );
     rlnClient.createOrUpdateAutoApproveMarker(parameters);
+  }
+
+  public List<LedgerAddressDTO> get() {
+    var accounts = accountCache.getAccounts();
+    ArrayList<LedgerAddressDTO> result = new ArrayList<>(accounts.size());
+
+    for (var account : accounts) {
+      var autoApproval = autoApproveCache.getMarker(account.getKey());
+      result.add(LedgerAddressDTO.builder()
+          .isIBAN(true)
+          .address(account.getKey())
+          .bearerToken("")
+          .clientId(0L)
+          .approvalMode(convertApproveType(autoApproval.data.autoApproveType))
+          .approvalLimit(getLimit(autoApproval.data.autoApproveType))
+          .build());
+    }
+
+    return result;
+  }
+
+  private Double getLimit(AutoApproveType autoApproveType) {
+    if (autoApproveType instanceof LimitedMaxAmount) {
+      return ((LimitedMaxAmount) autoApproveType).bigDecimalValue.doubleValue();
+    }
+    return Double.NaN;
+  }
+
+  private String convertApproveType(AutoApproveType autoApproveType) {
+    if (autoApproveType instanceof FullAuto) {
+      return "AUTO";
+    } else if (autoApproveType instanceof LimitedMaxAmount) {
+      return "LIMIT";
+    } else {
+      return "MANUAL";
+    }
   }
 
   private ApprovalMode convertApprovalMode(ApprovalProperties autoApprove) {
