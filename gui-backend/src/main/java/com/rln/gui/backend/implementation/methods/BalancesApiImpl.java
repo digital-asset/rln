@@ -52,6 +52,7 @@ public class BalancesApiImpl {
      */
     public List<Balance> getAddressBalance(String address) throws IbanNotFoundException {
         var liquidBalanceAmount = liquidBalanceCache.getBalance(address);
+        var actualLiquidAmount = liquidBalanceAmount.orElseThrow(() -> new IbanNotFoundException(address));
         var incomingBalanceAmount = incomingBalanceCache.getBalance(address);
         var lockedBalanceAmount = lockedBalanceCache.getBalance(address);
 
@@ -61,27 +62,22 @@ public class BalancesApiImpl {
             .assetName(accountCache.getAssetCode(address));
 
         var result = new ArrayList<Balance>(3);
-
-        if (liquidBalanceAmount == null) {
-            throw new IbanNotFoundException(address);
-        }
-
         var liquidBalance = builder
-            .balance(liquidBalanceAmount)
+            .balance(actualLiquidAmount)
             .type(BalanceType.LIQUID.name()).build();
         result.add(liquidBalance);
-        if (lockedBalanceAmount != null) {
+        lockedBalanceAmount.ifPresent(actualLockedAmount -> {
             var actualBalance = builder
-                .balance(liquidBalanceAmount.add(lockedBalanceAmount))
+                .balance(actualLiquidAmount.add(actualLockedAmount))
                 .type(BalanceType.ACTUAL.name()).build();
             result.add(actualBalance);
-        }
-        if (incomingBalanceAmount != null) {
+        });
+        incomingBalanceAmount.ifPresent(actualIncomingAmount -> {
             var futureBalance = builder
-                .balance(liquidBalanceAmount.add(incomingBalanceAmount))
+                .balance(actualLiquidAmount.add(actualIncomingAmount))
                 .type(BalanceType.FUTURE.name()).build();
             result.add(futureBalance);
-        }
+        });
 
         return result;
     }

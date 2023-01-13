@@ -11,6 +11,7 @@ import com.rln.gui.backend.implementation.balanceManagement.exception.ContractId
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -52,8 +53,8 @@ public abstract class BalanceCache<T extends Template> {
     }
 
     // map from iban to total balanceAmount
-    public BigDecimal getBalance(String address) {
-        return ibanToContractIds.entrySet().stream()
+    public Optional<BigDecimal> getBalance(String address) {
+        return Optional.ofNullable(ibanToContractIds.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> entry.getValue().stream()
@@ -64,7 +65,7 @@ public abstract class BalanceCache<T extends Template> {
                                     }
                                     return getBalanceAmount(balance);
                                 }).reduce(BigDecimal.ZERO, BigDecimal::add)))
-                .get(address);
+                .get(address));
     }
 
     abstract protected String getIban(T balance);
