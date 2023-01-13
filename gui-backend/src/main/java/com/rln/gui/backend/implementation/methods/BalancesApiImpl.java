@@ -56,11 +56,14 @@ public class BalancesApiImpl {
                 .orElseThrow(() -> new IbanNotFoundException(address));
         var incomingBalanceAmount = incomingBalanceCache.getBalance(address);
         var lockedBalanceAmount = lockedBalanceCache.getBalance(address);
+        var assetName = accountCache
+                .getAssetCode(address)
+                .orElseThrow(() -> new IbanNotFoundException(address));
 
         var builder = Balance.builder()
             .address(address)
             .assetId(0L) // default to 0 now, as we don't have assetId in the system yet
-            .assetName(accountCache.getAssetCode(address));
+            .assetName(assetName);
 
         var result = new ArrayList<Balance>(3);
         var liquidBalance = builder

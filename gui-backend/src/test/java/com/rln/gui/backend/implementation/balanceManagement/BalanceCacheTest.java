@@ -71,7 +71,7 @@ class BalanceCacheTest {
 
   private double getBalance(BalanceCache<Balance> cache, String iban) {
     return cache.getBalance(iban)
-        .orElseThrow(() -> new RuntimeException("Test error, IBAN not in the cache: " + iban))
+        .orElseThrow(() -> new RuntimeException("Test error, IBAN not in the balance cache: " + iban))
         .doubleValue();
   }
 }
