@@ -22,7 +22,10 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
+import io.restassured.http.ContentType;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 import junit.framework.TestCase;
 import org.hamcrest.MatcherAssert;
@@ -142,19 +145,32 @@ class BalancesApiImplTest extends LedgerBaseTest {
     void GIVEN_balances_on_ledger_WHEN_post_change_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
         double liquidAmount = 100.0;
 
-        var c1 = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+        BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
 
         // WHEN
         List<com.rln.gui.backend.model.Balance> balances = RestAssured.given()
-            .when().get(String.format("/api/addresses/%s/balance", BalanceTestUtil.IBAN1))
+            .accept(ContentType.JSON)
+            .contentType(ContentType.JSON)
+            .body(createBalanceChangeRequest("1", USD, liquidAmount))
+            .when().post(String.format("/api/addresses/%s/balance", BalanceTestUtil.IBAN1))
             .then()
             .statusCode(200)
             .extract().body().as(new TypeRef<>() {
             });
 
         // THEN
-        MatcherAssert.assertThat(balances.get(0).getBalance().doubleValue(), Matchers.is(liquidAmount));
+        MatcherAssert.assertThat(balances.get(0).getBalance().doubleValue(), Matchers.is(2 * liquidAmount));
 
-        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), Balance.TEMPLATE_ID, c1.getValue());
+        var newLiquidBalance = SANDBOX.getLedgerAdapter()
+            .getCreatedContractId(getCurrentBankPartyId(), Balance.TEMPLATE_ID, com.daml.ledger.javaapi.data.ContractId::new);
+        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), Balance.TEMPLATE_ID, newLiquidBalance.getValue());
+    }
+
+    private Map<String, Object> createBalanceChangeRequest(String assetId, String addetName, double change) {
+        Map<String, Object> transferProposalRequest = new HashMap<>();
+        transferProposalRequest.put("assetId", assetId);
+        transferProposalRequest.put("assetName", addetName);
+        transferProposalRequest.put("change", change);
+        return transferProposalRequest;
     }
 }

@@ -20,6 +20,7 @@ import com.rln.gui.backend.model.WalletAddressTestDTO;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -99,7 +100,13 @@ public class BalancesApiImpl {
 
     public List<Balance> changeBalance(String provider, String address, @Valid @NotNull BalanceChange balanceChange) {
         rlnClient.changeBalance(new ChangeBalanceParameters(provider, address, balanceChange.getChange()));
-        return getAddressBalance(address);
+        return getAddressBalance(address)
+            .stream().map(balance -> {
+                if(BalanceType.LIQUID.toString().equals(balance.getType())) {
+                    balance.setBalance(balance.getBalance().add(balanceChange.getChange()));
+                }
+                return balance;
+            }).collect(Collectors.toList());
     }
 
     public List<Balance> getBalances(Long walletId) {
