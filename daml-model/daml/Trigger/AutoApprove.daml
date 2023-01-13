@@ -8,12 +8,13 @@
 module Trigger.AutoApprove where
 
 import DA.Action (void, when)
-import DA.Foldable (forA_)
+import DA.Foldable (mapA_, forA_)
 import DA.List (head)
 import DA.Optional (fromSome, optionalToList)
 import Daml.Trigger
 import Model.Blacklist
 import Model.Balance
+import Model.LoanConfig
 import Workflow.TransferProposal
 import Workflow.Data
 import DA.Map qualified as Map
@@ -27,7 +28,8 @@ autoApproveTrigger = Trigger
       registeredTemplate @AutoApproveTransferProposalMarker,
       registeredTemplate @TransferProposal,
       registeredTemplate @Blacklist,
-      registeredTemplate @Balance
+      registeredTemplate @Balance,
+      registeredTemplate @LoanConfig
     ]
   , heartbeat = None
   }
@@ -105,25 +107,6 @@ involveBlackListParty TransferProposal{step, approvers} Blacklist{banks, account
   let bankOnSettlementChainBlackListed = any (`elem` banks) approvers in
   receiverIsBlackListed || senderIsBlackListed || bankOnSettlementChainBlackListed
 
-type HasEnoughBalanceWithBalanceCid = (Bool, Optional (ContractId Balance))
-hasEnoughBalance : TransferProposal -> TriggerA () HasEnoughBalanceWithBalanceCid
-hasEnoughBalance transferProposal@TransferProposal{owner; step} = do
-  let
-    Instrument{amount, label} = step.delivery
-    amountRequired = amount
-    currencyRequired = label
-    identifier = toIdentifier transferProposal
-    provider = owner
-  case step.sender of
-    Some iban -> do
-      queryContractKey (BalanceKey with ..) >>= \case
-        Some (balanceCid, Balance{amount;currency}) ->
-          if currency /= currencyRequired then
-            pure $ trace ("Account " <> iban <> "does not hold required currency " <> currencyRequired) (False, Some balanceCid)
-          else pure $ (amount >= amountRequired, Some balanceCid)
-        None -> pure $ trace ("No Balance exist for account" <> iban) (False, None)
-    None -> pure (True, None)
-
 findProposalMarker : TransferProposal -> Map.Map Text AutoApproveTransferProposalMarker -> Optional AutoApproveTransferProposalMarker
 findProposalMarker transferProposal@TransferProposal{ step = SettlementStep{ sender, receiver } } markers =
   case (sender, receiver) of
@@ -154,21 +137,45 @@ findBalance transferProposal@TransferProposal{owner; step} iban = do
       else pure $ Some balance
     None -> pure $ trace ("No Balance exist for account" <> iban) None
 
+createLoanForSender : TransferProposal -> Decimal -> Text -> ContractId TransferProposal -> TriggerA () ()
+createLoanForSender transferProposal loanAmount sender cid = do
+  case transferProposal.step.sender of
+    Some sender -> do
+      let balanceKey = BalanceKey with iban = sender, provider = transferProposal.owner
+      loanConfig <- queryContractKey @LoanConfig balanceKey
+      case loanConfig of
+        Some (loanConfigCid, lc) -> do
+          let cmd = exerciseCmd loanConfigCid (CreateLoan with loanAmount = loanAmount)
+          void $ emitCommands [cmd] [toAnyContractId cid] 
+        None -> pure $ trace ("No LoanConfig found for BalanceKey" <> show balanceKey) ()
+    None -> pure $ trace "Unable request loan for empty sender"  ()
+
+
 handleProposalForSender : TransferProposal -> Text -> Blacklist -> ContractId TransferProposal -> TriggerA () ()
 handleProposalForSender transferProposal sender blacklist cid = do
-  maybeBalance <- findBalance transferProposal sender
-  case maybeBalance of
-    Some (balanceCid, balance) | transferProposal.step.delivery.amount <= balance.amount ->
-        if involveBlackListParty transferProposal blacklist then
-          rejectProposal "Rejected due to blacklist" cid
-        else
-          approveProposal
-            "Approved Proposal as sender has enough balance and no banks/accounts are blacklisted"
-            cid
-            (Some balanceCid)
-            (lockBalanceCommand transferProposal balanceCid)
-    _ ->
-      rejectProposal "Rejected due to not enough balance"  cid
+  if involveBlackListParty transferProposal blacklist then
+      rejectProposal "Rejected due to blacklist" cid
+  else do
+    maybeBalance <- findBalance transferProposal sender
+    mapA_ (\(balanceCid, balance) -> do
+          if transferProposal.step.delivery.amount <= balance.amount then do
+            let loanAmount = transferProposal.step.delivery.amount - balance.amount
+            createLoanForSender transferProposal loanAmount sender cid
+            maybeBalance <- findBalance transferProposal sender
+            pure ()
+          else
+            pure ()
+      ) maybeBalance
+    
+    case maybeBalance of
+      Some (balanceCid, balance) | transferProposal.step.delivery.amount <= balance.amount ->
+        approveProposal
+          "Approved Proposal as sender has enough balance and no banks/accounts are blacklisted"
+          cid
+          (Some balanceCid)
+          (lockBalanceCommand transferProposal balanceCid)
+      _ ->
+        rejectProposal "Rejected due to not enough balance"  cid
 
 handleProposalForReceiver : TransferProposal -> ContractId TransferProposal -> TriggerA () ()
 handleProposalForReceiver transferProposal cid = do
