@@ -16,6 +16,7 @@ import com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 
+import java.util.List;
 import java.util.Set;
 
 public interface RLNClient {
@@ -41,4 +42,6 @@ public interface RLNClient {
     void subscribeForContinuousEvent(String subscriberParty, Set<Identifier> templatesIncluded, Consumer<Event> consumer);
 
     void archiveBalance(ArchiveBalanceParameters parameters);
+
+    void changeBalance(ChangeBalanceParameters changeBalanceParameters);
 }

@@ -19,9 +19,11 @@ import com.daml.ledger.javaapi.data.codegen.Update;
 import com.daml.ledger.rxjava.DamlLedgerClient;
 import com.google.protobuf.Empty;
 import com.rln.client.damlClient.commandId.RandomGenerator;
+import com.rln.common.BigDecimals;
 import com.rln.damlCodegen.da.internal.template.Archive;
 import com.rln.damlCodegen.da.types.Tuple2;
 import com.rln.damlCodegen.model.balance.Balance;
+import com.rln.damlCodegen.model.balance.Balance.ByKey;
 import com.rln.damlCodegen.model.balance.BalanceKey;
 import com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer;
 import com.rln.damlCodegen.workflow.transactionmanifest.TransactionManifest;
@@ -32,13 +34,16 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,6 +190,39 @@ public class RLNDamlClient implements RLNClient {
         var update = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban())).exerciseArchive(new Archive());
         commandPublisher.onNext(new ClientCommand(event, update, parameters.getProvider(), parameters));
     }
+
+    @Override
+    public void changeBalance(ChangeBalanceParameters parameters) {
+        var event = String.format("Changing balance %s (provider: %s)", parameters.getIban(), parameters.getProvider());
+        if (BigDecimals.equals(parameters.getChange(), BigDecimal.ZERO)) {
+          return;
+        }
+        Update<?> update;
+        if (BigDecimals.lessThan(parameters.getChange(), BigDecimal.ZERO)) {
+          update = getBalanceUpdate(parameters, Balance.ByKey::exerciseDecrease);
+        } else {
+          update = getBalanceUpdate(parameters, Balance.ByKey::exerciseIncrease);
+        }
+        var commandId = commandIdGenerator.generate();
+        var clientCommands = new ClientCommand(event, update, parameters.getProvider(), parameters);
+        logStartOfSubmission(commandId, List.of(clientCommands));
+        ledger.getCommandClient()
+            .submitAndWaitForResult(
+                WORK_ID,
+                APP_ID,
+                commandId,
+                List.of(parameters.getProvider()),
+                List.of(parameters.getProvider()),
+                update
+            )
+            .doOnSuccess(s -> logEndOfSubmission(commandId))
+            .doOnError(errorHandler(commandId));
+    }
+
+  private Update<?> getBalanceUpdate(ChangeBalanceParameters parameters, BiFunction<ByKey, BigDecimal, Update<?>> balanceUpdateChoice) {
+      var byBalanceKey = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban()));
+      return balanceUpdateChoice.apply(byBalanceKey, parameters.getChange().abs());
+  }
 
   // helper functions
     private Tuple2<Flowable<CreatedEvent>, LedgerOffset> getActiveContractsAndOffset(TransactionFilter filter) {
