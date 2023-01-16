@@ -20,6 +20,7 @@ import com.rln.gui.backend.model.WalletAddressTestDTO;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -52,37 +53,37 @@ public class BalancesApiImpl {
      *      FUTURE: liquid + incoming
      */
     public List<Balance> getAddressBalance(String address) throws IbanNotFoundException {
-        var liquidBalanceAmount = liquidBalanceCache.getBalance(address);
+        var liquidBalanceAmount = liquidBalanceCache
+                .getBalance(address)
+                .orElseThrow(() -> new IbanNotFoundException(address));
         var incomingBalanceAmount = incomingBalanceCache.getBalance(address);
         var lockedBalanceAmount = lockedBalanceCache.getBalance(address);
+        var assetName = accountCache
+                .getAssetCode(address)
+                .orElseThrow(() -> new IbanNotFoundException(address));
 
         var builder = Balance.builder()
             .address(address)
             .assetId(0L) // default to 0 now, as we don't have assetId in the system yet
-            .assetName(accountCache.getAssetCode(address));
+            .assetName(assetName);
 
         var result = new ArrayList<Balance>(3);
-
-        if (liquidBalanceAmount == null) {
-            throw new IbanNotFoundException(address);
-        }
-
         var liquidBalance = builder
             .balance(liquidBalanceAmount)
             .type(BalanceType.LIQUID.name()).build();
         result.add(liquidBalance);
-        if (lockedBalanceAmount != null) {
+        lockedBalanceAmount.ifPresent(actualLockedAmount -> {
             var actualBalance = builder
-                .balance(liquidBalanceAmount.add(lockedBalanceAmount))
+                .balance(liquidBalanceAmount.add(actualLockedAmount))
                 .type(BalanceType.ACTUAL.name()).build();
             result.add(actualBalance);
-        }
-        if (incomingBalanceAmount != null) {
+        });
+        incomingBalanceAmount.ifPresent(actualIncomingAmount -> {
             var futureBalance = builder
-                .balance(liquidBalanceAmount.add(incomingBalanceAmount))
+                .balance(liquidBalanceAmount.add(actualIncomingAmount))
                 .type(BalanceType.FUTURE.name()).build();
             result.add(futureBalance);
-        }
+        });
 
         return result;
     }
@@ -99,7 +100,13 @@ public class BalancesApiImpl {
 
     public List<Balance> changeBalance(String provider, String address, @Valid @NotNull BalanceChange balanceChange) {
         rlnClient.changeBalance(new ChangeBalanceParameters(provider, address, balanceChange.getChange()));
-        return getAddressBalance(address);
+        return getAddressBalance(address)
+            .stream().map(balance -> {
+                if(BalanceType.LIQUID.toString().equals(balance.getType())) {
+                    balance.setBalance(balance.getBalance().add(balanceChange.getChange()));
+                }
+                return balance;
+            }).collect(Collectors.toList());
     }
 
     public List<Balance> getBalances(Long walletId) {

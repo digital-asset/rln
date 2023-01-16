@@ -5,10 +5,6 @@
 package com.rln.gui.backend.implementation;
 
 import com.daml.ledger.javaapi.data.ContractId;
-import com.daml.ledger.javaapi.data.DamlRecord;
-import com.daml.ledger.javaapi.data.ExerciseCommand;
-import com.daml.ledger.javaapi.data.Identifier;
-import com.daml.ledger.javaapi.data.Party;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.client.damlClient.TestUtils;
 import com.rln.client.damlClient.partyManagement.RandomShardPartyPicker;
@@ -62,7 +58,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
     TransactionsTestUtils.checkInitiateTransfer(initiateTransfer, GROUP_ID, getCurrentBankPartyId(),
         getSchedulerPartyId());
 
-    cleanup(getCurrentBankPartyId(), InitiateTransfer.TEMPLATE_ID,
+    cleanupContract(getCurrentBankPartyId(), InitiateTransfer.TEMPLATE_ID,
         initiateTransferContractWithId.contractId.getValue());
   }
 
@@ -89,7 +85,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
                 MESSAGE_ID, GROUP_ID),
         ContractId::new);
 
-    cleanup(getCurrentBankPartyId(), ApprovedTransferProposal.TEMPLATE_ID, approvedCid.getValue());
+    cleanupContract(getCurrentBankPartyId(), ApprovedTransferProposal.TEMPLATE_ID, approvedCid.getValue());
   }
 
   @Test
@@ -112,7 +108,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
     TransactionsTestUtils
         .checkListedApprovalResult(transferProposalCid, result.get(1), GROUP_ID, MESSAGE_ID,
             RECEIVER_IBAN, Subject.RECEIVER, BANK_BIC, TRANSACTION_AMOUNT);
-    cleanup(getSchedulerPartyId(), TransferProposal.TEMPLATE_ID, transferProposalCid);
+    cleanupContract(getSchedulerPartyId(), TransferProposal.TEMPLATE_ID, transferProposalCid);
   }
 
   @Test
@@ -144,7 +140,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
             RECEIVER_IBAN, BANK_BIC,
             USD, TRANSACTION_AMOUNT, GuiBackendConstants.SUCCESS_STATUS);
 
-    cleanup(getCurrentBankPartyId(), ApprovedTransferProposal.TEMPLATE_ID, approvedCid);
+    cleanupContract(getCurrentBankPartyId(), ApprovedTransferProposal.TEMPLATE_ID, approvedCid);
   }
 
   @Test
@@ -176,12 +172,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
             RECEIVER_IBAN, BANK_BIC,
             USD, TRANSACTION_AMOUNT, GuiBackendConstants.REJECTED_STATUS);
 
-    cleanup(getCurrentBankPartyId(), RejectedTransferProposal.TEMPLATE_ID, rejectedCid);
+    cleanupContract(getCurrentBankPartyId(), RejectedTransferProposal.TEMPLATE_ID, rejectedCid);
   }
 
-  public static void cleanup(Party partyId, Identifier identifier, String contractId)
-      throws InvalidProtocolBufferException {
-    SANDBOX.getLedgerAdapter().exerciseChoice(partyId,
-        new ExerciseCommand(identifier, contractId, "Archive", new DamlRecord()));
-  }
 }

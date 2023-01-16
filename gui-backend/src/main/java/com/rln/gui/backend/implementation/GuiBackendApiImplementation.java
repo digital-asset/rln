@@ -80,7 +80,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
     try {
       return balancesApi.getAddressBalance(address);
     } catch (IbanNotFoundException e) {
-      throw new WebApplicationException(Status.NOT_FOUND);
+      throw notFound();
     }
   }
 
@@ -108,9 +108,9 @@ public class GuiBackendApiImplementation implements DefaultApi {
       // Provider is always the party the GUI backend is acting in the name of
       balancesApi.delete(configuration.partyId(), address);
     } catch (IbanNotFoundException e) {
-      throw new WebApplicationException(Status.NOT_FOUND);
+      throw notFound();
     } catch (NonZeroBalanceException e) {
-      throw new WebApplicationException(Status.FORBIDDEN);
+      throw forbidden();
     }
   }
 
@@ -222,5 +222,13 @@ public class GuiBackendApiImplementation implements DefaultApi {
 
   private static WebApplicationException notImplemented() {
     return new WebApplicationException(Status.NOT_IMPLEMENTED);
+  }
+
+  private static WebApplicationException notFound() {
+    return new WebApplicationException(Status.NOT_FOUND);
+  }
+
+  private static WebApplicationException forbidden() {
+    return new WebApplicationException(Status.FORBIDDEN);
   }
 }
