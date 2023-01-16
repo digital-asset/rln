@@ -4,7 +4,6 @@
  */
 package com.rln.client.damlClient;
 
-import com.daml.ledger.javaapi.data.CommandsSubmission;
 import com.daml.ledger.javaapi.data.CreatedEvent;
 import com.daml.ledger.javaapi.data.Event;
 import com.daml.ledger.javaapi.data.FiltersByParty;
@@ -24,6 +23,7 @@ import com.rln.common.BigDecimals;
 import com.rln.damlCodegen.da.internal.template.Archive;
 import com.rln.damlCodegen.da.types.Tuple2;
 import com.rln.damlCodegen.model.balance.Balance;
+import com.rln.damlCodegen.model.balance.Balance.ByKey;
 import com.rln.damlCodegen.model.balance.BalanceKey;
 import com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer;
 import com.rln.damlCodegen.workflow.transactionmanifest.TransactionManifest;
@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -198,9 +199,9 @@ public class RLNDamlClient implements RLNClient {
         }
         Update<?> update;
         if (BigDecimals.lessThan(parameters.getChange(), BigDecimal.ZERO)) {
-          update = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban())).exerciseDecrease(parameters.getChange().abs());
+          update = getBalanceUpdate(parameters, Balance.ByKey::exerciseDecrease);
         } else {
-          update = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban())).exerciseIncrease(parameters.getChange().abs());
+          update = getBalanceUpdate(parameters, Balance.ByKey::exerciseIncrease);
         }
         var commandId = commandIdGenerator.generate();
         var clientCommands = new ClientCommand(event, update, parameters.getProvider(), parameters);
@@ -217,6 +218,11 @@ public class RLNDamlClient implements RLNClient {
             .doOnSuccess(s -> logEndOfSubmission(commandId))
             .doOnError(errorHandler(commandId));
     }
+
+  private Update<?> getBalanceUpdate(ChangeBalanceParameters parameters, BiFunction<ByKey, BigDecimal, Update<?>> balanceUpdateChoice) {
+      var byBalanceKey = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban()));
+      return balanceUpdateChoice.apply(byBalanceKey, parameters.getChange().abs());
+  }
 
   // helper functions
     private Tuple2<Flowable<CreatedEvent>, LedgerOffset> getActiveContractsAndOffset(TransactionFilter filter) {
