@@ -8,11 +8,16 @@ import com.rln.gui.backend.implementation.balanceManagement.data.AccountInfo;
 import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFoundException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AccountCache {
 
     private final Map<String, AccountInfo> accounts = new ConcurrentHashMap<>();
+
+    public Set<String> getAccounts() {
+        return accounts.keySet();
+    }
 
     public Optional<String> getAssetCode(String iban) {
         return Optional.ofNullable(accounts.get(iban)).map(AccountInfo::getAssetCode);

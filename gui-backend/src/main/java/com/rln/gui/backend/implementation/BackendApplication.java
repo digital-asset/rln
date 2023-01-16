@@ -6,6 +6,7 @@ package com.rln.gui.backend.implementation;
 
 import com.rln.client.damlClient.partyManagement.BicPartyIdMapper;
 import com.rln.gui.backend.implementation.balanceManagement.AccountEventListener;
+import com.rln.gui.backend.implementation.balanceManagement.AutoApproveEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.BalanceEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
 import com.rln.gui.backend.ods.TransferProposalManager;
@@ -34,6 +35,9 @@ public class BackendApplication {
 
         @Inject
         AccountEventListener accountEventListener;
+
+        @Inject
+        AutoApproveEventListener autoApproveEventListener;
 
         @Inject
         BicPartyIdMapper bicPartyIdMapper;

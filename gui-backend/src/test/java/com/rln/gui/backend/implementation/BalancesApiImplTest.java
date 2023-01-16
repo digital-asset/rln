@@ -158,7 +158,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
 
         var newLiquidBalance = SANDBOX.getLedgerAdapter()
             .getCreatedContractId(getCurrentBankPartyId(), Balance.TEMPLATE_ID, com.daml.ledger.javaapi.data.ContractId::new);
-        TransactionsApiImplTest.cleanup(getCurrentBankPartyId(), Balance.TEMPLATE_ID, newLiquidBalance.getValue());
+        TransactionsApiImplTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, newLiquidBalance.getValue());
     }
 
     private Map<String, Object> createBalanceChangeRequest(String assetId, String addetName, double change) {
