@@ -4,6 +4,7 @@
  */
 package com.rln.client.damlClient;
 
+import com.daml.ledger.javaapi.data.CommandsSubmission;
 import com.daml.ledger.javaapi.data.CreatedEvent;
 import com.daml.ledger.javaapi.data.Event;
 import com.daml.ledger.javaapi.data.FiltersByParty;
@@ -35,6 +36,7 @@ import io.reactivex.subjects.PublishSubject;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -199,7 +201,20 @@ public class RLNDamlClient implements RLNClient {
         } else {
           update = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban())).exerciseIncrease(parameters.getChange().abs());
         }
-        commandPublisher.onNext(new ClientCommand(event, update, parameters.getProvider(), parameters));
+        var commandId = commandIdGenerator.generate();
+        var clientCommands = new ClientCommand(event, update, parameters.getProvider(), parameters);
+        logStartOfSubmission(commandId, List.of(clientCommands));
+        ledger.getCommandClient()
+            .submitAndWaitForResult(
+                WORK_ID,
+                APP_ID,
+                commandId,
+                List.of(parameters.getProvider()),
+                List.of(parameters.getProvider()),
+                update
+            )
+            .doOnSuccess(s -> logEndOfSubmission(commandId))
+            .doOnError(errorHandler(commandId));
     }
 
   // helper functions
