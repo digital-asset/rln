@@ -20,6 +20,7 @@ import com.daml.ledger.javaapi.data.codegen.Update;
 import com.daml.ledger.rxjava.DamlLedgerClient;
 import com.google.protobuf.Empty;
 import com.rln.client.damlClient.commandId.RandomGenerator;
+import com.rln.common.BigDecimals;
 import com.rln.damlCodegen.da.internal.template.Archive;
 import com.rln.damlCodegen.da.types.Tuple2;
 import com.rln.damlCodegen.model.balance.Balance;
@@ -192,11 +193,11 @@ public class RLNDamlClient implements RLNClient {
     @Override
     public void changeBalance(ChangeBalanceParameters parameters) {
         var event = String.format("Changing balance %s (provider: %s)", parameters.getIban(), parameters.getProvider());
-        if (parameters.getChange().compareTo(BigDecimal.ZERO) == 0) {
+        if (BigDecimals.equals(parameters.getChange(), BigDecimal.ZERO)) {
           return;
         }
         Update<?> update;
-        if (parameters.getChange().compareTo(BigDecimal.ZERO) < 0) {
+        if (BigDecimals.lessThan(parameters.getChange(), BigDecimal.ZERO)) {
           update = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban())).exerciseDecrease(parameters.getChange().abs());
         } else {
           update = Balance.byKey(new BalanceKey(parameters.getProvider(), parameters.getIban())).exerciseIncrease(parameters.getChange().abs());
