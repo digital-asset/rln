@@ -112,11 +112,11 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
   }
 
   @Test
-  void apiGetAddressSettingsList() throws InvalidProtocolBufferException {
+  void apiGetAddressSettingsListWhenLimit() throws InvalidProtocolBufferException {
     var liquidAmount = 500;
-    var b = BalanceTestUtil
+    var balance = BalanceTestUtil
         .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
-    var c = publishLimitMarker(getCurrentBankPartyId(), SENDER_IBAN, TRANSACTION_AMOUNT);
+    var balanceLimit = publishLimitMarker(getCurrentBankPartyId(), SENDER_IBAN, TRANSACTION_AMOUNT);
 
     List<LedgerAddressDTO> result = RestAssured.given()
         .when().get("/api/ledger/addresses")
@@ -139,8 +139,38 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     Assertions.assertEquals(0, ledgerAddressInfo.getClientId());
     Assertions.assertTrue(ledgerAddressInfo.getBearerToken().isEmpty());
 
-    cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, b);
-    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID, c);
+    cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
+    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID, balanceLimit);
+  }
+
+  @Test
+  void apiGetAddressSettingsListWhenManual() throws InvalidProtocolBufferException {
+    var liquidAmount = 500;
+    var balance = BalanceTestUtil
+        .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+
+    List<LedgerAddressDTO> result = RestAssured.given()
+        .when().get("/api/ledger/addresses")
+        .then()
+        .statusCode(200)
+        .extract().body().as(new TypeRef<>() {
+        });
+
+
+    Assertions.assertEquals(1, result.size());
+
+    var ledgerAddressInfo = result.get(0);
+
+    Assertions.assertEquals(SENDER_IBAN, ledgerAddressInfo.getAddress());
+    Assertions.assertEquals("MANUAL", ledgerAddressInfo.getApprovalMode());
+    Assertions.assertEquals(null, ledgerAddressInfo.getApprovalLimit());
+    Assertions.assertTrue(ledgerAddressInfo.getIsIBAN());
+    // The following fields are just filled with dummy values
+    Assertions.assertEquals(null, ledgerAddressInfo.getId());
+    Assertions.assertEquals(0, ledgerAddressInfo.getClientId());
+    Assertions.assertTrue(ledgerAddressInfo.getBearerToken().isEmpty());
+
+    cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
   }
 
   private ContractId publishLimitMarker(Party party, String address, BigDecimal amount)

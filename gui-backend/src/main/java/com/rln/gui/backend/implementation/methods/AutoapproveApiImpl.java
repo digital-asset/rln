@@ -10,6 +10,7 @@ import com.rln.client.damlClient.AutoApproveParameters;
 import com.rln.client.damlClient.AutoApproveParameters.ApprovalMode;
 import com.rln.client.damlClient.RLNClient;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker;
+import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker.Contract;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveType;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.FullAuto;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxAmount;
@@ -72,35 +73,42 @@ public class AutoapproveApiImpl {
     ArrayList<LedgerAddressDTO> result = new ArrayList<>(accounts.size());
 
     for (var account : accounts) {
-      var autoApproval = autoApproveCache.getMarker(account.getKey());
+      var autoApproval = autoApproveCache.getMarker(account);
       result.add(LedgerAddressDTO.builder()
           .isIBAN(true)
-          .address(account.getKey())
+          .address(account)
           .bearerToken("")
           .clientId(0L)
-          .approvalMode(convertApproveType(autoApproval.data.autoApproveType))
-          .approvalLimit(getLimit(autoApproval.data.autoApproveType))
+          .approvalMode(convertApproveType(autoApproval))
+          .approvalLimit(getLimit(autoApproval))
           .build());
     }
 
     return result;
   }
 
-  private Double getLimit(AutoApproveType autoApproveType) {
-    if (autoApproveType instanceof LimitedMaxAmount) {
-      return ((LimitedMaxAmount) autoApproveType).bigDecimalValue.doubleValue();
+  private String convertApproveType(Contract autoApproval) {
+    if (autoApproval == null) {
+      return "MANUAL";
     }
-    return Double.NaN;
-  }
-
-  private String convertApproveType(AutoApproveType autoApproveType) {
+    var autoApproveType = autoApproval.data.autoApproveType;
     if (autoApproveType instanceof FullAuto) {
       return "AUTO";
     } else if (autoApproveType instanceof LimitedMaxAmount) {
       return "LIMIT";
     } else {
-      return "MANUAL";
+      throw new RuntimeException("Unknown approve mode/type: " + autoApproveType);
     }
+  }
+
+  private Double getLimit(Contract autoApprove) {
+    if (autoApprove != null) {
+      var autoApproveType = autoApprove.data.autoApproveType;
+      if (autoApproveType instanceof LimitedMaxAmount) {
+        return ((LimitedMaxAmount) autoApproveType).bigDecimalValue.doubleValue();
+      }
+    }
+    return null;
   }
 
   private ApprovalMode convertApprovalMode(ApprovalProperties autoApprove) {
