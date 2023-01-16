@@ -112,12 +112,10 @@ class BalancesApiImplTest extends LedgerBaseTest {
     }
 
     @Test
-    void GIVEN_local_and_nonlocal_balance_on_ledger_WHEN_get_request_local_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
+    void GIVEN_local_balance_on_ledger_WHEN_get_request_local_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
         double liquidAmount = 100.0;
         var localBalance = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX,
             getCurrentBankPartyId(), Balance.TEMPLATE_ID);
-        var nonLocalBalance = BalanceTestUtil.populateBalance(liquidAmount + 200, BalanceTestUtil.IBAN2, BalanceTestUtil.ASSET_CODE1, SANDBOX,
-            getSchedulerPartyId(), Optional.of(getCurrentBankPartyId().getValue()), Balance.TEMPLATE_ID);
 
         // WHEN
         List<com.rln.gui.backend.model.Balance> balances = RestAssured
@@ -132,6 +130,25 @@ class BalancesApiImplTest extends LedgerBaseTest {
         MatcherAssert.assertThat(balances.get(0).getBalance().doubleValue(), Matchers.is(liquidAmount));
 
         LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, localBalance.getValue());
+    }
+
+    @Test
+    void GIVEN_non_local_balance_on_ledger_WHEN_get_request_local_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
+        double liquidAmount = 100.0;
+        var nonLocalBalance = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX,
+            getSchedulerPartyId(), Optional.of(getCurrentBankPartyId().getValue()), Balance.TEMPLATE_ID);
+
+        // WHEN
+        List<com.rln.gui.backend.model.Balance> balances = RestAssured
+            .get(String.format("/api/getLocalBalance?address=%s", BalanceTestUtil.IBAN1))
+            .then()
+            .statusCode(200)
+            .extract().body().as(new TypeRef<>() {
+            });
+
+        // THEN
+        Assertions.assertTrue(balances.isEmpty());
+
         LedgerBaseTest.cleanupContract(getSchedulerPartyId(), Balance.TEMPLATE_ID, nonLocalBalance.getValue());
     }
 
