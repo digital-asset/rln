@@ -5,7 +5,6 @@
 package com.rln.gui.backend.implementation.balanceManagement.cache;
 
 import com.rln.gui.backend.implementation.balanceManagement.data.AccountInfo;
-import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFoundException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -19,8 +18,8 @@ public class AccountCache {
         return accounts.keySet();
     }
 
-    public Optional<String> getAssetCode(String iban) {
-        return Optional.ofNullable(accounts.get(iban)).map(AccountInfo::getAssetCode);
+    public Optional<AccountInfo> getAccountInfo(String iban) {
+        return Optional.ofNullable(accounts.get(iban));
     }
 
     public void update(String iban, AccountInfo accountInfo) {

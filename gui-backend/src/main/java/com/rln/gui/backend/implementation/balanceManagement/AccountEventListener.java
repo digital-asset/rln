@@ -34,8 +34,7 @@ public class AccountEventListener {
         logger.info("Update Account with {}", event);
         var createdEvent = (CreatedEvent) event;
         var balance = Balance.fromValue(createdEvent.getArguments());
-        var iban = balance.iban;
-        var accountInfo = new AccountInfo(iban, balance.currency);
+        var accountInfo = new AccountInfo(balance.provider, balance.iban, balance.currency);
         accountCache.update(balance.iban, accountInfo);
     }
 }

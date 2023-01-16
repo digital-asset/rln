@@ -10,6 +10,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class AccountInfo {
+    private String provider;
     private String iban;
     private String assetCode;
 }

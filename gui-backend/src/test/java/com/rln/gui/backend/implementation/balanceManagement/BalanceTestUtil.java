@@ -34,9 +34,16 @@ public class BalanceTestUtil {
     private static final Random rand = new Random();
 
     public static ContractId populateBalance(double amount, String iban, String assetCode,
-                                       SandboxManager sandbox, Party currentBank, Identifier balanceTemplate)
+        SandboxManager sandbox, Party currentBank, Identifier balanceTemplate)
+        throws InvalidProtocolBufferException {
+        return populateBalance(amount, iban, assetCode,
+            sandbox, currentBank, Optional.empty(), balanceTemplate);
+    }
+
+    public static ContractId populateBalance(double amount, String iban, String assetCode,
+        SandboxManager sandbox, Party currentBank, Optional<String> owner, Identifier balanceTemplate)
             throws InvalidProtocolBufferException {
-        var liquidBalance = createBalance(iban, currentBank.getValue(), assetCode, amount, balanceTemplate);
+        var liquidBalance = createBalance(iban, currentBank.getValue(), owner, assetCode, amount, balanceTemplate);
         sandbox.getLedgerAdapter().createContract(currentBank, balanceTemplate, liquidBalance);
         return sandbox.getLedgerAdapter().getCreatedContractId(currentBank, balanceTemplate,
             com.daml.ledger.javaapi.data.ContractId::new);
@@ -55,7 +62,7 @@ public class BalanceTestUtil {
         CreatedEvent event = Mockito.mock(CreatedEvent.class);
         Mockito.when(event.getContractId()).thenReturn(cid);
         Mockito.when(event.getTemplateId()).thenReturn(templateId);
-        Mockito.when(event.getArguments()).thenReturn(createBalance(iban, provider, currency, amount, templateId));
+        Mockito.when(event.getArguments()).thenReturn(createBalance(iban, provider, Optional.empty(), currency, amount, templateId));
         return event;
     }
 
@@ -63,8 +70,8 @@ public class BalanceTestUtil {
         return createBalanceEvent(iban, provider, currency, amount, "anyCid", Balance.TEMPLATE_ID);
     }
 
-    public static DamlRecord createBalance(String iban, String provider, String currency, Double amount, Identifier templateId) {
-        Balance balance = new Balance(iban, provider, Optional.empty(), currency, BigDecimal.valueOf(amount));
+    public static DamlRecord createBalance(String iban, String provider, Optional<String> owner, String currency, Double amount, Identifier templateId) {
+        Balance balance = new Balance(iban, provider, owner, currency, BigDecimal.valueOf(amount));
         String context = generateRandomString(8);
         logger.info("===================== context {}", context);
 
@@ -78,7 +85,7 @@ public class BalanceTestUtil {
     }
 
     public static Balance createBalance(String iban, String provider, String currency, Double amount) {
-        return Balance.fromValue(createBalance(iban, provider, currency, amount, Balance.TEMPLATE_ID));
+        return Balance.fromValue(createBalance(iban, provider, Optional.empty(), currency, amount, Balance.TEMPLATE_ID));
     }
 
     private static String generateRandomString(int length) {
