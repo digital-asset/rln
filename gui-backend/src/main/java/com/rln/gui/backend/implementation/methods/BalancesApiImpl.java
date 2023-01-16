@@ -99,10 +99,10 @@ public class BalancesApiImpl {
         return accountInfo
             .filter(info -> info.getProvider().equals(guiBackendConfiguration.partyId()))
             .map(info -> getAddressBalance(address))
-            .orElse(List.of());
+            .orElseThrow(() -> new IbanNotFoundException(address));
     }
 
-        public void delete(String provider, String address) throws NonZeroBalanceException {
+    public void delete(String provider, String address) throws NonZeroBalanceException {
         var balances = getAddressBalance(address);
         var allBalancesAreZero= balances.stream()
             .allMatch(balance -> balance.getBalance().compareTo(BigDecimal.ZERO) == 0);

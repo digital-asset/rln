@@ -43,13 +43,17 @@ public abstract class BalanceCache<T extends Template> {
     public void updateBalanceUponArchived(ContractId cid) {
         var iban = contractIdToIban.remove(cid);
         contractIdToBalance.remove(cid);
-        if (iban == null) {
-            throw new ContractIdNotFoundException(cid);
+        if (iban != null) {
+            // When null, then the Coid is not mapped to any iban
+            var result = ibanToContractIds.computeIfPresent(iban, (k, v) -> {
+                v.remove(cid);
+                return v;
+            });
+            if (result != null && result.isEmpty()) {
+                ibanToContractIds.remove(iban);
+            }
         }
-        ibanToContractIds.computeIfPresent(iban, (k, v) -> {
-            v.remove(cid);
-            return v;
-        });
+        // throw new ContractIdNotFoundException(cid);
     }
 
     // map from iban to total balanceAmount

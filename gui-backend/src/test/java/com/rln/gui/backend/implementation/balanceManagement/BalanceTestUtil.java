@@ -45,6 +45,11 @@ public class BalanceTestUtil {
             throws InvalidProtocolBufferException {
         var liquidBalance = createBalance(iban, currentBank.getValue(), owner, assetCode, amount, balanceTemplate);
         sandbox.getLedgerAdapter().createContract(currentBank, balanceTemplate, liquidBalance);
+        // If there is an owner, we want to consume this contract from their event queue
+        owner.ifPresent(ownerParty -> {
+            sandbox.getLedgerAdapter().getCreatedContractId(new Party(ownerParty), balanceTemplate,
+                com.daml.ledger.javaapi.data.ContractId::new);
+        });
         return sandbox.getLedgerAdapter().getCreatedContractId(currentBank, balanceTemplate,
             com.daml.ledger.javaapi.data.ContractId::new);
     }

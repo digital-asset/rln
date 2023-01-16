@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AccountCache {
 
     private final Map<String, AccountInfo> accounts = new ConcurrentHashMap<>();
+    private final Map<String, String> balanceCidToAddress = new ConcurrentHashMap<>();
 
     public Set<String> getAccounts() {
         return accounts.keySet();
@@ -22,7 +23,18 @@ public class AccountCache {
         return Optional.ofNullable(accounts.get(iban));
     }
 
-    public void update(String iban, AccountInfo accountInfo) {
+    public void delete(String contractId) {
+        // TODO error handling
+        var iban = balanceCidToAddress.get(contractId);
+        balanceCidToAddress.remove(contractId);
+        if (iban != null) {
+            accounts.remove(iban);
+        }
+    }
+
+    public void update(String contractId, String iban, AccountInfo accountInfo) {
+        // TODO error handling
+        balanceCidToAddress.putIfAbsent(contractId, iban);
         accounts.putIfAbsent(iban, accountInfo);
     }
 }

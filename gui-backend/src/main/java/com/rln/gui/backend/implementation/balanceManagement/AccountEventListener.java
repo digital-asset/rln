@@ -28,13 +28,14 @@ public class AccountEventListener {
     }
 
     private void updateAccountWithEvent(Event event) {
-        if (event instanceof ArchivedEvent) {
-            return;
-        }
         logger.info("Update Account with {}", event);
-        var createdEvent = (CreatedEvent) event;
-        var balance = Balance.fromValue(createdEvent.getArguments());
-        var accountInfo = new AccountInfo(balance.provider, balance.iban, balance.currency);
-        accountCache.update(balance.iban, accountInfo);
+        if (event instanceof ArchivedEvent) {
+            accountCache.delete(event.getContractId());
+        } else {
+            var createdEvent = (CreatedEvent) event;
+            var balance = Balance.fromValue(createdEvent.getArguments());
+            var accountInfo = new AccountInfo(balance.provider, balance.iban, balance.currency);
+            accountCache.update(createdEvent.getContractId(), balance.iban, accountInfo);
+        }
     }
 }
