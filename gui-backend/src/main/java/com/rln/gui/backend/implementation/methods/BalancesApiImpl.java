@@ -22,6 +22,7 @@ import com.rln.gui.backend.model.WalletAddressTestDTO;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -97,9 +98,13 @@ public class BalancesApiImpl {
     public List<Balance> getLocalBalance(String address) throws IbanNotFoundException {
         var accountInfo = accountCache.getAccountInfo(address);
         return accountInfo
-            .filter(info -> info.getProvider().equals(guiBackendConfiguration.partyId()))
+            .filter(isLocal())
             .map(info -> getAddressBalance(address))
             .orElseThrow(() -> new IbanNotFoundException(address));
+    }
+
+    private Predicate<AccountInfo> isLocal() {
+        return info -> info.getProvider().equals(guiBackendConfiguration.partyId());
     }
 
     public void delete(String provider, String address) throws NonZeroBalanceException {
