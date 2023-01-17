@@ -9,6 +9,7 @@ import com.rln.damlCodegen.model.balance.Balance;
 import com.rln.gui.backend.implementation.balanceManagement.cache.BalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.LiquidBalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.exception.ContractIdNotFoundException;
+import java.util.Optional;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -62,11 +63,10 @@ class BalanceCacheTest {
 
     // WHEN existing balance cid archived
     cache.updateBalanceUponArchived(cid);
-    MatcherAssert.assertThat(getBalance(cache, BalanceTestUtil.IBAN1), Matchers.is(0.0d));
+    MatcherAssert.assertThat(cache.getBalance(BalanceTestUtil.IBAN1), Matchers.is(Optional.empty()));
 
     // WHEN non-existing balance cid archived
-    Assertions.assertThrows(ContractIdNotFoundException.class,
-        () -> cache.updateBalanceUponArchived(new ContractId("non-existing cid")));
+    Assertions.assertDoesNotThrow(() -> cache.updateBalanceUponArchived(new ContractId("non-existing cid")));
   }
 
   private double getBalance(BalanceCache<Balance> cache, String iban) {

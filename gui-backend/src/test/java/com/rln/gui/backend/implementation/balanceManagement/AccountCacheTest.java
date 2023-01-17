@@ -9,14 +9,13 @@ import com.daml.ledger.javaapi.data.CreatedEvent;
 import com.daml.ledger.javaapi.data.Event;
 import com.rln.client.damlClient.RLNClient;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
-import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFoundException;
+import com.rln.gui.backend.implementation.balanceManagement.data.AccountInfo;
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.functions.Consumer;
 import java.util.Optional;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
@@ -46,7 +45,8 @@ class AccountCacheTest {
     }
 
     private String getAssetCode(AccountCache cache, String iban) {
-        return cache.getAssetCode(iban)
+        return cache.getAccountInfo(iban)
+            .map(AccountInfo::getAssetCode)
             .orElseThrow(() -> new RuntimeException("Test error, IBAN not in the account cache: " + iban));
     }
 
@@ -63,7 +63,7 @@ class AccountCacheTest {
         AccountCache cache = new AccountCache();
         new AccountEventListener(rlnClient, BalanceTestUtil.BANK_PARTY, cache);
 
-        MatcherAssert.assertThat(cache.getAssetCode(BalanceTestUtil.IBAN1), Matchers.is(Optional.empty()));
+        MatcherAssert.assertThat(cache.getAccountInfo(BalanceTestUtil.IBAN1), Matchers.is(Optional.empty()));
 
         // WHEN
         balances.connect();

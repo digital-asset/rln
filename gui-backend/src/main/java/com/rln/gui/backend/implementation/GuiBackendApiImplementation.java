@@ -166,7 +166,11 @@ public class GuiBackendApiImplementation implements DefaultApi {
   // Get the balance for an address, provided the address is local to this participant
   @Override
   public List<Balance> getLocalBalance(String address) {
-    throw notImplemented();
+    try {
+      return balancesApi.getLocalBalance(address);
+    } catch (IbanNotFoundException e) {
+      throw notFound();
+    }
   }
 
   // Get the 'id'', 'name', and 'bic' of this party

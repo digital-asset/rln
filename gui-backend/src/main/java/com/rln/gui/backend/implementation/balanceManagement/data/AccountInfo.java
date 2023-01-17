@@ -4,12 +4,20 @@
  */
 package com.rln.gui.backend.implementation.balanceManagement.data;
 
+import com.rln.damlCodegen.model.balance.Balance;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
 public class AccountInfo {
+    private String provider;
     private String iban;
     private String assetCode;
+
+  public AccountInfo(Balance balance) {
+    provider = balance.provider;
+    iban = balance.iban;
+    assetCode = balance.currency;
+  }
 }

@@ -5,7 +5,6 @@
 package com.rln.gui.backend.implementation.balanceManagement.cache;
 
 import com.rln.gui.backend.implementation.balanceManagement.data.AccountInfo;
-import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFoundException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -14,16 +13,25 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AccountCache {
 
     private final Map<String, AccountInfo> accounts = new ConcurrentHashMap<>();
+    private final Map<String, String> balanceCidToAddress = new ConcurrentHashMap<>();
 
     public Set<String> getAccounts() {
         return accounts.keySet();
     }
 
-    public Optional<String> getAssetCode(String iban) {
-        return Optional.ofNullable(accounts.get(iban)).map(AccountInfo::getAssetCode);
+    public Optional<AccountInfo> getAccountInfo(String iban) {
+        return Optional.ofNullable(accounts.get(iban));
     }
 
-    public void update(String iban, AccountInfo accountInfo) {
-        accounts.putIfAbsent(iban, accountInfo);
+    public void delete(String contractId) {
+        var iban = balanceCidToAddress.remove(contractId);
+        if (iban != null) {
+            accounts.remove(iban);
+        }
+    }
+
+    public void update(String contractId, AccountInfo accountInfo) {
+        balanceCidToAddress.putIfAbsent(contractId, accountInfo.getIban());
+        accounts.putIfAbsent(accountInfo.getIban(), accountInfo);
     }
 }

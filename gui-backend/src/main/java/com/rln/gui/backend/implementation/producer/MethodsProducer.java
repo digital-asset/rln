@@ -29,12 +29,13 @@ public class MethodsProducer {
 
   @Singleton
   @Produces
-  public BalancesApiImpl getBalancesApiImpl(LiquidBalanceCache liquidBalanceCache,
+  public BalancesApiImpl getBalancesApiImpl(GuiBackendConfiguration guiBackendConfiguration,
+      LiquidBalanceCache liquidBalanceCache,
       IncomingBalanceCache incomingBalanceCache,
       LockedBalanceCache lockedBalanceCache,
       AccountCache accountCache,
       RLNClient rlnClient) {
-    return new BalancesApiImpl(liquidBalanceCache, incomingBalanceCache, lockedBalanceCache, accountCache, rlnClient);
+    return new BalancesApiImpl(guiBackendConfiguration, liquidBalanceCache, incomingBalanceCache, lockedBalanceCache, accountCache, rlnClient);
   }
 
   @Singleton

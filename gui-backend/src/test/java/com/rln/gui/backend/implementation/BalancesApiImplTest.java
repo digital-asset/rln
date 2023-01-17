@@ -5,6 +5,8 @@
 package com.rln.gui.backend.implementation;
 
 
+import com.daml.extensions.testing.comparator.MessageTester;
+import com.daml.ledger.javaapi.data.TreeEvent;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.damlCodegen.model.balance.Balance;
 import com.rln.damlCodegen.model.balance.IncomingBalance;
@@ -21,9 +23,12 @@ import io.restassured.http.ContentType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @TestProfile(GuiBackendTest.class)
@@ -96,6 +101,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
             });
 
         // THEN
+        Assertions.assertEquals(1, balances.size());
         MatcherAssert.assertThat(balances.get(0).getBalance().doubleValue(), Matchers.is(liquidAmount));
 
         LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balanceId.getValue());
@@ -110,7 +116,45 @@ class BalancesApiImplTest extends LedgerBaseTest {
     }
 
     @Test
-    void GIVEN_only_zero_liquid_balance_on_ledger_WHEN_get_request_delete_address_THEN_balance_deleted() throws InvalidProtocolBufferException {
+    void GIVEN_local_balance_on_ledger_WHEN_get_request_local_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
+        double liquidAmount = 100.0;
+        var localBalance = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX,
+            getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+
+        // WHEN
+        List<com.rln.gui.backend.model.Balance> balances = RestAssured
+            .get(String.format("/api/getLocalBalance?address=%s", BalanceTestUtil.IBAN1))
+            .then()
+            .statusCode(200)
+            .extract().body().as(new TypeRef<>() {
+            });
+
+        // THEN
+        MatcherAssert.assertThat(balances, Matchers.hasSize(1));
+        MatcherAssert.assertThat(balances.get(0).getBalance().doubleValue(), Matchers.is(liquidAmount));
+
+        LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, localBalance.getValue());
+    }
+
+    // ==
+    @Test
+    void GIVEN_non_local_balance_on_ledger_WHEN_get_request_local_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
+        double liquidAmount = 100.0;
+        var nonLocalBalance = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX,
+            getSchedulerPartyId(), getCurrentBankPartyId().getValue(), Balance.TEMPLATE_ID);
+
+        // WHEN
+        RestAssured
+            .get(String.format("/api/getLocalBalance?address=%s", BalanceTestUtil.IBAN1))
+            .then().assertThat()
+            .statusCode(404);
+
+        LedgerBaseTest.cleanupContract(getSchedulerPartyId(), Balance.TEMPLATE_ID, nonLocalBalance.getValue());
+    }
+
+    @Test
+    void GIVEN_only_zero_liquid_balance_on_ledger_WHEN_get_request_delete_address_THEN_balance_deleted()
+        throws InvalidProtocolBufferException, InterruptedException {
         // GIVEN 1 balance, 2 locked balances, 2 incoming balances
         double liquidAmount = 0.0;
         BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
@@ -120,6 +164,13 @@ class BalancesApiImplTest extends LedgerBaseTest {
             .then()
             .assertThat()
             .statusCode(204);
+
+        Thread.sleep(1000);
+
+        RestAssured
+            .get(String.format("/api/getLocalBalance?address=%s", BalanceTestUtil.IBAN1))
+            .then().assertThat()
+            .statusCode(404);
     }
 
     @Test
