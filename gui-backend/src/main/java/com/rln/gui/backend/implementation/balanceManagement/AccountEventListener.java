@@ -8,6 +8,7 @@ import com.daml.ledger.javaapi.data.ArchivedEvent;
 import com.daml.ledger.javaapi.data.CreatedEvent;
 import com.daml.ledger.javaapi.data.Event;
 import com.daml.ledger.javaapi.data.Identifier;
+import com.daml.ledger.javaapi.data.codegen.ValueDecoder;
 import com.rln.client.damlClient.RLNClient;
 import com.rln.damlCodegen.model.balance.Balance;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 public class AccountEventListener {
 
+    private static final ValueDecoder<Balance> BALANCE_DECODER = Balance.valueDecoder();
     private static final Logger logger = LoggerFactory.getLogger(AccountEventListener.class);
     private static final Set<Identifier> accountTemplates = Set.of(Balance.TEMPLATE_ID);
     private final AccountCache accountCache;
@@ -33,9 +35,8 @@ public class AccountEventListener {
             accountCache.delete(event.getContractId());
         } else {
             var createdEvent = (CreatedEvent) event;
-            var balance = Balance.fromValue(createdEvent.getArguments());
-            var accountInfo = new AccountInfo(balance.provider, balance.iban, balance.currency);
-            accountCache.update(createdEvent.getContractId(), balance.iban, accountInfo);
+            var accountInfo = new AccountInfo(BALANCE_DECODER.decode(createdEvent.getArguments()));
+            accountCache.update(createdEvent.getContractId(), accountInfo);
         }
     }
 }

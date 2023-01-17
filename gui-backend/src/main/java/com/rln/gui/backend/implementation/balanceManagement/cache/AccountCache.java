@@ -24,17 +24,14 @@ public class AccountCache {
     }
 
     public void delete(String contractId) {
-        // TODO error handling
-        var iban = balanceCidToAddress.get(contractId);
-        balanceCidToAddress.remove(contractId);
+        var iban = balanceCidToAddress.remove(contractId);
         if (iban != null) {
             accounts.remove(iban);
         }
     }
 
-    public void update(String contractId, String iban, AccountInfo accountInfo) {
-        // TODO error handling
-        balanceCidToAddress.putIfAbsent(contractId, iban);
-        accounts.putIfAbsent(iban, accountInfo);
+    public void update(String contractId, AccountInfo accountInfo) {
+        balanceCidToAddress.putIfAbsent(contractId, accountInfo.getIban());
+        accounts.putIfAbsent(accountInfo.getIban(), accountInfo);
     }
 }

@@ -45,15 +45,14 @@ public abstract class BalanceCache<T extends Template> {
         contractIdToBalance.remove(cid);
         if (iban != null) {
             // When null, then the Coid is not mapped to any iban
-            var result = ibanToContractIds.computeIfPresent(iban, (k, v) -> {
-                v.remove(cid);
-                return v;
+            ibanToContractIds.computeIfPresent(iban, (k, contractIdSet) -> {
+                contractIdSet.remove(cid);
+                if (contractIdSet.isEmpty()) {
+                    return null;
+                }
+                return contractIdSet;
             });
-            if (result != null && result.isEmpty()) {
-                ibanToContractIds.remove(iban);
-            }
         }
-        // throw new ContractIdNotFoundException(cid);
     }
 
     // map from iban to total balanceAmount

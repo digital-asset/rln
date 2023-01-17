@@ -130,7 +130,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
             });
 
         // THEN
-        Assertions.assertEquals(1, balances.size());
+        MatcherAssert.assertThat(balances, Matchers.hasSize(1));
         MatcherAssert.assertThat(balances.get(0).getBalance().doubleValue(), Matchers.is(liquidAmount));
 
         LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, localBalance.getValue());
@@ -141,7 +141,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
     void GIVEN_non_local_balance_on_ledger_WHEN_get_request_local_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
         double liquidAmount = 100.0;
         var nonLocalBalance = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX,
-            getSchedulerPartyId(), Optional.of(getCurrentBankPartyId().getValue()), Balance.TEMPLATE_ID);
+            getSchedulerPartyId(), getCurrentBankPartyId().getValue(), Balance.TEMPLATE_ID);
 
         // WHEN
         RestAssured
