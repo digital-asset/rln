@@ -1,0 +1,53 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Trigger.LoanManagement where
+
+import DA.Action (void)
+import DA.Foldable (forA_)
+import DA.Optional
+import Daml.Trigger
+import Model.Balance
+import Model.LoanConfig
+
+
+loanManagementTrigger : Trigger ()
+loanManagementTrigger = Trigger
+    { initialize = pure ()
+    , updateState = \_ -> pure ()
+    , rule = createLoanWhenBelowThreshold
+    , registeredTemplates = RegisteredTemplates [
+        registeredTemplate @Balance,
+        registeredTemplate @LoanConfig
+        ]
+    , heartbeat = None
+    }
+
+createLoanWhenBelowThreshold : Party -> TriggerA () ()
+createLoanWhenBelowThreshold sender = do
+    loanConfigs <- query @LoanConfig
+    balances <- fmap (\x -> snd <$> x) $ query @Balance
+    forA_ loanConfigs \(loanCid, loanConfig) -> do
+        let maybeBalance = listToOptional $ filter (correspondsTo loanConfig) balances
+        case maybeBalance of
+            Some balance | loanConfig.activeLoan < loanConfig.maxLoanThreshold -> do
+                let amount = min loanConfig.maxLoanPerTransaction (loanConfig.maxLoanThreshold - loanConfig.activeLoan)
+                createLoan balance.provider balance.iban (Some amount) loanCid
+            Some balance | loanConfig.activeLoan >= loanConfig.maxLoanThreshold -> do
+                traceA $ "Maximum loan reached for " <> loanConfig.account
+            _ -> traceA $ "No balance found for " <> loanConfig.account
+    traceA "Loan creation completed."
+
+correspondsTo : LoanConfig -> Balance -> Bool
+correspondsTo lc b = b.iban == lc.account && b.provider == lc.provider
+
+createLoan : Party -> Text -> Optional Decimal -> ContractId LoanConfig -> TriggerA () ()
+createLoan provider account loanAmount loanConfigCid = do
+    let balanceKey = BalanceKey with iban = account, provider = provider
+    let cmd = exerciseCmd loanConfigCid (CreateLoan with loanAmount = loanAmount)
+    void $ emitCommands [cmd] []
+
+traceA : (Applicative f, Show b) => b -> f ()
+traceA msg = pure $ trace msg ()

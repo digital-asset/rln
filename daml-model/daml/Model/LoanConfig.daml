@@ -6,42 +6,60 @@
 module Model.LoanConfig where
 
 import Model.Balance
+import DA.Optional
 
 type Amount = Decimal
 type IBAN = Text
 
 -- Loan configuration on account (e.g. IBAN) level
+-- The idea is to provide the {accountHolder} with individual loans up {maxLoanPerTransaction},
+-- as long as {maxLoanThreshold} has not been reached (as tracked by {activeLoan}).
 template LoanConfig
     with
         provider: Party
+        -- ^ Account provider
         accountHolder: Party
+        -- ^ Account holder
         account: IBAN
-        maxLoan: Amount
+        -- ^ Account number
+        maxLoanPerTransaction: Amount
+        -- ^ Defines the limit of a single loan
+        maxLoanThreshold: Amount
+        -- ^ Defines the limit of all loans given to this account
         activeLoan: Amount
-        paybackThreshold: Amount
-        paybackAccount: IBAN
+        -- ^ Sum of currently active loans
+        paybackThreshold: Optional Amount
+        -- ^ Defines at which balance amount the loan will be paid back
 
     where
-        signatory provider, accountHolder
+        -- TODO: multisig (propose/accept)
+        -- signatory provider, accountHolder
+        signatory provider
+        observer accountHolder
         key (BalanceKey with iban = account, provider = provider) : BalanceKey
         maintainer key.provider
 
-        ensure activeLoan <= maxLoan
+        ensure activeLoan >= 0.0
+            && activeLoan <= maxLoanThreshold
+            && maxLoanPerTransaction >= 0.0
+            && maxLoanPerTransaction <= maxLoanThreshold
         
-        let remainingLoanAmount = maxLoan - activeLoan
+        let currentLoanAmount = min maxLoanPerTransaction (maxLoanThreshold - activeLoan)
             balanceKey = BalanceKey accountHolder account
 
         choice CreateLoan: (ContractId LoanConfig, ContractId Balance)
             with
-                loanAmount: Amount
+                loanAmount: Optional Amount
+                -- ^ None implies to grant the current max loan amount
             controller provider
                 do
-                    assertMsg ("Maximum available loan is: " <> show remainingLoanAmount) $ remainingLoanAmount >= loanAmount
+                    let amount = fromOptional currentLoanAmount loanAmount
+                    assertMsg ("Maximum available loan is: " <> show currentLoanAmount) $ currentLoanAmount >= amount
                     balance <- lookupByKey @Balance balanceKey
                     case balance of
                         Some balanceCid -> do
-                            balanceNewCid <- exercise balanceCid Increase with increment = loanAmount
-                            loanConfigCid <- create this with activeLoan = activeLoan + loanAmount
+                            balanceNewCid <- exercise balanceCid Increase with increment = amount
+                            loanConfigCid <- create this with activeLoan = activeLoan + amount
                             pure (loanConfigCid, balanceNewCid)
-                        None -> error $ "No Balance found for BalanceKey: " <> show balanceKey                  
+                        None -> error $ "No Balance found for BalanceKey: " <> show balanceKey
     
