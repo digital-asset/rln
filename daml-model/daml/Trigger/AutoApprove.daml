@@ -8,13 +8,12 @@
 module Trigger.AutoApprove where
 
 import DA.Action (void, when)
-import DA.Foldable (mapA_, forA_)
+import DA.Foldable (forA_)
 import DA.List (head)
 import DA.Optional (fromSome, optionalToList)
 import Daml.Trigger
 import Model.Blacklist
 import Model.Balance
-import Model.LoanConfig
 import Workflow.TransferProposal
 import Workflow.Data
 import DA.Map qualified as Map
@@ -28,8 +27,7 @@ autoApproveTrigger = Trigger
       registeredTemplate @AutoApproveTransferProposalMarker,
       registeredTemplate @TransferProposal,
       registeredTemplate @Blacklist,
-      registeredTemplate @Balance,
-      registeredTemplate @LoanConfig
+      registeredTemplate @Balance
     ]
   , heartbeat = None
   }
