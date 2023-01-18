@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'org.yaml', name: 'snakeyaml', version: '1.19'
+    }
+}
+
 plugins {
     id "base"
     id "java"
@@ -12,6 +21,10 @@ version "2"
 
 def damlOutput = "${buildDir}/daml/rln.dar"
 def damlCodeGenResource = "${buildDir}/daml-codegen-model/src/gen/java"
+def damlYaml = new org.yaml.snakeyaml.Yaml().load( new File("${projectDir}/daml.yaml").newInputStream() )
+project.ext {
+    darVersion = damlYaml.version
+}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11

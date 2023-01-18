@@ -11,10 +11,11 @@ repositories {
     mavenCentral()
 }
 
-def imageVersion = "1.0.0"
+def subVersion = "1"
+def imageVersion = "${project(":daml-model").darVersion}-${subVersion}"
 
 group "com.rln"
-version "2"
+version imageVersion
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -91,7 +92,7 @@ compileJava {
 
 task dockerBuild(type: Exec) {
     workingDir "${rootDir}"
-    commandLine "docker", "build", "-t", "rln-gui-backend:latest", "-t", "rln-gui-backend:${imageVersion}", "-f", "docker/Dockerfile-gui-backend", "."
+    commandLine "docker", "build", "--build-arg", "IMAGE_VERSION=${imageVersion}", "-t", "rln-gui-backend:latest", "-t", "rln-gui-backend:${imageVersion}", "-f", "docker/Dockerfile-gui-backend", "."
     dependsOn compileJava
 }
 
