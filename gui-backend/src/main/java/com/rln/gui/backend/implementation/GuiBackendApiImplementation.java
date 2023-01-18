@@ -46,8 +46,6 @@ public class GuiBackendApiImplementation implements DefaultApi {
     this.balancesApi = balancesApi;
   }
 
-  // Endpoints that we had in the previous API as well:
-
   @Override
   public List<Approval> transferProposal(@Valid TransferProposal transferProposal) {
     return transactionsApi.transferProposal(transferProposal);
@@ -84,16 +82,6 @@ public class GuiBackendApiImplementation implements DefaultApi {
     }
   }
 
-  // Endpoints that are new:
-  // There is a `*` mark if there are any questions wrt the endpoint.
-
-  // * what is the exact purpose of this endpoint?
-  // Inform the participant of a decision on a group of messages
-  @Override
-  public void finalised(@Valid Finalised finalised) {
-    throw notImplemented();
-  }
-
   // Change a balance. This affects the 'hot', 'pessimistic', and 'actual' balances
   @Override
   public List<Balance> changeBalance(String address, @Valid @NotNull BalanceChange balanceChange) {
@@ -114,52 +102,16 @@ public class GuiBackendApiImplementation implements DefaultApi {
     }
   }
 
-  // * what is the body?
-  // Delete a ledger client
+  // Create a new ledger address
   @Override
-  public void delete1(Long clientId, @Valid Long body) {
-    throw notImplemented();
-  }
-
-  // * what is a wallet? how does it relate to addresses?
-  // Delete an address from a wallet
-  @Override
-  public void delete2(Long walletId, String address) {
-    throw notImplemented();
+  public Object post(@Valid @NotNull LedgerAddressDTO ledgerAddressDTO) {
+    return autoApproveApi.post(ledgerAddressDTO);
   }
 
   // Get all the known ledger addresses
   @Override
   public List<LedgerAddressDTO> get() {
     return autoApproveApi.get();
-  }
-
-  // * what is a client?
-  // Get all the clients
-  @Override
-  public List<ClientDTO> get1() {
-    throw notImplemented();
-  }
-
-  // * what kind of party is this about?
-  // Get all the known parties
-  @Override
-  public List<PartyDTO> get2() {
-    throw notImplemented();
-  }
-
-  // * clarification about wallets and addresses
-  // Get all the wallet addresses in the specified wallet
-  @Override
-  public List<WalletAddressDTO> get3(Long walletId) {
-    throw notImplemented();
-  }
-
-  // * clarification about wallets and addresses
-  // Get all the balances for all addresses in a wallet
-  @Override
-  public List<Balance> getBalances(Long walletId) {
-    throw notImplemented();
   }
 
   // * What is a local address? (in our model) do we know whether something is local?
@@ -173,36 +125,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
     }
   }
 
-  // Get the 'id'', 'name', and 'bic' of this party
-  @Override
-  public void getMyParty() {
-    throw notImplemented();
-  }
-
-  // * clarification about wallets
-  // Get all the wallets
-  @Override
-  public List<WalletDTO> getWallets() {
-    throw notImplemented();
-  }
-
-  // Create a new ledger address
-  @Override
-  public Object post(@Valid @NotNull LedgerAddressDTO ledgerAddressDTO) {
-    throw notImplemented();
-  }
-
-  // Create a new client. Returns the internal ID assigned to the new client.
-  @Override
-  public void post1(@Valid @NotNull ClientDTO clientDTO) {
-    throw notImplemented();
-  }
-
-  // Create a new party
-  @Override
-  public void post2(@Valid @NotNull PartyDTO partyDTO) {
-    throw notImplemented();
-  }
+  // Wallet management ----------
 
   // Create a new wallet address
   @Override
@@ -216,13 +139,87 @@ public class GuiBackendApiImplementation implements DefaultApi {
     throw notImplemented();
   }
 
-  // * why couldn't they?
+  // Get all the wallets
+  @Override
+  public List<WalletDTO> getWallets() {
+    throw notImplemented();
+  }
+
+  // Get all the balances for all addresses in a wallet
+  @Override
+  public List<Balance> getBalances(Long walletId) {
+    throw notImplemented();
+  }
+
+  // Get all the wallet addresses in the specified wallet
+  @Override
+  public List<WalletAddressDTO> get3(Long walletId) {
+    throw notImplemented();
+  }
+
+  // Delete an address from a wallet
+  @Override
+  public void delete2(Long walletId, String address) {
+    throw notImplemented();
+  }
+
+  // Client management ----------
+
+  // Create a new client. Returns the internal ID assigned to the new client.
+  @Override
+  public void post1(@Valid @NotNull ClientDTO clientDTO) {
+    throw notImplemented();
+  }
+
+  // Get all the clients
+  @Override
+  public List<ClientDTO> get1() {
+    throw notImplemented();
+  }
+
+  // * what is the body?
+  // Delete a ledger client
+  @Override
+  public void delete1(Long clientId, @Valid Long body) {
+    throw notImplemented();
+  }
+
+  // Party management ----------
+
+  // Get the 'id'', 'name', and 'bic' of this party
+  @Override
+  public void getMyParty() {
+    throw notImplemented();
+  }
+
+  // Create a new party
+  @Override
+  public void post2(@Valid @NotNull PartyDTO partyDTO) {
+    throw notImplemented();
+  }
+
+  // Get all the known parties
+  @Override
+  public List<PartyDTO> get2() {
+    throw notImplemented();
+  }
+
+  // Test endpoints (won't implement) -----
+
   // Test if balances can be retrieved for a proposed wallet address
   @Override
   public Object testWalletAddress(String address,
       @Valid @NotNull WalletAddressTestDTO walletAddressTestDTO) {
     throw notImplemented();
   }
+
+  // Inform the participant of a decision on a group of messages
+  @Override
+  public void finalised(@Valid Finalised finalised) {
+    throw notImplemented();
+  }
+
+  // -------------
 
   private static WebApplicationException notImplemented() {
     return new WebApplicationException(Status.NOT_IMPLEMENTED);

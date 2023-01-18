@@ -68,6 +68,10 @@ public class AutoapproveApiImpl {
     rlnClient.createOrUpdateAutoApproveMarker(parameters);
   }
 
+  public Object post(LedgerAddressDTO ledgerAddressDTO) {
+    return null;
+  }
+
   public List<LedgerAddressDTO> get() {
     var accounts = accountCache.getAccounts();
     ArrayList<LedgerAddressDTO> result = new ArrayList<>(accounts.size());
