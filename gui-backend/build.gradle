@@ -104,4 +104,5 @@ task dockerSave(type: Exec) {
 
 build {
     dependsOn dockerBuild
+    dependsOn ":daml-model:copyDarForStagingTesting"
 }
