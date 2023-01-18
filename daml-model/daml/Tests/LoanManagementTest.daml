@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
 module Tests.LoanManagementTest where
 
 import Trigger.LoanManagement
@@ -19,11 +24,11 @@ setup = do
     let approvers = [cb, bank11, bank12, bank21, bank22]
     pure (banks, schedulerAndAssembler, users)
 
-createLoanWithMaxLoanPerTransaction : Script ()
-createLoanWithMaxLoanPerTransaction = do
+given_balance_below_threshold_then_create_loan : Script ()
+given_balance_below_threshold_then_create_loan = do
     (Banks{..}, ServiceParties{..}, users@UserParties{..}) <- setup
-    aliceBalanceCid <- submit bank11 do 
-        createCmd Balance with 
+    aliceBalanceCid <- submit bank11 do
+        createCmd Balance with
             provider = bank11
             owner = Some users.alice
             iban = "CH123"
@@ -41,10 +46,57 @@ createLoanWithMaxLoanPerTransaction = do
             balancePaybackThreshold = 20000.0
 
     commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
-
     verifyCommandsCount commands 1
     verifyLoanAmount loanConfigCid commands None
 
+given_balance_above_threshold_then_create_payback : Script ()
+given_balance_above_threshold_then_create_payback = do
+    (Banks{..}, ServiceParties{..}, users@UserParties{..}) <- setup
+    aliceBalanceCid <- submit bank11 do
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 21000.0
+
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 0.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+
+    commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
+    verifyCommandsCount commands 1
+    verifyPaybackAmount loanConfigCid commands None
+
+given_balance_at_threshold_then_create_no_loan_and_no_payback : Script ()
+given_balance_at_threshold_then_create_no_loan_and_no_payback = do
+    (Banks{..}, ServiceParties{..}, users@UserParties{..}) <- setup
+    aliceBalanceCid <- submit bank11 do
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 10000.0
+
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 0.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+
+    commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
+    verifyCommandsCount commands 0
 
 -- Helper functions
 
@@ -61,6 +113,15 @@ verifyLoanAmount loanConfigCid commands amount = do
     case exercisedChoice of
       CreateLoan a | a == amount -> Right ()
       CreateLoan a | a /= amount -> Left $ "Wrong loan amount provided. Expected: " <> show amount <> " but granted " <> show a
+      _ -> Left $ "Did not settle on ledger"
+
+verifyPaybackAmount: ContractId LoanConfig -> [Command] -> Optional Decimal -> Script ()
+verifyPaybackAmount loanConfigCid commands amount = do
+  assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
+    assertMsg "ContractId used in exercise is incorrect" $ cid == loanConfigCid
+    case exercisedChoice of
+      PaybackLoan a | a == amount -> Right ()
+      PaybackLoan a | a /= amount -> Left $ "Wrong payback amount provided. Expected: " <> show amount <> " but granted " <> show a
       _ -> Left $ "Did not settle on ledger"
 
 verifyCommandsCount: [Command] -> Int -> Script ()
