@@ -7,7 +7,7 @@ module Trigger.LoanManagement where
 
 import DA.Action (void)
 import DA.Foldable (forA_)
-import DA.Optional
+import DA.Map qualified as Map
 import Daml.Trigger
 import Model.Balance
 import Model.LoanConfig
@@ -28,24 +28,20 @@ loanManagementTrigger = Trigger
 createLoanWhenBelowThreshold : Party -> TriggerA () ()
 createLoanWhenBelowThreshold sender = do
     loanConfigs <- query @LoanConfig
-    balances <- fmap (\x -> snd <$> x) $ query @Balance
+    balances <- query @Balance
+    let balanceMap = Map.fromList $ map ((\x -> ((x.provider, x.iban), x)) . snd) balances
     forA_ loanConfigs \(loanCid, loanConfig) -> do
-        let maybeBalance = listToOptional $ filter (correspondsTo loanConfig) balances
+        let maybeBalance = Map.lookup (loanConfig.provider, loanConfig.account) balanceMap
         case maybeBalance of
             Some balance | loanConfig.activeLoan < loanConfig.maxLoanThreshold -> do
-                let amount = min loanConfig.maxLoanPerTransaction (loanConfig.maxLoanThreshold - loanConfig.activeLoan)
-                createLoan balance.provider balance.iban (Some amount) loanCid
+                createLoan balance.provider balance.iban None loanCid
             Some balance | loanConfig.activeLoan >= loanConfig.maxLoanThreshold -> do
                 traceA $ "Maximum loan reached for " <> loanConfig.account
-            _ -> traceA $ "No balance found for " <> loanConfig.account
+            _ -> traceA $ "No balance found for " <> loanConfig.account -- TODO: retire LC?
     traceA "Loan creation completed."
-
-correspondsTo : LoanConfig -> Balance -> Bool
-correspondsTo lc b = b.iban == lc.account && b.provider == lc.provider
 
 createLoan : Party -> Text -> Optional Decimal -> ContractId LoanConfig -> TriggerA () ()
 createLoan provider account loanAmount loanConfigCid = do
-    let balanceKey = BalanceKey with iban = account, provider = provider
     let cmd = exerciseCmd loanConfigCid (CreateLoan with loanAmount = loanAmount)
     void $ emitCommands [cmd] []
 

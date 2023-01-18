@@ -19,7 +19,6 @@ setup = do
     let approvers = [cb, bank11, bank12, bank21, bank22]
     pure (banks, schedulerAndAssembler, users)
 
-
 createLoanWithMaxLoanPerTransaction : Script ()
 createLoanWithMaxLoanPerTransaction = do
     (Banks{..}, ServiceParties{..}, users@UserParties{..}) <- setup
@@ -44,8 +43,7 @@ createLoanWithMaxLoanPerTransaction = do
     commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
 
     verifyCommandsCount commands 1
-    verifyLoanAmount loanConfigCid commands (Some 1000.0)
-    -- verifyBalance aliceBalanceCid commands 1000.0
+    verifyLoanAmount loanConfigCid commands None
 
 
 -- Helper functions
@@ -63,15 +61,6 @@ verifyLoanAmount loanConfigCid commands amount = do
     case exercisedChoice of
       CreateLoan a | a == amount -> Right ()
       CreateLoan a | a /= amount -> Left $ "Wrong loan amount provided. Expected: " <> show amount <> " but granted " <> show a
-      _ -> Left $ "Did not settle on ledger"
-
-verifyBalance: ContractId Balance -> [Command] -> Decimal -> Script ()
-verifyBalance balanceCid commands amount = do
-  assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
-    assertMsg "ContractId used in exercise is incorrect" $ cid == balanceCid
-    case exercisedChoice of
-      Increase a | a == amount -> Right ()
-      Increase a | a /= amount -> Left $ "Wrong balance increase. Expected: " <> show amount <> " but granted " <> show a
       _ -> Left $ "Did not settle on ledger"
 
 verifyCommandsCount: [Command] -> Int -> Script ()

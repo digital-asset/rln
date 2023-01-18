@@ -32,8 +32,6 @@ template LoanConfig
         -- ^ Defines at which balance amount the loan will be paid back
 
     where
-        -- TODO: multisig (propose/accept)
-        -- signatory provider, accountHolder
         signatory provider
         observer accountHolder
         key (BalanceKey with iban = account, provider = provider) : BalanceKey
@@ -62,4 +60,4 @@ template LoanConfig
                             loanConfigCid <- create this with activeLoan = activeLoan + amount
                             pure (loanConfigCid, balanceNewCid)
                         None -> error $ "No Balance found for BalanceKey: " <> show balanceKey
-    
+                        
