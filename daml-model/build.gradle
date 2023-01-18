@@ -19,12 +19,12 @@ repositories {
 group "com.rln"
 version "2"
 
-def damlOutput = "${buildDir}/daml/rln.dar"
-def damlCodeGenResource = "${buildDir}/daml-codegen-model/src/gen/java"
 def damlYaml = new org.yaml.snakeyaml.Yaml().load( new File("${projectDir}/daml.yaml").newInputStream() )
 project.ext {
     darVersion = damlYaml.version
 }
+def damlOutput = "${buildDir}/daml/rln-${darVersion}.dar"
+def damlCodeGenResource = "${buildDir}/daml-codegen-model/src/gen/java"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
