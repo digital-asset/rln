@@ -36,9 +36,9 @@ createLoanWithMaxLoanPerTransaction = do
             accountHolder = users.alice
             account = "CH123"
             activeLoan = 0.0
-            maxLoanPerTransaction = 1000.0
+            balanceLoanThreshold = 1000.0
             maxLoanThreshold = 10000.0
-            paybackThreshold = None
+            balancePaybackThreshold = 20000.0
 
     commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
 

@@ -11,9 +11,12 @@ import DA.Optional
 type Amount = Decimal
 type IBAN = Text
 
--- Loan configuration on account (e.g. IBAN) level
--- The idea is to provide the {accountHolder} with individual loans up {maxLoanPerTransaction},
--- as long as {maxLoanThreshold} has not been reached (as tracked by {activeLoan}).
+{-
+Loan configuration on account (e.g. Provider/IBAN) level
+The idea is to provide the {accountHolder} with individual loans 
+up until {balanceLoanThreshold} is reached and as long as {maxLoanThreshold} 
+has not been reached (as tracked by {activeLoan}).
+-}
 template LoanConfig
     with
         provider: Party
@@ -22,14 +25,14 @@ template LoanConfig
         -- ^ Account holder
         account: IBAN
         -- ^ Account number
-        maxLoanPerTransaction: Amount
-        -- ^ Defines the limit of a single loan
+        balanceLoanThreshold: Amount
+        -- ^ Defines the balance up until which loans will be provided
         maxLoanThreshold: Amount
         -- ^ Defines the limit of all loans given to this account
         activeLoan: Amount
         -- ^ Sum of currently active loans
-        paybackThreshold: Optional Amount
-        -- ^ Defines at which balance amount the loan will be paid back
+        balancePaybackThreshold: Amount
+        -- ^ Defines above which balance amount the loan will be paid back
 
     where
         signatory provider
@@ -39,25 +42,64 @@ template LoanConfig
 
         ensure activeLoan >= 0.0
             && activeLoan <= maxLoanThreshold
-            && maxLoanPerTransaction >= 0.0
-            && maxLoanPerTransaction <= maxLoanThreshold
+            && balanceLoanThreshold >= 0.0
+            && balanceLoanThreshold <= maxLoanThreshold
+            && balancePaybackThreshold > maxLoanThreshold 
         
-        let currentLoanAmount = min maxLoanPerTransaction (maxLoanThreshold - activeLoan)
+        let currentMaxLoanAmount balance = min (max (balanceLoanThreshold - balance) 0.0) (maxLoanThreshold - activeLoan)
+            currentMaxPaybackAmount balance = min (max (balance - balancePaybackThreshold) 0.0) activeLoan
             balanceKey = BalanceKey accountHolder account
+            getBalance = do
+                visible <- visibleByKey @Balance balanceKey
+                if visible then error $ "No Balance found for BalanceKey: " <> show balanceKey
+                else do
+                    (balanceCid, balance) <- fetchByKey @Balance balanceKey
+                    return (balanceCid, balance)
 
+        {-
+        Increases balance of associated account and adds new loan to active loans.
+
+        For example: 
+        - Account A with Balance = 50.0 
+        - LoanConfig with balanceLoanThreshold = 200.0, maxLoanThreshold = 1000.0, activeLoan = 0.0
+        > In this case, account A would be funded with 150.0 (resulting in a total balance of 200.0) 
+        > in order to reach the targeted balanceLoanThreshold. Consequently, the new activeLoan = 150.0.
+        > In contrast, if prior to the loan giving activeLoan = 1000.0, no loan would be given as 
+        > the maxLoanThreshold has already been reached.
+        -}
         choice CreateLoan: (ContractId LoanConfig, ContractId Balance)
             with
                 loanAmount: Optional Amount
                 -- ^ None implies to grant the current max loan amount
             controller provider
                 do
-                    let amount = fromOptional currentLoanAmount loanAmount
-                    assertMsg ("Maximum available loan is: " <> show currentLoanAmount) $ currentLoanAmount >= amount
-                    balance <- lookupByKey @Balance balanceKey
-                    case balance of
-                        Some balanceCid -> do
-                            balanceNewCid <- exercise balanceCid Increase with increment = amount
-                            loanConfigCid <- create this with activeLoan = activeLoan + amount
-                            pure (loanConfigCid, balanceNewCid)
-                        None -> error $ "No Balance found for BalanceKey: " <> show balanceKey
-                        
+                    (balanceCid, balance) <- getBalance
+                    let maxAmount = currentMaxLoanAmount balance.amount
+                    let amount = fromOptional maxAmount loanAmount
+                    assertMsg ("Maximum available loan is: " <> show maxAmount) $ maxAmount >= amount
+                    balanceNewCid <- exercise balanceCid Increase with increment = amount
+                    loanConfigCid <- create this with activeLoan = activeLoan + amount
+                    pure (loanConfigCid, balanceNewCid)
+
+        {-
+        Decreases balance of associated account and subtracts new loan from active loans.
+
+        For example: 
+        - Account A with Balance = 1050.0 
+        - LoanConfig with balancePaybackThreshold = 1000.0, activeLoan = 550.0
+        > In this case, account A would be decreased by 50.0 (resulting in a total balance of 1000.0), 
+        > in order to pay back the loan partially and reducing the active loan to 500.0
+        -}
+        choice PaybackLoan: (ContractId LoanConfig, ContractId Balance)
+            with
+                paybackAmount: Optional Amount
+                -- ^ None implies to pay back the max possible
+            controller provider
+                do
+                    (balanceCid, balance) <- getBalance
+                    let maxAmount = currentMaxPaybackAmount balance.amount
+                    let amount = fromOptional maxAmount paybackAmount
+                    assertMsg ("Maximum available payback is: " <> show maxAmount) $ maxAmount >= amount
+                    balanceNewCid <- exercise balanceCid Decrease with decrement = amount
+                    loanConfigCid <- create this with activeLoan = activeLoan - amount
+                    pure (loanConfigCid, balanceNewCid)
