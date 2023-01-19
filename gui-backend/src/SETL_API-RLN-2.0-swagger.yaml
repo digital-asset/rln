@@ -540,7 +540,9 @@ paths:
         '200':
           description: Success response
           content:
-            application/json: {}
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyDTO'
   /api/test/kafka/pause:
     post:
       description: TEST ONLY - pause collection of messages from Kafka

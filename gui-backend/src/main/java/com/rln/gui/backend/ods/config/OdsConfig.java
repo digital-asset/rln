@@ -20,7 +20,7 @@ public class OdsConfig {
                                                          TransferProposalRepository transferProposals,
                                                          GuiBackendConfiguration backendConfiguration,
                                                          RLNClient ledger) {
-    var proposalManager = new TransferProposalManager(transferProposals, backendConfiguration.partyId(), ledger);
+    var proposalManager = new TransferProposalManager(transferProposals, backendConfiguration.partyDamlId(), ledger);
     proposalManager.run();
     return proposalManager;
   }

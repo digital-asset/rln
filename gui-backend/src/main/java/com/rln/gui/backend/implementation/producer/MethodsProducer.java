@@ -1,6 +1,7 @@
 package com.rln.gui.backend.implementation.producer;
 
 import com.rln.client.damlClient.RLNClient;
+import com.rln.client.damlClient.partyManagement.PartyManager;
 import com.rln.client.damlClient.partyManagement.RandomShardPartyPicker;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AutoApproveCache;
@@ -11,6 +12,7 @@ import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.implementation.converter.TransferProposalToApiTypeConverter;
 import com.rln.gui.backend.implementation.methods.AutoapproveApiImpl;
 import com.rln.gui.backend.implementation.methods.BalancesApiImpl;
+import com.rln.gui.backend.implementation.methods.PartyApiImpl;
 import com.rln.gui.backend.implementation.methods.TransactionsApiImpl;
 import com.rln.gui.backend.ods.TransferProposalRepository;
 import javax.enterprise.inject.Produces;
@@ -25,6 +27,14 @@ public class MethodsProducer {
   @Produces
   public AutoapproveApiImpl getAutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration, RLNClient rlnClient, AutoApproveCache autoApproveCache, AccountCache accountCache) {
     return new AutoapproveApiImpl(guiBackendConfiguration, autoApproveCache, accountCache, rlnClient);
+  }
+
+  @Singleton
+  @Produces
+  public PartyApiImpl getPartyApiImpl(
+      GuiBackendConfiguration guiBackendConfiguration,
+      PartyManager partyManager) {
+    return new PartyApiImpl(guiBackendConfiguration, partyManager);
   }
 
   @Singleton

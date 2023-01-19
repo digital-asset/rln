@@ -55,7 +55,7 @@ public class TransactionsApiImpl {
     var contractId = CompoundUniqueIdUtil.parseSubjectAndContractId(transactionStatusUpdate.getId())._2;
     ApproveRejectProposalChoiceParameters parameters =
         new ApproveRejectProposalChoiceParameters(
-            guiBackendConfiguration.partyId(),
+            guiBackendConfiguration.partyDamlId(),
             new ContractId(contractId),
             approved,
             GuiBackendConstants.DEFAULT_GUI_BACKEND_REASON,
@@ -102,7 +102,7 @@ public class TransactionsApiImpl {
 
   private InitiateTransfer translateToInitiateTransfer(TransferProposal createTransaction) {
     var payload = createTransaction.getPayload();
-    var initiator = guiBackendConfiguration.partyId();
+    var initiator = guiBackendConfiguration.partyDamlId();
     var groupId = createTransaction.getGroupId();
     var scheduler = schedulerRandomShardPartyPicker.pickRandomShardParty();
     return new InitiateTransfer(groupId, initiator, scheduler, payload);

@@ -23,7 +23,7 @@ public class PartyManagementProducer {
   @Produces
   public BicPartyIdMapper getBicPartyIdMapper(RLNClient rlnClient, GuiBackendConfiguration guiBackendConfiguration) {
     logger.info("Created BicPartyIdMapper with RLNClient {}", rlnClient);
-    return new BicPartyIdMapper(rlnClient, guiBackendConfiguration.partyId());
+    return new BicPartyIdMapper(rlnClient, guiBackendConfiguration.partyDamlId());
   }
 
   @ApplicationScoped

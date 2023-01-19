@@ -89,6 +89,9 @@ public class LedgerBaseTest {
           DAR_PATH,
           (client, channel) -> {},
           false);
+  protected static final String BASEURL = "baseurl";
+  protected static final String PARTY_NAME = "PartyName";
+  protected static final long PARTY_ID = 1L;
   private static Party currentBankPartyId;
   private static Party schedulerPartyId;
   private static Party assemblerPartyId;
@@ -102,10 +105,24 @@ public class LedgerBaseTest {
   @ApplicationScoped
   @Mock
   public static class MockedGuiBackendConfiguration implements GuiBackendConfiguration {
+    @Override
+    public Long partyId() {
+      return PARTY_ID;
+    }
 
     @Override
-    public String partyId() {
+    public String partyDamlId() {
       return currentBankPartyId.getValue();
+    }
+
+    @Override
+    public String partyName() {
+      return PARTY_NAME;
+    }
+
+    @Override
+    public String baseUrl() {
+      return BASEURL;
     }
 
     @Override

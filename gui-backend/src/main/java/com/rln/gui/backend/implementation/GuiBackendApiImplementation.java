@@ -5,6 +5,7 @@ import com.rln.gui.backend.implementation.balanceManagement.exception.NonZeroBal
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.implementation.methods.AutoapproveApiImpl;
 import com.rln.gui.backend.implementation.methods.BalancesApiImpl;
+import com.rln.gui.backend.implementation.methods.PartyApiImpl;
 import com.rln.gui.backend.implementation.methods.TransactionsApiImpl;
 import com.rln.gui.backend.model.Approval;
 import com.rln.gui.backend.model.ApprovalProperties;
@@ -20,7 +21,6 @@ import com.rln.gui.backend.model.TransferProposal;
 import com.rln.gui.backend.model.WalletAddressDTO;
 import com.rln.gui.backend.model.WalletAddressTestDTO;
 import com.rln.gui.backend.model.WalletDTO;
-import java.math.BigDecimal;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -33,17 +33,19 @@ public class GuiBackendApiImplementation implements DefaultApi {
   private final AutoapproveApiImpl autoApproveApi;
   private final TransactionsApiImpl transactionsApi;
   private final BalancesApiImpl balancesApi;
+  private final PartyApiImpl partyApi;
 
   public GuiBackendApiImplementation(
       GuiBackendConfiguration configuration,
       AutoapproveApiImpl autoApproveApi,
       TransactionsApiImpl transactionsApi,
-      BalancesApiImpl balancesApi) {
+      BalancesApiImpl balancesApi,
+      PartyApiImpl partyApi) {
     this.configuration = configuration;
-
     this.autoApproveApi = autoApproveApi;
     this.transactionsApi = transactionsApi;
     this.balancesApi = balancesApi;
+    this.partyApi = partyApi;
   }
 
   @Override
@@ -85,7 +87,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
   // Change a balance. This affects the 'hot', 'pessimistic', and 'actual' balances
   @Override
   public List<Balance> changeBalance(String address, @Valid @NotNull BalanceChange balanceChange) {
-    return balancesApi.changeBalance(configuration.partyId(), address, balanceChange);
+    return balancesApi.changeBalance(configuration.partyDamlId(), address, balanceChange);
   }
 
   // * what is a ledger address?
@@ -94,7 +96,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
   public void delete(String address) {
     try {
       // Provider is always the party the GUI backend is acting in the name of
-      balancesApi.delete(configuration.partyId(), address);
+      balancesApi.delete(configuration.partyDamlId(), address);
     } catch (IbanNotFoundException e) {
       throw notFound();
     } catch (NonZeroBalanceException e) {
@@ -188,8 +190,8 @@ public class GuiBackendApiImplementation implements DefaultApi {
 
   // Get the 'id'', 'name', and 'bic' of this party
   @Override
-  public void getMyParty() {
-    throw notImplemented();
+  public PartyDTO getMyParty() {
+    return partyApi.getMyParty();
   }
 
   // Create a new party

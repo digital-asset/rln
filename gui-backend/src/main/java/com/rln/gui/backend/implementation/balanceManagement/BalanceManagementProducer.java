@@ -27,7 +27,7 @@ public class BalanceManagementProducer {
                                                         BalanceEventProcessor processor,
                                                         GuiBackendConfiguration guiConfig) {
         logger.info("Created BalanceEventListener");
-        return new BalanceEventListener(rlnClient, processor, guiConfig.partyId());
+        return new BalanceEventListener(rlnClient, processor, guiConfig.partyDamlId());
     }
 
     @ApplicationScoped
@@ -46,7 +46,7 @@ public class BalanceManagementProducer {
         GuiBackendConfiguration guiConfig,
         AccountCache cache) {
         logger.info("Created AccountEventListener");
-        return new AccountEventListener(rlnClient, guiConfig.partyId(), cache);
+        return new AccountEventListener(rlnClient, guiConfig.partyDamlId(), cache);
     }
 
     @Dependent
@@ -55,7 +55,7 @@ public class BalanceManagementProducer {
         GuiBackendConfiguration guiConfig,
         AutoApproveCache cache) {
         logger.info("Created AutoApproveEventListener");
-        return new AutoApproveEventListener(rlnClient, guiConfig.partyId(), cache);
+        return new AutoApproveEventListener(rlnClient, guiConfig.partyDamlId(), cache);
     }
 
 
