@@ -104,7 +104,7 @@ public class BalancesApiImpl {
     }
 
     private Predicate<AccountInfo> isLocal() {
-        return info -> info.getProvider().equals(guiBackendConfiguration.partyId());
+        return info -> info.getProvider().equals(guiBackendConfiguration.partyDamlId());
     }
 
     public void delete(String provider, String address) throws NonZeroBalanceException {

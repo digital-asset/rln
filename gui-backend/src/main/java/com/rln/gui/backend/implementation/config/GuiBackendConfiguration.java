@@ -10,7 +10,10 @@ import java.nio.file.Path;
 
 @ConfigMapping(prefix = "rln.gui.backend")
 public interface GuiBackendConfiguration {
-  String partyId();
+  Long partyId();
+  String partyDamlId();
+  String partyName();
+  String baseUrl();
   Path schedulerShardPartiesConfig();
   int numberOfLedgerSubmitterThreads();
   int ledgerBatchSubmissionMaxMsec();

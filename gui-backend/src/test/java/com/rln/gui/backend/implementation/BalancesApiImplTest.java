@@ -5,8 +5,6 @@
 package com.rln.gui.backend.implementation;
 
 
-import com.daml.extensions.testing.comparator.MessageTester;
-import com.daml.ledger.javaapi.data.TreeEvent;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.damlCodegen.model.balance.Balance;
 import com.rln.damlCodegen.model.balance.IncomingBalance;
@@ -23,12 +21,10 @@ import io.restassured.http.ContentType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.inject.Inject;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @TestProfile(GuiBackendTest.class)

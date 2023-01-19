@@ -11,7 +11,6 @@ import com.rln.client.damlClient.AutoApproveParameters.ApprovalMode;
 import com.rln.client.damlClient.RLNClient;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker.Contract;
-import com.rln.damlCodegen.workflow.transferproposal.AutoApproveType;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.FullAuto;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxAmount;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
@@ -59,7 +58,7 @@ public class AutoapproveApiImpl {
     // What happens, when username is NOT the current party (in the name of which the GUI backend is running)?
     var parameters = new AutoApproveParameters(
       now,
-      guiBackendConfiguration.partyId(),
+      guiBackendConfiguration.partyDamlId(),
       autoApprove.getAddress(),
       markerId,
       convertApprovalMode(autoApprove),
