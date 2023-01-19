@@ -1,15 +1,16 @@
 package com.rln.gui.backend.implementation;
 
+import com.rln.gui.backend.implementation.methods.LedgerBaseTest;
+import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import com.rln.gui.backend.model.PartyDTO;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
-import io.restassured.common.mapper.TypeRef;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
-@TestProfile(GuiBackendTest.class)
+@TestProfile(GuiBackendTestProfile.class)
 @QuarkusTest
 class PartyApiImplTest extends LedgerBaseTest {
 
