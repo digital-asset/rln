@@ -15,15 +15,13 @@ class PartyApiImplTest extends LedgerBaseTest {
 
   @Test
   void getMyParty() {
-    PartyDTO expected = new PartyDTO(LedgerBaseTest.BASEURL, LedgerBaseTest.BANK_BIC, LedgerBaseTest.PARTY_ID, LedgerBaseTest.PARTY_NAME);
+    var result = RestAssured
+      .get("/api/parties/me")
+      .then()
+      .statusCode(200)
+      .extract().body().as(PartyDTO.class);
 
-    PartyDTO result = RestAssured.given()
-        .when().get("/api/parties/me")
-        .then()
-        .statusCode(200)
-        .extract().body().as(new TypeRef<>() {
-        });
-
+    var expected = new PartyDTO(BASEURL, BANK_BIC, PARTY_ID, PARTY_NAME);
     MatcherAssert.assertThat(result, Matchers.is(expected));
   }
 }
