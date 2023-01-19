@@ -6,7 +6,9 @@ import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.implementation.methods.AutoapproveApiImpl;
 import com.rln.gui.backend.implementation.methods.BalancesApiImpl;
 import com.rln.gui.backend.implementation.methods.PartyApiImpl;
+import com.rln.gui.backend.implementation.methods.SetlPartiesConfigFileNotFoundException;
 import com.rln.gui.backend.implementation.methods.TransactionsApiImpl;
+import com.rln.gui.backend.implementation.producer.ConverterProducer;
 import com.rln.gui.backend.model.Approval;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.Balance;
@@ -21,13 +23,18 @@ import com.rln.gui.backend.model.TransferProposal;
 import com.rln.gui.backend.model.WalletAddressDTO;
 import com.rln.gui.backend.model.WalletAddressTestDTO;
 import com.rln.gui.backend.model.WalletDTO;
+import java.io.IOException;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GuiBackendApiImplementation implements DefaultApi {
+
+  private final Logger logger = LoggerFactory.getLogger(GuiBackendApiImplementation.class);
 
   private final GuiBackendConfiguration configuration;
   private final AutoapproveApiImpl autoApproveApi;
@@ -203,7 +210,12 @@ public class GuiBackendApiImplementation implements DefaultApi {
   // Get all the known parties
   @Override
   public List<PartyDTO> get2() {
-    throw notImplemented();
+    try {
+      return partyApi.getParties();
+    } catch (SetlPartiesConfigFileNotFoundException e) {
+      logger.error("Unable to list known parties", e);
+      throw internalServerError();
+    }
   }
 
   // Test endpoints (won't implement) -----
@@ -233,5 +245,9 @@ public class GuiBackendApiImplementation implements DefaultApi {
 
   private static WebApplicationException forbidden() {
     return new WebApplicationException(Status.FORBIDDEN);
+  }
+
+  private static WebApplicationException internalServerError() {
+    return new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
   }
 }

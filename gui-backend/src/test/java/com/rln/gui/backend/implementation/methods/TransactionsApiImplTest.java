@@ -2,7 +2,7 @@
  * Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.rln.gui.backend.implementation;
+package com.rln.gui.backend.implementation.methods;
 
 import com.daml.ledger.javaapi.data.ContractId;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -14,6 +14,7 @@ import com.rln.damlCodegen.workflow.transferproposal.RejectedTransferProposal;
 import com.rln.damlCodegen.workflow.transferproposal.TransferProposal;
 import com.rln.gui.backend.implementation.common.CompoundUniqueIdUtil.Subject;
 import com.rln.gui.backend.implementation.common.GuiBackendConstants;
+import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import com.rln.gui.backend.model.Transaction;
 import com.rln.gui.backend.ods.TransferProposalManager;
 import io.quarkus.test.junit.QuarkusTest;
@@ -29,7 +30,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-@TestProfile(GuiBackendTest.class)
+@TestProfile(GuiBackendTestProfile.class)
 @QuarkusTest
 class TransactionsApiImplTest extends LedgerBaseTest {
 

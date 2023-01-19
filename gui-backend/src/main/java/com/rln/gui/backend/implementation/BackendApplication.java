@@ -9,6 +9,7 @@ import com.rln.gui.backend.implementation.balanceManagement.AccountEventListener
 import com.rln.gui.backend.implementation.balanceManagement.AutoApproveEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.BalanceEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
+import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.ods.TransferProposalManager;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
@@ -42,9 +43,13 @@ public class BackendApplication {
         @Inject
         BicPartyIdMapper bicPartyIdMapper;
 
+        @Inject
+        GuiBackendConfiguration configuration;
+
         @Override
         public int run(String... args) {
             System.out.println("Backend application running.");
+            configuration.partiesConfig().forEach(i -> System.out.println(i));
             Quarkus.waitForExit();
             return 0;
         }

@@ -1,0 +1,146 @@
+[
+  {
+    "id": 1,
+    "baseUrl": "http:\/\/cello-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Cello Bank"
+  },
+  {
+    "id": 2,
+    "baseUrl": "http:\/\/bankofamerica-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Bank of America"
+  },
+  {
+    "id": 3,
+    "baseUrl": "http:\/\/hsbcny-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "HSBC, New York"
+  },
+  {
+    "id": 4,
+    "baseUrl": "http:\/\/bankofnewyork-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Bank of New York"
+  },
+  {
+    "id": 5,
+    "baseUrl": "http:\/\/wellsfargo-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Wells Fargo"
+  },
+  {
+    "id": 6,
+    "baseUrl": "http:\/\/usbank-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "US Bank"
+  },
+  {
+    "id": 7,
+    "baseUrl": "http:\/\/tdbank-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "TD Bank"
+  },
+  {
+    "id": 8,
+    "baseUrl": "http:\/\/swift-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "SWIFT"
+  },
+  {
+    "id": 9,
+    "baseUrl": "http:\/\/mastercard-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Mastercard"
+  },
+  {
+    "id": 10,
+    "baseUrl": "http:\/\/truist-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Truist"
+  },
+  {
+    "id": 11,
+    "baseUrl": "http:\/\/pncbank-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "PNC Bank"
+  },
+  {
+    "id": 12,
+    "baseUrl": "http:\/\/nyic-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Federal Reserve NY"
+  },
+  {
+    "id": 13,
+    "baseUrl": "http:\/\/corp1-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Corp1"
+  },
+  {
+    "id": 14,
+    "baseUrl": "http:\/\/corp2-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Corp2"
+  },
+  {
+    "id": 15,
+    "baseUrl": "http:\/\/corp3-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Corp3"
+  },
+  {
+    "id": 16,
+    "baseUrl": "http:\/\/corp4-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Corp4"
+  },
+  {
+    "id": 17,
+    "baseUrl": "http:\/\/corp5-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Corp5"
+  },
+  {
+    "id": 18,
+    "baseUrl": "http:\/\/rlndemo-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Rln Demo"
+  },
+  {
+    "id": 19,
+    "baseUrl": "http:\/\/rlndemo3-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Rln Demo 3"
+  },
+  {
+    "id": 20,
+    "baseUrl": "http:\/\/rlndemo4-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Rln Demo 4"
+  },
+  {
+    "id": 21,
+    "baseUrl": "http:\/\/rlnbranch-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Rln Branch"
+  },
+  {
+    "id": 22,
+    "baseUrl": "http:\/\/cellohk-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Cello HK"
+  },
+  {
+    "id": 23,
+    "baseUrl": "http:\/\/bonysg-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "BoNY, SG"
+  },
+  {
+    "id": 24,
+    "baseUrl": "http:\/\/deloitte-participant:8080\/api\/",
+    "damlPartyId": "partyId",
+    "name": "Deloitte"
+  }
+]

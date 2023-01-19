@@ -2,7 +2,7 @@
  * Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.rln.gui.backend.implementation;
+package com.rln.gui.backend.implementation.methods;
 
 import com.daml.ledger.javaapi.data.ContractId;
 import com.daml.ledger.javaapi.data.DamlRecord;
@@ -16,6 +16,7 @@ import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxA
 import com.rln.gui.backend.implementation.balanceManagement.AccountEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.AutoApproveEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.BalanceTestUtil;
+import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.ApprovalProperties.ApprovalModeEnum;
 import com.rln.gui.backend.model.LedgerAddressDTO;
@@ -31,7 +32,7 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-@TestProfile(GuiBackendTest.class)
+@TestProfile(GuiBackendTestProfile.class)
 @QuarkusTest
 class AutoapproveApiImplTest extends LedgerBaseTest {
 
