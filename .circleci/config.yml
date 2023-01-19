@@ -15,6 +15,21 @@ commands:
             curl -sSL https://get.daml.com/ | sh /dev/stdin << parameters.version >>
             # idea from https://circleci.com/docs/2.0/env-vars/
             >> $BASH_ENV echo 'export PATH="$HOME/.daml/bin:$PATH"'
+
+  package_quarkus_app:
+    description: "Packaging a Quarkus Application"
+    parameters:
+      application_name:
+        type: string
+      archive:
+        type: string
+    steps:
+      - run:
+          name: Creating Tarball
+          working_directory: << parameters.application_name >>/build
+          command: |
+            zip -r << parameters.archive >> quarkus-app
+
 jobs:
   test_daml_java:
     parameters:
@@ -73,6 +88,33 @@ jobs:
             --detect.notices.report=false \
             --detect.timeout=3600
 
+
+  release:
+    parameters:
+      daml_sdk_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2022.04.2
+    steps:
+      - checkout
+      - install_sdk:
+          version: << parameters.daml_sdk_version >>
+      - run:
+          name: Building Artifacts
+          command: |
+            ./gradlew clean build
+      - package_quarkus_app:
+          application_name: "gui-backend"
+          archive: "gui-backend.zip"
+      - package_quarkus_app:
+          application_name: "integration-adapter"
+          archive: "integration-adapter.zip"
+
+parameters:
+  do_release:
+    type: boolean
+    default: false
+
 workflows:
   checkout-build-test:
     jobs:
@@ -82,3 +124,9 @@ workflows:
           daml_sdk_version: "2.5.0"
           context:
             - blackduck
+  release:
+    when: << pipeline.parameters.do_release >>
+    jobs:
+      - release:
+          daml_sdk_version: "2.5.0"
+          context: npn-publish
