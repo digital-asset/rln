@@ -2,7 +2,7 @@
  * Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.rln.gui.backend.implementation;
+package com.rln.gui.backend.implementation.methods;
 
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -13,6 +13,7 @@ import com.rln.gui.backend.implementation.balanceManagement.AccountEventListener
 import com.rln.gui.backend.implementation.balanceManagement.BalanceEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.BalanceTestUtil;
 import com.rln.gui.backend.implementation.balanceManagement.data.BalanceType;
+import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
@@ -27,7 +28,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-@TestProfile(GuiBackendTest.class)
+@TestProfile(GuiBackendTestProfile.class)
 @QuarkusTest
 class BalancesApiImplTest extends LedgerBaseTest {
 

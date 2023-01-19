@@ -5,7 +5,6 @@
 package com.rln.gui.backend.implementation.config;
 
 import io.smallrye.config.ConfigMapping;
-
 import java.nio.file.Path;
 
 @ConfigMapping(prefix = "rln.gui.backend")
@@ -18,4 +17,6 @@ public interface GuiBackendConfiguration {
   int numberOfLedgerSubmitterThreads();
   int ledgerBatchSubmissionMaxMsec();
   int ledgerBatchSubmissionMaxSize();
+
+  Path partiesConfig();
 }
