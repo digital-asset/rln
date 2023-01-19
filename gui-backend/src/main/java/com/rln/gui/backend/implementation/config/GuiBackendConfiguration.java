@@ -5,9 +5,7 @@
 package com.rln.gui.backend.implementation.config;
 
 import io.smallrye.config.ConfigMapping;
-import io.smallrye.config.WithConverter;
 import java.nio.file.Path;
-import java.util.List;
 
 @ConfigMapping(prefix = "rln.gui.backend")
 public interface GuiBackendConfiguration {
