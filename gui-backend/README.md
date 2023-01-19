@@ -34,6 +34,22 @@ rln.gui.backend.ledger-batch-submission-max-msec=250
 rln.gui.backend.ledger-batch-submission-max-size=50
 ```
 
+## Versioning
+
+- Dar version is like 1.0.0
+- Jar version is: [DAR-VERSION]-[Subversion]
+  - For example: 1.0.0-1
+- Docker image version is a label, the same as the Jar version
+
+### Creating a new version
+
+1. Dar change: modify `src/main/daml.yaml`'s Dar version
+2. Java change: modify `build.gradle` / subversion
+
+Use `gradle clean build -x test` to build the image.
+Use `gradle clean build dockerSave -x test` to get `build/rln-adapter-docker.img`.
+With `docker images | grep rln`, one can check the available images.
+
 
 ## Testing
 1. In gui-backend/examples/canton, execute:

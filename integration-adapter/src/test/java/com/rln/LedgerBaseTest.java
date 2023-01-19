@@ -34,7 +34,7 @@ public class LedgerBaseTest extends CommonBaseTest {
 
     public static final String SANDBOX_PORT = "6863";
 
-    protected static final Path DAR_PATH = Path.of("../daml-model/build/daml/rln.dar").toAbsolutePath();
+    protected static final Path DAR_PATH = Path.of("../stagingtest/canton/rln.dar").toAbsolutePath();
     protected static final Path DAML_ROOT = Path.of("../daml-model").toAbsolutePath();
     protected static final String TEST_BANK_BICS_MODULE = "Tests.BankBICsTest";
     protected static final String POPULATE_BANKS_SCRIPT = "populateBanks";

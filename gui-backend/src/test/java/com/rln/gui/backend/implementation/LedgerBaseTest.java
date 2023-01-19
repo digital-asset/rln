@@ -45,7 +45,7 @@ public class LedgerBaseTest {
   public static final String PAYLOAD = "PAYLOAD";
 
   protected static final Path DAR_PATH =
-      Path.of("../daml-model/build/daml/rln.dar").toAbsolutePath();
+      Path.of("../stagingtest/canton/rln.dar").toAbsolutePath();
   protected static final Path DAML_ROOT = Path.of("../daml-model").toAbsolutePath();
   protected static final String TEST_BANK_BICS_MODULE = "Tests.BankBICsTest";
   protected static final String POPULATE_BANKS_SCRIPT = "populateBanks";

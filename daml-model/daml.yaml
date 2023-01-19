@@ -5,7 +5,7 @@ sdk-version: 2.5.0
 name: rln
 source: daml
 init-script: Tests.TransferWorkflow:testWorkflow
-version: 1.0.1
+version: 2.0.0
 dependencies:
   - daml-prim
   - daml-stdlib

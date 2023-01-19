@@ -104,12 +104,6 @@ public class GuiBackendApiImplementation implements DefaultApi {
     }
   }
 
-  // Create a new ledger address
-  @Override
-  public Object post(@Valid @NotNull LedgerAddressDTO ledgerAddressDTO) {
-    return autoApproveApi.post(ledgerAddressDTO);
-  }
-
   // Get all the known ledger addresses
   @Override
   public List<LedgerAddressDTO> get() {
@@ -125,6 +119,12 @@ public class GuiBackendApiImplementation implements DefaultApi {
     } catch (IbanNotFoundException e) {
       throw notFound();
     }
+  }
+
+  // Create a new ledger address
+  @Override
+  public Object post(@Valid @NotNull LedgerAddressDTO ledgerAddressDTO) {
+    throw notImplemented();
   }
 
   // Wallet management ----------

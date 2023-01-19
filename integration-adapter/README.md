@@ -4,14 +4,14 @@ Be sure to mark `build/generated` as Generated Sources Root (in the Project brow
 ## Versioning
 
 - Dar version is like 1.0.0
-- Docker image version is a label: [DAR-VERSION]-[Subversion]
+- Jar version is: [DAR-VERSION]-[Subversion]
   - For example: 1.0.0-1
+- Docker image version is a label, the same as the Jar version
 
 ### Creating a new version
 
-1. modify `src/main/daml.yaml`'s Dar version
-2. modify `build.gradle` / imageVersion (Docker image version)
-3. modify `docker/Dockerfile-integration-adapter` / version label (Docker image version)
+1. Dar change: modify `src/main/daml.yaml`'s Dar version
+2. Java change: modify `build.gradle` / subversion
 
 Use `gradle clean build -x test` to build the image.
 Use `gradle clean build dockerSave -x test` to get `build/rln-adapter-docker.img`.
