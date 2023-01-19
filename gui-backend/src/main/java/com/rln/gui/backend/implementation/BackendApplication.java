@@ -49,7 +49,6 @@ public class BackendApplication {
         @Override
         public int run(String... args) {
             System.out.println("Backend application running.");
-            configuration.partiesConfig().forEach(i -> System.out.println(i));
             Quarkus.waitForExit();
             return 0;
         }
