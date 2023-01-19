@@ -48,10 +48,10 @@ template LoanConfig
         
         let currentMaxLoanAmount balance = min (max (balanceLoanThreshold - balance) 0.0) (maxLoanThreshold - activeLoan)
             currentMaxPaybackAmount balance = min (max (balance - balancePaybackThreshold) 0.0) activeLoan
-            balanceKey = BalanceKey accountHolder account
+            balanceKey = BalanceKey provider account
             getBalance = do
                 visible <- visibleByKey @Balance balanceKey
-                if visible then error $ "No Balance found for BalanceKey: " <> show balanceKey
+                if not visible then error $ "No Balance found for BalanceKey: " <> show balanceKey
                 else do
                     (balanceCid, balance) <- fetchByKey @Balance balanceKey
                     return (balanceCid, balance)
@@ -76,7 +76,7 @@ template LoanConfig
                     (balanceCid, balance) <- getBalance
                     let maxAmount = currentMaxLoanAmount balance.amount
                     let amount = fromOptional maxAmount loanAmount
-                    assertMsg ("Maximum available loan is: " <> show maxAmount) $ maxAmount >= amount
+                    assertMsg ("Maximum available loan is: " <> show maxAmount) $ amount > 0.0 && amount <= maxAmount
                     balanceNewCid <- exercise balanceCid Increase with increment = amount
                     loanConfigCid <- create this with activeLoan = activeLoan + amount
                     pure (loanConfigCid, balanceNewCid)
@@ -99,7 +99,7 @@ template LoanConfig
                     (balanceCid, balance) <- getBalance
                     let maxAmount = currentMaxPaybackAmount balance.amount
                     let amount = fromOptional maxAmount paybackAmount
-                    assertMsg ("Maximum available payback is: " <> show maxAmount) $ maxAmount >= amount
+                    assertMsg ("Maximum available payback is: " <> show maxAmount) $ amount > 0.0 && amount <= maxAmount
                     balanceNewCid <- exercise balanceCid Decrease with decrement = amount
                     loanConfigCid <- create this with activeLoan = activeLoan - amount
                     pure (loanConfigCid, balanceNewCid)

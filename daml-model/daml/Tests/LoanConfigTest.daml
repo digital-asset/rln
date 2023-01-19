@@ -1,0 +1,300 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Tests.LoanConfigTest where
+
+import DA.Assert
+import Daml.Script
+import Model.Balance
+import Model.LoanConfig
+import Tests.PartyAlloc
+
+setup = do
+    proposalTime <- getTime
+    banks@Banks{..} <- actionPartyAllocation
+    users@UserParties{..} <- userPartyAllocation
+    pure (banks, users)
+
+create_loan_should_increase_balance : Script ()
+create_loan_should_increase_balance = do
+    (Banks{..}, users@UserParties{..}) <- setup
+    submit bank11 do 
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 0.0
+
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 0.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+
+    (loanConfigCid, balanceCid) <- submit bank11 do
+        exerciseCmd loanConfigCid CreateLoan with loanAmount = None
+    
+    queryContractId bank11 loanConfigCid >>= optional 
+        (fail "LoanConfig not found") 
+        (\x -> x.activeLoan === 1000.0)
+
+    queryContractId bank11 balanceCid >>= optional 
+        (fail "Balance not found") 
+        (\x -> x.amount === 1000.0)     
+
+create_loan_should_increase_balance_partially : Script ()
+create_loan_should_increase_balance_partially = do
+    (Banks{..}, users@UserParties{..}) <- setup
+    submit bank11 do 
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 0.0
+
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 0.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+
+    (loanConfigCid, balanceCid) <- submit bank11 do
+        exerciseCmd loanConfigCid CreateLoan with loanAmount = Some 500.0
+
+    queryContractId bank11 loanConfigCid >>= optional 
+        (fail "LoanConfig not found") 
+        (\x -> x.activeLoan === 500.0) 
+
+    queryContractId bank11 balanceCid >>= optional 
+        (fail "Balance not found") 
+        (\x -> x.amount === 500.0)     
+
+create_loan_should_fail_on_sufficient_balance : Script ()
+create_loan_should_fail_on_sufficient_balance = do
+    (Banks{..}, users@UserParties{..}) <- setup
+    submit bank11 do 
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 1000.0
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 0.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+    submitMustFail bank11 do
+        exerciseCmd loanConfigCid CreateLoan with loanAmount = None
+
+create_loan_should_fail_on_exceeded_max_threshold : Script ()
+create_loan_should_fail_on_exceeded_max_threshold = do
+    (Banks{..}, users@UserParties{..}) <- setup
+    submit bank11 do 
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 0.0
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 10000.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+    submitMustFail bank11 do
+        exerciseCmd loanConfigCid CreateLoan with loanAmount = None
+
+create_loan_should_fail_on_partially_exceeded_max_threshold : Script ()
+create_loan_should_fail_on_partially_exceeded_max_threshold = do
+    (Banks{..}, users@UserParties{..}) <- setup
+    submit bank11 do 
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 0.0
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 9500.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+    submitMustFail bank11 do
+        exerciseCmd loanConfigCid CreateLoan with loanAmount = Some 1000.0
+
+create_payback_should_decrease_on_sufficient_balance : Script ()
+create_payback_should_decrease_on_sufficient_balance = do
+    (Banks{..}, users@UserParties{..}) <- setup
+    submit bank11 do 
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 21000.0
+
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 1000.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+
+    (loanConfigCid, balanceCid) <- submit bank11 do
+        exerciseCmd loanConfigCid PaybackLoan with paybackAmount = None
+    
+    queryContractId bank11 loanConfigCid >>= optional 
+        (fail "LoanConfig not found") 
+        (\x -> x.activeLoan === 0.0) 
+
+    queryContractId bank11 balanceCid >>= optional 
+        (fail "Balance not found") 
+        (\x -> x.amount === 20000.0)   
+
+create_payback_should_decrease_on_sufficient_balance_partially : Script ()
+create_payback_should_decrease_on_sufficient_balance_partially = do
+    (Banks{..}, users@UserParties{..}) <- setup
+    submit bank11 do 
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 21000.0
+
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 1000.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+
+    (loanConfigCid, balanceCid) <- submit bank11 do
+        exerciseCmd loanConfigCid PaybackLoan with paybackAmount = Some 500.0
+    
+    queryContractId bank11 loanConfigCid >>= optional 
+        (fail "LoanConfig not found") 
+        (\x -> x.activeLoan === 500.0) 
+
+    queryContractId bank11 balanceCid >>= optional 
+        (fail "Balance not found") 
+        (\x -> x.amount === 20500.0)   
+
+create_payback_should_fail_on_insufficient_balance : Script ()
+create_payback_should_fail_on_insufficient_balance = do
+    (Banks{..}, users@UserParties{..}) <- setup
+    submit bank11 do 
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 0.0
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 1000.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+    submitMustFail bank11 do
+        exerciseCmd loanConfigCid PaybackLoan with paybackAmount = None
+
+create_payback_should_fail_on_partially_insufficient_balance : Script ()
+create_payback_should_fail_on_partially_insufficient_balance = do
+    (Banks{..}, users@UserParties{..}) <- setup
+    submit bank11 do 
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 20500.0
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 1000.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+    submitMustFail bank11 do
+        exerciseCmd loanConfigCid PaybackLoan with paybackAmount = Some 1000.0
+
+create_loan_and_payback_loan_should_reduce_loan : Script ()
+create_loan_and_payback_loan_should_reduce_loan = do
+    (Banks{..}, users@UserParties{..}) <- setup
+    submit bank11 do 
+        createCmd Balance with
+            provider = bank11
+            owner = Some users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 0.0
+
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 0.0
+            balanceLoanThreshold = 1000.0
+            maxLoanThreshold = 10000.0
+            balancePaybackThreshold = 20000.0
+
+    (loanConfigCid, balanceCid) <- submit bank11 do
+        exerciseCmd loanConfigCid CreateLoan with loanAmount = None
+
+    balanceCid <- submit bank11 do 
+        exerciseCmd balanceCid Decrease with decrement = 100.0
+
+    (loanConfigCid, balanceCid) <- submit bank11 do
+        exerciseCmd loanConfigCid CreateLoan with loanAmount = None
+
+    balanceCid <- submit bank11 do 
+        exerciseCmd balanceCid Increase with increment = 20000.0
+
+    (loanConfigCid, balanceCid) <- submit bank11 do
+        exerciseCmd loanConfigCid PaybackLoan with paybackAmount = None
+
+    queryContractId bank11 loanConfigCid >>= optional 
+        (fail "LoanConfig not found") 
+        (\x -> x.activeLoan === 100.0) 
+
+    queryContractId bank11 balanceCid >>= optional 
+        (fail "Balance not found") 
+        (\x -> x.amount === 20000.0)
