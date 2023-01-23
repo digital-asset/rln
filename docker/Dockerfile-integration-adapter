@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk11:ubi
+FROM adoptopenjdk/openjdk11:jdk-11.0.11_9
 ARG IMAGE_VERSION
 RUN mkdir /opt/app
 ADD integration-adapter/build/quarkus-app /opt/app/rln-adapter
