@@ -13,7 +13,11 @@ data BalanceKey =
         iban: Text
   deriving (Eq, Show)
 
-type BalanceOwner = Optional Party
+data BalanceOwner = BalanceOwner
+  with
+    name : Text
+    party : Optional Party
+  deriving (Eq, Show)
 
 template Balance
   with
@@ -25,7 +29,7 @@ template Balance
     amount: Decimal
   where
     signatory provider
-    observer optionalToList owner
+    observer optionalToList owner.party
 
     ensure amount >= 0.0
     let balanceKey = BalanceKey with ..
