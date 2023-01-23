@@ -17,47 +17,33 @@ type EntityNameBicParticipantName = (Text, Text, Text)
 type EntityToBicMapping = [EntityNameBicParticipantName]
 type Parties = [Party]
 
--- onboarding: EntityToBicMapping -> Script Parties
--- onboarding mapping = script do
---   -- allocate parties with entityName as displayName and Hint
---   partyToBicMapping <- mapA (\(entityName, bic, participantName) -> do
---                                           p <- allocatePartyWithHintOn entityName (PartyIdHint entityName) (ParticipantName participantName)
---                                           pure (p, bic)) mapping
---   -- allocate scheduler and assembler
---   scheduler <- allocatePartyWithHintOn "scheduler" (PartyIdHint "scheduler") (ParticipantName "schedulerParticipant")
---   assembler <- allocatePartyWithHintOn "assembler" (PartyIdHint "assembler") (ParticipantName "assemblerParticipant")
 
---   -- create BankBic for each party
---   mapA_ (\(p, bic) -> submit p $ createCmd
---           BankBIC
---             with
---               bic
---               banks = Set.singleton p
---               schedulers = Set.singleton scheduler
---               assemblers = Set.singleton assembler
---           )
---           partyToBicMapping
---   pure $ scheduler :: assembler :: map fst partyToBicMapping
-
-
-onboarding : Entity -> Script [Party]
+onboarding : Entity -> Script [Output]
 onboarding entity = do
   scheduler <- allocatePartyOn "Scheduler" (ParticipantName "schedulerParticipant")
   assembler <- allocatePartyOn "Assembler" (ParticipantName "assemblerParticipant")
-
-  (_, result) <- setupAccount entity [] scheduler assembler
-
-  pure result
+  (_, output) <- setupAccount entity [] scheduler assembler
+  pure output
 
 
 data Entity = Entity
   with
+    id : Int
     name : Text
     participant : ParticipantName
     iban : Optional Text
     bic : Optional Text
+    baseUrl : Text
     clientAccounts : [ClientAccount]
     children : [Entity]
+
+data Output = Output
+  with
+    id : Int
+    baseUrl : Text
+    damlPartyId : Text
+    name : Text
+  deriving (Show)
 
 
 data ClientAccount = ClientAccount
@@ -68,11 +54,17 @@ data ClientAccount = ClientAccount
     participant : ParticipantName
 
 
-setupAccount : Entity -> [Party] -> Party -> Party -> Script (Party, [Party])
+setupAccount : Entity -> [Party] -> Party -> Party -> Script (Party, [Output])
 setupAccount entity parties scheduler assembler = do
   party <- allocatePartyOn entity.name entity.participant
-
-  whenSome entity.bic $ \bic ->
+  let output = Output 
+        with
+          id = entity.id
+          baseUrl = entity.baseUrl
+          damlPartyId = partyToText party
+          name = entity.name
+  
+  whenSome entity.bic \bic ->
     void $ party `submit` createCmd
       BankBIC
         with
@@ -81,54 +73,62 @@ setupAccount entity parties scheduler assembler = do
           schedulers = Set.singleton scheduler
           assemblers = Set.singleton assembler
 
-  forA_ entity.clientAccounts \account -> do
-    ownerParty <- if account.shouldAllocateParty
-      then Some <$> allocatePartyOn account.name account.participant
-      else pure None
-    party `submit` createCmd
-      Balance
-        with
-          iban = account.iban
-          provider = party
-          owner = BalanceOwner with name = account.name, party = ownerParty
-          currency = "USD"
-          amount = 0.0
+  forA_ entity.clientAccounts \account -> createAccount party account
 
-  forA_ entity.children \child -> do
-    (childParty, _) <- setupAccount child parties scheduler assembler
-    whenSome child.iban $ \iban ->
-      void $ party `submit` createCmd
-        Balance
-          with
-            iban
-            provider = party
-            owner = BalanceOwner with name = child.name, party = Some childParty
-            currency = "USD"
-            amount = 0.0
+  outputs <- concat <$> mapA (\child -> setupAccount' party child parties scheduler assembler) entity.children
+  
+  pure $ (party, output :: outputs)
 
-  pure $ (party, party :: parties)
-
+  where createAccount provider account = do 
+          ownerParty <- if account.shouldAllocateParty
+            then Some <$> allocatePartyOn account.name account.participant
+            else pure None
+          provider `submit` createCmd
+            Balance
+              with
+                iban = account.iban
+                provider = provider
+                owner = BalanceOwner with name = account.name, party = ownerParty
+                currency = "USD"
+                amount = 0.0
+        
+        setupAccount' provider child parties scheduler assembler = do
+          (childParty, parties') <- setupAccount child parties scheduler assembler
+          whenSome child.iban $ \iban ->
+            void $ provider `submit` createCmd
+              Balance
+                with
+                  iban
+                  provider = provider
+                  owner = BalanceOwner with name = child.name, party = Some childParty
+                  currency = "USD"
+                  amount = 0.0
+          return parties'
 
 onboardingTest : Script ()
 onboardingTest = do
   let entity = Entity
         with
-          name = "FED"
+          id = 1
+          name = "FED1"
           participant = ParticipantName "Somewhere"
           iban = None
           bic = None
+          baseUrl = ""
           clientAccounts = []
           children = [
             Entity with
+              id = 2
               name = "Cello Bank"
               participant = ParticipantName "Who Knows Where"
               iban = Some "US87CITI83042524873201"
               bic = Some "CITIUS33"
+              baseUrl = ""
               clientAccounts = []
               children = []
             ]
 
-  parties <- onboarding entity
+  outputs <- onboarding entity
 
-  debug parties
+  debug outputs
   pure ()
