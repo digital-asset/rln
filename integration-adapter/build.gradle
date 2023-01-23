@@ -10,7 +10,7 @@ repositories {
     mavenCentral()
 }
 
-def subVersion = "1"
+def subVersion = "2"
 def imageVersion = "${project(":daml-model").darVersion}-${subVersion}"
 
 group "com.rln"
