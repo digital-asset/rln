@@ -62,7 +62,7 @@ public class PartyApiImpl {
           new TypeReference<>() {}
       );
     } catch (IOException e) {
-      throw new SetlPartiesConfigFileNotFoundException(guiBackendConfiguration.partiesConfig());
+      throw new InternalServerError(e);
     }
   }
 }

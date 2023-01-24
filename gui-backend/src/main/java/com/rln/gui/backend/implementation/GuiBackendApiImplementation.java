@@ -6,9 +6,8 @@ import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.implementation.methods.AutoapproveApiImpl;
 import com.rln.gui.backend.implementation.methods.BalancesApiImpl;
 import com.rln.gui.backend.implementation.methods.PartyApiImpl;
-import com.rln.gui.backend.implementation.methods.SetlPartiesConfigFileNotFoundException;
+import com.rln.gui.backend.implementation.methods.InternalServerError;
 import com.rln.gui.backend.implementation.methods.TransactionsApiImpl;
-import com.rln.gui.backend.implementation.producer.ConverterProducer;
 import com.rln.gui.backend.model.Approval;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.Balance;
@@ -23,7 +22,6 @@ import com.rln.gui.backend.model.TransferProposal;
 import com.rln.gui.backend.model.WalletAddressDTO;
 import com.rln.gui.backend.model.WalletAddressTestDTO;
 import com.rln.gui.backend.model.WalletDTO;
-import java.io.IOException;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -212,7 +210,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
   public List<PartyDTO> get2() {
     try {
       return partyApi.getParties();
-    } catch (SetlPartiesConfigFileNotFoundException e) {
+    } catch (InternalServerError e) {
       logger.error("Unable to list known parties", e);
       throw internalServerError();
     }

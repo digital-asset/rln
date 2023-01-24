@@ -6,10 +6,10 @@ package com.rln.gui.backend.implementation.methods;
 
 import java.nio.file.Path;
 
-public class SetlPartiesConfigFileNotFoundException extends RuntimeException{
+public class InternalServerError extends RuntimeException{
     private static final long serialVersionUID = 123456737L;
 
-    public SetlPartiesConfigFileNotFoundException(Path file) {
-        super(String.format("Setl Parties config file not found: %s.", file));
+    public InternalServerError(Exception cause) {
+        super(cause);
     }
 }
