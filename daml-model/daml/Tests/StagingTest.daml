@@ -24,7 +24,7 @@ stagingTest = do
   scheduler <- allocatePartyWithHintOn "scheduler" (PartyIdHint "scheduler") $ ParticipantName "schedulerParticipant"
   assembler <- allocatePartyWithHintOn "assembler" (PartyIdHint "assembler") $ ParticipantName "assemblerParticipant"
 
-  submit bankA do createCmd BankBIC with bic = "bankABic"; banks = S.singleton bankA; schedulers = S.singleton scheduler; assemblers = S.singleton assembler
-  submit bankB do createCmd BankBIC with bic = "bankBBic"; banks = S.singleton bankB; schedulers = S.singleton scheduler; assemblers = S.singleton assembler
+  submit bankA do createCmd BankBIC with bic = "bankABic"; bankShards = S.singleton bankA; schedulerShards = S.singleton scheduler; assemblerShards = S.singleton assembler; otherBanks = S.singleton bankB
+  submit bankB do createCmd BankBIC with bic = "bankBBic"; bankShards = S.singleton bankB; schedulerShards = S.singleton scheduler; assemblerShards = S.singleton assembler; otherBanks = S.singleton bankA
 
   pure StagingParties with ..

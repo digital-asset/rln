@@ -79,9 +79,10 @@ setupAccount scheduler assembler parties partyInfo = do
       BankBIC
         with
           bic = bic
-          banks = Set.singleton party
-          schedulers = Set.singleton scheduler
-          assemblers = Set.singleton assembler
+          bankShards = Set.singleton party
+          schedulerShards = Set.singleton scheduler
+          assemblerShards = Set.singleton assembler
+          otherBanks = Set.empty -- TODO
 
   whenSome partyInfo.account \account ->
     let provider = fromSomeNote
