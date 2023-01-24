@@ -10,116 +10,105 @@ import Model.BankBIC
 import Model.Balance
 import DA.Set qualified as Set
 import DA.Foldable (forA_)
-import DA.Optional (whenSome)
-import DA.Functor (void)
+import DA.Optional (fromSomeNote, whenSome)
+import qualified DA.TextMap as TextMap
+import DA.TextMap (TextMap)
+import DA.Action (void, foldlA)
 
 type EntityNameBicParticipantName = (Text, Text, Text)
 type EntityToBicMapping = [EntityNameBicParticipantName]
 type Parties = [Party]
 
-data Entity = Entity
-  with
+data PartyInfo = PartyInfo with
+  id : Int
+  name : Text
+  bic : Optional Text
+  baseUrl : Text
+  participantName : Text
+  account : Optional Account
+  clients : [ClientInfo]
+
+data Account = Account with
+  provider : Text
+  iban : Iban
+
+type Iban = Text
+
+data ClientInfo = ClientInfo with
+    name : Text
+    iban : Iban
+  deriving (Eq, Show)
+
+data Output = Output with
+    guiBackendConfig : GuiBackendConfig
+    parties : [Party]
+  deriving (Eq, Show)
+
+type GuiBackendConfig = [GuiBackendConfigEntry]
+
+data GuiBackendConfigEntry = GuiBackendConfigEntry with
     id : Int
-    name : Text
-    participant : ParticipantName
-    iban : Optional Text
-    bic : Optional Text
     baseUrl : Text
-    clientAccounts : [ClientAccount]
-    children : [Entity]
-
-data ClientAccount = ClientAccount
-  with
+    damlPartyId : Party
     name : Text
-    iban : Text
-    shouldAllocateParty : Bool
-    participant : ParticipantName
+  deriving (Eq, Show)
 
-data Output = Output
-  with
-    id : Int
-    baseUrl : Text
-    damlPartyId : Text
-    name : Text
-  deriving (Show)
 
-onboarding : Entity -> Script [Output]
-onboarding entity = do
+onboarding : [PartyInfo] -> Script Output
+onboarding partyInfo = do
   scheduler <- allocatePartyOn "Scheduler" (ParticipantName "schedulerParticipant")
   assembler <- allocatePartyOn "Assembler" (ParticipantName "assemblerParticipant")
-  (_, output) <- setupAccount entity [] scheduler assembler
-  pure output
 
-setupAccount : Entity -> [Party] -> Party -> Party -> Script (Party, [Output])
-setupAccount entity parties scheduler assembler = do
-  party <- allocatePartyOn entity.name entity.participant
-  whenSome entity.bic \bic ->
+  (_, entries) <- foldlA
+    (\(parties, entries) info -> do
+      account <- setupAccount scheduler assembler parties info
+      let updatedParties = TextMap.insert info.name account.damlPartyId parties
+      pure (updatedParties, account :: entries))
+    (TextMap.empty, [])
+    partyInfo
+
+  pure $ Output { guiBackendConfig = entries, parties = fmap (.damlPartyId) entries }
+
+
+setupAccount : Party -> Party -> TextMap Party -> PartyInfo -> Script GuiBackendConfigEntry
+setupAccount scheduler assembler parties partyInfo = do
+  party <- allocatePartyOn partyInfo.name (ParticipantName partyInfo.participantName)
+
+  whenSome partyInfo.bic \bic ->
     void $ party `submit` createCmd
       BankBIC
         with
-          bic
+          bic = bic
           banks = Set.singleton party
           schedulers = Set.singleton scheduler
           assemblers = Set.singleton assembler
-  forA_ entity.clientAccounts \account -> createAccount party account
-  outputs <- concat <$> mapA (\child -> setupAccount' party child parties scheduler assembler) entity.children
-  pure (party, 
-        Output with
-            id = entity.id
-            baseUrl = entity.baseUrl
-            damlPartyId = partyToText party
-            name = entity.name
-        :: outputs
-        )
-  where createAccount provider account = do 
-          ownerParty <- if account.shouldAllocateParty
-            then Some <$> allocatePartyOn account.name account.participant
-            else pure None
-          provider `submit` createCmd
-            Balance
-              with
-                iban = account.iban
-                provider = provider
-                owner = BalanceOwner with name = account.name, party = ownerParty
-                currency = "USD"
-                amount = 0.0
-        setupAccount' provider child parties scheduler assembler = do
-          (childParty, parties') <- setupAccount child parties scheduler assembler
-          whenSome child.iban $ \iban ->
-            void $ provider `submit` createCmd
-              Balance
-                with
-                  iban
-                  provider = provider
-                  owner = BalanceOwner with name = child.name, party = Some childParty
-                  currency = "USD"
-                  amount = 0.0
-          return parties'
 
-onboardingTest : Script ()
-onboardingTest = do
-  let entity = Entity
+  whenSome partyInfo.account \account ->
+    let provider = fromSomeNote
+            ("No party found for provider: " <> account.provider)
+            (TextMap.lookup account.provider parties)
+    in void $ provider `submit` createCmd
+      Balance
         with
-          id = 1
-          name = "FED1"
-          participant = ParticipantName "Somewhere"
-          iban = None
-          bic = None
-          baseUrl = ""
-          clientAccounts = []
-          children = [
-            Entity with
-              id = 2
-              name = "Cello Bank"
-              participant = ParticipantName "Who Knows Where"
-              iban = Some "US87CITI83042524873201"
-              bic = Some "CITIUS33"
-              baseUrl = ""
-              clientAccounts = []
-              children = []
-            ]
+          iban = account.iban
+          provider
+          owner = BalanceOwner with name = partyInfo.name, party = Some party
+          currency = "USD"
+          amount = 0.0
 
-  outputs <- onboarding entity
+  forA_ partyInfo.clients \client ->
+    party `submit` createCmd
+      Balance
+        with
+          iban = client.iban
+          provider = party
+          owner = BalanceOwner with name = client.name, party = Some party
+          currency = "USD"
+          amount = 0.0
 
-  debug outputs
-  pure ()
+  pure GuiBackendConfigEntry
+    with
+      id = partyInfo.id
+      baseUrl = partyInfo.baseUrl
+      damlPartyId = party
+      name = partyInfo.name
