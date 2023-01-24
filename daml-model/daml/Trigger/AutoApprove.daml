@@ -105,25 +105,6 @@ involveBlackListParty TransferProposal{step, approvers} Blacklist{banks, account
   let bankOnSettlementChainBlackListed = any (`elem` banks) approvers in
   receiverIsBlackListed || senderIsBlackListed || bankOnSettlementChainBlackListed
 
-type HasEnoughBalanceWithBalanceCid = (Bool, Optional (ContractId Balance))
-hasEnoughBalance : TransferProposal -> TriggerA () HasEnoughBalanceWithBalanceCid
-hasEnoughBalance transferProposal@TransferProposal{owner; step} = do
-  let
-    Instrument{amount, label} = step.delivery
-    amountRequired = amount
-    currencyRequired = label
-    identifier = toIdentifier transferProposal
-    provider = owner
-  case step.sender of
-    Some iban -> do
-      queryContractKey (BalanceKey with ..) >>= \case
-        Some (balanceCid, Balance{amount;currency}) ->
-          if currency /= currencyRequired then
-            pure $ trace ("Account " <> iban <> "does not hold required currency " <> currencyRequired) (False, Some balanceCid)
-          else pure $ (amount >= amountRequired, Some balanceCid)
-        None -> pure $ trace ("No Balance exist for account" <> iban) (False, None)
-    None -> pure (True, None)
-
 findProposalMarker : TransferProposal -> Map.Map Text AutoApproveTransferProposalMarker -> Optional AutoApproveTransferProposalMarker
 findProposalMarker transferProposal@TransferProposal{ step = SettlementStep{ sender, receiver } } markers =
   case (sender, receiver) of

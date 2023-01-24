@@ -17,6 +17,10 @@ data Banks = Banks with
 data ServiceParties = ServiceParties with
   scheduler : Party
   assembler: Party
+
+data UserParties = UserParties with
+  alice : Party
+
 actionPartyAllocation = do
   bank21 <- allocateParty "Bank21"
   bank11 <- allocateParty "Bank11"
@@ -31,3 +35,7 @@ servicePartyAllocation = do
   assembler <- allocateParty "Assembler"
 
   pure ServiceParties with ..
+
+userPartyAllocation = do
+  alice <- allocateParty "Alice"
+  pure UserParties with ..
