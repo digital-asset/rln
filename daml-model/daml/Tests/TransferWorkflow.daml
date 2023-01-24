@@ -91,10 +91,10 @@ initAndCreateProposals = do
   serviceParties@ServiceParties with .. <- servicePartyAllocation
   banks@Banks with .. <- actionPartyAllocation
 
-  createUsdBalance cb (Some bank11) "Bank11" 1000.0
-  createUsdBalance cb (Some bank12) "Bank12" 1000.0
-  createUsdBalance bank21 None "Alice" 1000.0
-  createUsdBalance bank22 None "Bob" 1000.0
+  createUsdBalance cb (Some bank11) "Bank11" "Bank11" 1000.0
+  createUsdBalance cb (Some bank12) "Bank12" "Bank12" 1000.0
+  createUsdBalance bank21 None "Alice" "Alice" 1000.0
+  createUsdBalance bank22 None "Bob" "Bob" 1000.0
 
   initiateTransferCid <- bank21 `submit` createCmd
     InitiateTransfer with
@@ -126,10 +126,11 @@ initialDummyData =
 usdCurrency : Text
 usdCurrency = "USD"
 
-createUsdBalance : Party -> Optional Party -> Text -> Decimal -> Script (ContractId Balance)
-createUsdBalance provider owner iban amount = do
+createUsdBalance : Party -> Optional Party -> Text -> Text -> Decimal -> Script (ContractId Balance)
+createUsdBalance provider ownerParty ownerName iban amount = do
   provider `submit` createCmd Balance with
     currency = usdCurrency
+    owner = BalanceOwner with name = ownerName, party = ownerParty
     ..
 
 assertBalance : Party -> Text -> Decimal -> Script ()
