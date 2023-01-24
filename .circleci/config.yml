@@ -30,6 +30,36 @@ commands:
           command: |
             zip -r << parameters.archive >> quarkus-app
 
+  sign_artifact:
+    description: "Sign Artifact with GnuPG"
+    parameters:
+      artifact:
+        type: string
+      target_directory:
+        type: string
+    steps:
+      - run:
+          name: "Prepare GPG dir and key file"
+          command: |
+            export KEY_FILE=$(mktemp)
+            export GPG_DIR=$(mktemp -d)
+            echo "$gpg_code_signing" | base64 -d > $KEY_FILE
+      - run:
+          name: "Signing the artifact"
+          command: |
+            gpg --homedir $GPG_DIR --no-tty --quiet --import $KEY_FILE
+            gpg --homedir $GPG_DIR -ab << parameters.artifact >>
+      - run:
+          name: "Move artifact and signature"
+          command: |
+            mv << parameters.artifact >> << parameters.target_directory >>
+            mv << parameters.artifact >>.asc << parameters.target_directory >>
+      - run:
+          name: "Cleanup GPG dir and key file"
+          when: always
+          command: |
+            rm -rf $KEY_FILE $GPG_DIR
+
 jobs:
   test_daml_java:
     parameters:
@@ -87,15 +117,15 @@ jobs:
             --detect.excluded.detector.types=pip \
             --detect.notices.report=false \
             --detect.timeout=3600
-
-
-  release:
+  make_release:
     parameters:
       daml_sdk_version:
         type: string
     machine:
       image: ubuntu-2204:2022.04.2
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - checkout
       - install_sdk:
           version: << parameters.daml_sdk_version >>
@@ -125,8 +155,8 @@ workflows:
           context:
             - blackduck
   release:
-    when: << pipeline.parameters.do_release >>
+#    when: << pipeline.parameters.do_release >>
     jobs:
-      - release:
+      - make_release:
           daml_sdk_version: "2.5.0"
           context: npn-publish
