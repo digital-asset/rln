@@ -7,23 +7,108 @@ module Tests.Onboarding where
 
 import Daml.Script
 import Model.BankBIC
-import DA.Set qualified as S
-import DA.Foldable (mapA_)
+import Model.Balance
+import DA.Set qualified as Set
+import DA.Foldable (forA_)
+import DA.Optional (fromSomeNote, whenSome)
+import qualified DA.TextMap as TextMap
+import DA.TextMap (TextMap)
+import DA.Action (void, foldlA)
 
 type EntityNameBicParticipantName = (Text, Text, Text)
 type EntityToBicMapping = [EntityNameBicParticipantName]
 type Parties = [Party]
 
-onboarding: EntityToBicMapping -> Script Parties
-onboarding mapping = script do 
-  -- allocate parties with entityName as displayName and Hint
-  partyToBicMapping <- mapA (\(entityName, bic, participantName) -> do 
-                                          p <- allocatePartyWithHintOn entityName (PartyIdHint entityName) (ParticipantName participantName)
-                                          pure (p, bic)) mapping
-  -- allocate scheduler and assembler
-  scheduler <- allocatePartyWithHintOn "scheduler" (PartyIdHint "scheduler") (ParticipantName "schedulerParticipant")
-  assembler <- allocatePartyWithHintOn "assembler" (PartyIdHint "assembler") (ParticipantName "assemblerParticipant")
+data PartyInfo = PartyInfo with
+  id : Int
+  name : Text
+  bic : Optional Text
+  baseUrl : Text
+  participantName : Text
+  account : Optional Account
+  clients : [ClientInfo]
 
-  -- create BankBic for each party
-  mapA_ (\(p, bic) -> submit p do createCmd BankBIC with bic; banks = S.singleton p; schedulers = S.singleton scheduler; assemblers = S.singleton assembler) partyToBicMapping
-  pure $ scheduler :: assembler :: map fst partyToBicMapping
+data Account = Account with
+  provider : Text
+  iban : Iban
+
+type Iban = Text
+
+data ClientInfo = ClientInfo with
+    name : Text
+    iban : Iban
+  deriving (Eq, Show)
+
+data Output = Output with
+    guiBackendConfig : GuiBackendConfig
+    parties : [Party]
+  deriving (Eq, Show)
+
+type GuiBackendConfig = [GuiBackendConfigEntry]
+
+data GuiBackendConfigEntry = GuiBackendConfigEntry with
+    id : Int
+    baseUrl : Text
+    damlPartyId : Party
+    name : Text
+  deriving (Eq, Show)
+
+
+onboarding : [PartyInfo] -> Script Output
+onboarding partyInfo = do
+  scheduler <- allocatePartyOn "Scheduler" (ParticipantName "schedulerParticipant")
+  assembler <- allocatePartyOn "Assembler" (ParticipantName "assemblerParticipant")
+
+  (_, entries) <- foldlA
+    (\(parties, entries) info -> do
+      account <- setupAccount scheduler assembler parties info
+      let updatedParties = TextMap.insert info.name account.damlPartyId parties
+      pure (updatedParties, account :: entries))
+    (TextMap.empty, [])
+    partyInfo
+
+  pure $ Output { guiBackendConfig = entries, parties = fmap (.damlPartyId) entries }
+
+
+setupAccount : Party -> Party -> TextMap Party -> PartyInfo -> Script GuiBackendConfigEntry
+setupAccount scheduler assembler parties partyInfo = do
+  party <- allocatePartyOn partyInfo.name (ParticipantName partyInfo.participantName)
+
+  whenSome partyInfo.bic \bic ->
+    void $ party `submit` createCmd
+      BankBIC
+        with
+          bic = bic
+          banks = Set.singleton party
+          schedulers = Set.singleton scheduler
+          assemblers = Set.singleton assembler
+
+  whenSome partyInfo.account \account ->
+    let provider = fromSomeNote
+            ("No party found for provider: " <> account.provider)
+            (TextMap.lookup account.provider parties)
+    in void $ provider `submit` createCmd
+      Balance
+        with
+          iban = account.iban
+          provider
+          owner = BalanceOwner with name = partyInfo.name, party = Some party
+          currency = "USD"
+          amount = 0.0
+
+  forA_ partyInfo.clients \client ->
+    party `submit` createCmd
+      Balance
+        with
+          iban = client.iban
+          provider = party
+          owner = BalanceOwner with name = client.name, party = Some party
+          currency = "USD"
+          amount = 0.0
+
+  pure GuiBackendConfigEntry
+    with
+      id = partyInfo.id
+      baseUrl = partyInfo.baseUrl
+      damlPartyId = party
+      name = partyInfo.name

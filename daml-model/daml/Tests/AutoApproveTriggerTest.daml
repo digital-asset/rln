@@ -50,7 +50,7 @@ given_enough_balance_and_no_one_blacklisted_but_no_autoapprove_marker_nothing_ha
 
   transferProposalCid <- submit scheduler do createCmd transferProposal
   blacklistCid <- submit bank11 do createCmd Blacklist with owner = bank11; accounts = []; banks = []
-  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = None; ..
+  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = (BalanceOwner with name = "Alice", party = None); ..
 
   commands <- getAutoApproveTriggerResult bank11 None transferProposalCid blacklistCid aliceBalanceCid
   assertMsg "No approve exercise command should be created" $ null commands
@@ -68,7 +68,7 @@ given_enough_balance_and_no_one_blacklisted_then_approve = do
         creationTime
   transferProposalCid <- submit scheduler do createCmd transferProposal
   blacklistCid <- submit bank11 do createCmd Blacklist with owner = bank11; accounts = []; banks = []
-  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = None; ..
+  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = (BalanceOwner with name = "Alice", party = None); ..
 
   commands <- getAutoApproveTriggerResult bank11 (Some autoApproveMarkerCid) transferProposalCid blacklistCid aliceBalanceCid
   verifyProposalApproved transferProposalCid commands
@@ -90,7 +90,7 @@ given_not_enough_balance_and_no_one_blacklisted_then_reject = do
         creationTime
   transferProposalCid <- submit scheduler do createCmd transferProposal with step = overBalanceStep
   blacklistCid <- submit bank11 do createCmd Blacklist with owner = bank11; accounts = []; banks = []
-  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = None; ..
+  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = (BalanceOwner with name = "Alice", party = None); ..
 
   commands <- getAutoApproveTriggerResult bank11 (Some autoApproveMarkerCid) transferProposalCid blacklistCid aliceBalanceCid
   verifyProposalRejected transferProposalCid commands
@@ -108,7 +108,7 @@ given_enough_balance_and_one_agent_blacklisted_then_reject = do
         creationTime
   transferProposalCid <- submit scheduler do createCmd transferProposal
   blacklistCid <- submit bank11 do createCmd Blacklist with owner = bank11; accounts = []; banks = [bank12]
-  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = None; ..
+  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = (BalanceOwner with name = "Alice", party = None); ..
 
   commands <- getAutoApproveTriggerResult bank11 (Some autoApproveMarkerCid) transferProposalCid blacklistCid aliceBalanceCid
   verifyProposalRejected transferProposalCid commands
@@ -126,7 +126,7 @@ given_enough_balance_and_sender_iban_blacklisted_then_reject = do
         creationTime
   transferProposalCid <- submit scheduler do createCmd transferProposal
   blacklistCid <- submit bank11 do createCmd Blacklist with owner = bank11; accounts = [iban]; banks = []
-  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = None; ..
+  aliceBalanceCid <- submit bank11 do createCmd Balance with provider = bank11; owner = (BalanceOwner with name = "Alice", party = None); ..
 
   commands <- getAutoApproveTriggerResult bank11 (Some autoApproveMarkerCid) transferProposalCid blacklistCid aliceBalanceCid
   verifyProposalRejected transferProposalCid commands

@@ -13,15 +13,20 @@ import com.daml.ledger.javaapi.data.Identifier;
 import com.daml.ledger.javaapi.data.Party;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.damlCodegen.model.balance.Balance;
+import com.rln.damlCodegen.model.balance.BalanceOwner;
 import com.rln.damlCodegen.model.balance.IncomingBalance;
 import com.rln.damlCodegen.model.balance.LockedBalance;
+
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.Random;
+
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.validation.constraints.NotNull;
 
 public class BalanceTestUtil {
 
@@ -34,24 +39,21 @@ public class BalanceTestUtil {
     private static final Random rand = new Random();
 
     public static ContractId populateBalance(double amount, String iban, String assetCode,
-        SandboxManager sandbox, Party currentBank, Identifier balanceTemplate)
-        throws InvalidProtocolBufferException {
+                                             SandboxManager sandbox, Party currentBank, Identifier balanceTemplate)
+            throws InvalidProtocolBufferException {
         return populateBalance(amount, iban, assetCode,
-            sandbox, currentBank, null, balanceTemplate);
+                sandbox, currentBank, Optional.empty(), balanceTemplate);
     }
 
     public static ContractId populateBalance(double amount, String iban, String assetCode,
-        SandboxManager sandbox, Party currentBank, String owner, Identifier balanceTemplate)
+                                             SandboxManager sandbox, Party currentBank, Optional<String> owner, Identifier balanceTemplate)
             throws InvalidProtocolBufferException {
         var liquidBalance = createBalance(iban, currentBank.getValue(), owner, assetCode, amount, balanceTemplate);
         sandbox.getLedgerAdapter().createContract(currentBank, balanceTemplate, liquidBalance);
         // If there is an owner, we want to consume this contract from their event queue
-        if (owner != null) {
-            sandbox.getLedgerAdapter().getCreatedContractId(new Party(owner), balanceTemplate,
-                com.daml.ledger.javaapi.data.ContractId::new);
-        }
+        owner.ifPresent(s -> sandbox.getLedgerAdapter().getCreatedContractId(new Party(s), balanceTemplate, ContractId::new));
         return sandbox.getLedgerAdapter().getCreatedContractId(currentBank, balanceTemplate,
-            com.daml.ledger.javaapi.data.ContractId::new);
+                com.daml.ledger.javaapi.data.ContractId::new);
     }
 
     public static ArchivedEvent archiveBalanceEvent(String cid, Identifier templateId) {
@@ -67,7 +69,7 @@ public class BalanceTestUtil {
         CreatedEvent event = Mockito.mock(CreatedEvent.class);
         Mockito.when(event.getContractId()).thenReturn(cid);
         Mockito.when(event.getTemplateId()).thenReturn(templateId);
-        Mockito.when(event.getArguments()).thenReturn(createBalance(iban, provider, null, currency, amount, templateId));
+        Mockito.when(event.getArguments()).thenReturn(createBalance(iban, provider, Optional.empty(), currency, amount, templateId));
         return event;
     }
 
@@ -75,8 +77,8 @@ public class BalanceTestUtil {
         return createBalanceEvent(iban, provider, currency, amount, "anyCid", Balance.TEMPLATE_ID);
     }
 
-    public static DamlRecord createBalance(String iban, String provider, String owner, String currency, Double amount, Identifier templateId) {
-        Balance balance = new Balance(iban, provider, Optional.ofNullable(owner), currency, BigDecimal.valueOf(amount));
+    public static DamlRecord createBalance(String iban, String provider, Optional<String> owner, String currency, Double amount, Identifier templateId) {
+        Balance balance = new Balance(iban, provider, new BalanceOwner(owner.orElse("Unknown"), owner), currency, BigDecimal.valueOf(amount));
         String context = generateRandomString(8);
         logger.info("===================== context {}", context);
 
@@ -90,7 +92,7 @@ public class BalanceTestUtil {
     }
 
     public static Balance createBalance(String iban, String provider, String currency, Double amount) {
-        return Balance.fromValue(createBalance(iban, provider, null, currency, amount, Balance.TEMPLATE_ID));
+        return Balance.fromValue(createBalance(iban, provider, Optional.empty(), currency, amount, Balance.TEMPLATE_ID));
     }
 
     private static String generateRandomString(int length) {

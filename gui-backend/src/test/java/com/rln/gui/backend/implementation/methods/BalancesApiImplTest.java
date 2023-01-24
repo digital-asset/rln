@@ -22,6 +22,7 @@ import io.restassured.http.ContentType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -138,7 +139,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
     void GIVEN_non_local_balance_on_ledger_WHEN_get_request_local_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
         double liquidAmount = 100.0;
         var nonLocalBalance = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX,
-            getSchedulerPartyId(), getCurrentBankPartyId().getValue(), Balance.TEMPLATE_ID);
+            getSchedulerPartyId(), Optional.of(getCurrentBankPartyId().getValue()), Balance.TEMPLATE_ID);
 
         // WHEN
         RestAssured
