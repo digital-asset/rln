@@ -12,7 +12,6 @@ import Daml.Trigger
 import Model.Balance
 import Model.LoanConfig
 
-
 loanManagementTrigger : Trigger ()
 loanManagementTrigger = Trigger
     { initialize = pure ()
@@ -36,7 +35,7 @@ run sender = do
             Some balance -> do
                 createLoanWhenBelowThreshold loanCid loanConfig balance
                 createPaybackWhenAboveThreshold loanCid loanConfig balance
-            _ -> traceA $ "No balance found for " <> loanConfig.account -- TODO: retire LC?
+            _ -> void $ emitCommands [exerciseCmd loanCid Archive] []
 
 createLoanWhenBelowThreshold : ContractId LoanConfig -> LoanConfig -> Balance -> TriggerA () ()
 createLoanWhenBelowThreshold loanCid loanConfig balance
