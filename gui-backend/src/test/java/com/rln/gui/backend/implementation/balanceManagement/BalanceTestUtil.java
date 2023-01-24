@@ -13,6 +13,7 @@ import com.daml.ledger.javaapi.data.Identifier;
 import com.daml.ledger.javaapi.data.Party;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.damlCodegen.model.balance.Balance;
+import com.rln.damlCodegen.model.balance.BalanceOwner;
 import com.rln.damlCodegen.model.balance.IncomingBalance;
 import com.rln.damlCodegen.model.balance.LockedBalance;
 import java.math.BigDecimal;
@@ -76,7 +77,7 @@ public class BalanceTestUtil {
     }
 
     public static DamlRecord createBalance(String iban, String provider, String owner, String currency, Double amount, Identifier templateId) {
-        Balance balance = new Balance(iban, provider, Optional.ofNullable(owner), currency, BigDecimal.valueOf(amount));
+        Balance balance = new Balance(iban, provider, new BalanceOwner(owner, Optional.of(owner)), currency, BigDecimal.valueOf(amount));
         String context = generateRandomString(8);
         logger.info("===================== context {}", context);
 
