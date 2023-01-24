@@ -33,7 +33,7 @@ create_loan_should_increase_balance = do
         account = "CH123"
         activeLoan = 0.0
         balanceLoanThreshold = 1000.0
-        maxLoanThreshold = 10000.0
+        maxLoanSize = 10000.0
         balancePaybackThreshold = 20000.0
 
     (loanConfigCid, balanceCid) <- submit bank11 $
@@ -63,7 +63,7 @@ create_loan_should_increase_balance_partially = do
         account = "CH123"
         activeLoan = 0.0
         balanceLoanThreshold = 1000.0
-        maxLoanThreshold = 10000.0
+        maxLoanSize = 10000.0
         balancePaybackThreshold = 20000.0
 
     (loanConfigCid, balanceCid) <- submit bank11 $
@@ -92,7 +92,7 @@ create_loan_should_fail_on_balance_above_loan_threshold = do
         account = "CH123"
         activeLoan = 0.0
         balanceLoanThreshold = 1000.0
-        maxLoanThreshold = 10000.0
+        maxLoanSize = 10000.0
         balancePaybackThreshold = 20000.0
     submitMustFail bank11 $
         exerciseCmd loanConfigCid CreateLoan with loanAmount = None
@@ -112,7 +112,7 @@ create_loan_should_fail_on_exceeded_max_threshold = do
         account = "CH123"
         activeLoan = 10000.0
         balanceLoanThreshold = 1000.0
-        maxLoanThreshold = 10000.0
+        maxLoanSize = 10000.0
         balancePaybackThreshold = 20000.0
     submitMustFail bank11 $
         exerciseCmd loanConfigCid CreateLoan with loanAmount = None
@@ -132,7 +132,7 @@ create_loan_should_fail_on_partially_exceeded_max_threshold = do
         account = "CH123"
         activeLoan = 9500.0
         balanceLoanThreshold = 1000.0
-        maxLoanThreshold = 10000.0
+        maxLoanSize = 10000.0
         balancePaybackThreshold = 20000.0
     submitMustFail bank11 $
         exerciseCmd loanConfigCid CreateLoan with loanAmount = Some 1000.0
@@ -153,7 +153,7 @@ create_payback_should_decrease_on_sufficient_balance = do
         account = "CH123"
         activeLoan = 1000.0
         balanceLoanThreshold = 1000.0
-        maxLoanThreshold = 10000.0
+        maxLoanSize = 10000.0
         balancePaybackThreshold = 20000.0
 
     (loanConfigCid, balanceCid) <- submit bank11 $
@@ -183,7 +183,7 @@ create_payback_should_decrease_on_sufficient_balance_partially = do
         account = "CH123"
         activeLoan = 1000.0
         balanceLoanThreshold = 1000.0
-        maxLoanThreshold = 10000.0
+        maxLoanSize = 10000.0
         balancePaybackThreshold = 20000.0
 
     (loanConfigCid, balanceCid) <- submit bank11 $
@@ -212,7 +212,7 @@ create_payback_should_fail_on_insufficient_balance = do
         account = "CH123"
         activeLoan = 1000.0
         balanceLoanThreshold = 1000.0
-        maxLoanThreshold = 10000.0
+        maxLoanSize = 10000.0
         balancePaybackThreshold = 20000.0
     submitMustFail bank11 $
         exerciseCmd loanConfigCid PaybackLoan with paybackAmount = None
@@ -233,7 +233,7 @@ create_payback_should_fail_on_partially_insufficient_balance = do
             account = "CH123"
             activeLoan = 1000.0
             balanceLoanThreshold = 1000.0
-            maxLoanThreshold = 10000.0
+            maxLoanSize = 10000.0
             balancePaybackThreshold = 20000.0
     submitMustFail bank11 do
         exerciseCmd loanConfigCid PaybackLoan with paybackAmount = Some 1000.0
@@ -254,7 +254,7 @@ create_loan_and_payback_loan_should_reduce_loan = do
         account = "CH123"
         activeLoan = 0.0
         balanceLoanThreshold = 1000.0
-        maxLoanThreshold = 10000.0
+        maxLoanSize = 10000.0
         balancePaybackThreshold = 20000.0
 
     (loanConfigCid, balanceCid) <- submit bank11 $

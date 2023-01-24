@@ -14,7 +14,7 @@ type IBAN = Text
 {-
 Loan configuration on account (e.g. Provider/IBAN) level
 The idea is to provide the {accountHolder} with individual loans 
-up until {balanceLoanThreshold} is reached and as long as {maxLoanThreshold} 
+up until {balanceLoanThreshold} is reached and as long as {maxLoanSize} 
 has not been reached (as tracked by {activeLoan}).
 -}
 template LoanConfig
@@ -27,7 +27,7 @@ template LoanConfig
         -- ^ Account number
         balanceLoanThreshold: Amount
         -- ^ Defines the balance up until which loans will be provided
-        maxLoanThreshold: Amount
+        maxLoanSize: Amount
         -- ^ Defines the limit of all loans given to this account
         activeLoan: Amount
         -- ^ Sum of currently active loans
@@ -41,12 +41,12 @@ template LoanConfig
         maintainer key.provider
 
         ensure activeLoan >= 0.0
-            && activeLoan <= maxLoanThreshold
+            && activeLoan <= maxLoanSize
             && balanceLoanThreshold >= 0.0
-            && balanceLoanThreshold <= maxLoanThreshold
-            && balancePaybackThreshold > maxLoanThreshold 
+            && balanceLoanThreshold <= maxLoanSize
+            && balancePaybackThreshold > maxLoanSize 
         
-        let currentMaxLoanAmount balance = min (max (balanceLoanThreshold - balance) 0.0) (maxLoanThreshold - activeLoan)
+        let currentMaxLoanAmount balance = min (max (balanceLoanThreshold - balance) 0.0) (maxLoanSize - activeLoan)
             currentMaxPaybackAmount balance = min (max (balance - balancePaybackThreshold) 0.0) activeLoan
             balanceKey = BalanceKey provider account
             getBalance = do
@@ -61,11 +61,11 @@ template LoanConfig
 
         For example: 
         - Account A with Balance = 50.0 
-        - LoanConfig with balanceLoanThreshold = 200.0, maxLoanThreshold = 1000.0, activeLoan = 0.0
+        - LoanConfig with balanceLoanThreshold = 200.0, maxLoanSize = 1000.0, activeLoan = 0.0
         > In this case, account A would be funded with 150.0 (resulting in a total balance of 200.0) 
         > in order to reach the targeted balanceLoanThreshold. Consequently, the new activeLoan = 150.0.
         > In contrast, if prior to the loan giving activeLoan = 1000.0, no loan would be given as 
-        > the maxLoanThreshold has already been reached.
+        > the maxLoanSize has already been reached.
         -}
         choice CreateLoan: (ContractId LoanConfig, ContractId Balance)
             with

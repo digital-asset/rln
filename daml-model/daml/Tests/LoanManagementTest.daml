@@ -42,7 +42,7 @@ given_balance_below_threshold_then_create_loan = do
             account = "CH123"
             activeLoan = 0.0
             balanceLoanThreshold = 1000.0
-            maxLoanThreshold = 10000.0
+            maxLoanSize = 10000.0
             balancePaybackThreshold = 20000.0
 
     commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
@@ -67,7 +67,7 @@ given_balance_above_threshold_then_create_payback = do
             account = "CH123"
             activeLoan = 0.0
             balanceLoanThreshold = 1000.0
-            maxLoanThreshold = 10000.0
+            maxLoanSize = 10000.0
             balancePaybackThreshold = 20000.0
 
     commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
@@ -92,7 +92,7 @@ given_balance_at_threshold_then_create_no_loan_and_no_payback = do
             account = "CH123"
             activeLoan = 0.0
             balanceLoanThreshold = 1000.0
-            maxLoanThreshold = 10000.0
+            maxLoanSize = 10000.0
             balancePaybackThreshold = 20000.0
 
     commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
