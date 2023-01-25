@@ -29,12 +29,10 @@ commands:
           command: |
             tar cvfj << parameters.archive >> -C << parameters.build_directory >> quarkus-app
 
-  sign_artifact:
-    description: "Sign Artifact with GnuPG"
+  sign_artifacts:
+    description: "Sign Artifacts with GnuPG"
     parameters:
-      artifact:
-        type: string
-      target_directory:
+      artifact_directory:
         type: string
     steps:
       - run:
@@ -44,15 +42,13 @@ commands:
             export GPG_DIR=$(mktemp -d)
             echo "$gpg_code_signing" | base64 -d > $KEY_FILE
       - run:
-          name: "Signing the artifact"
+          name: "Signing the artifacts"
           command: |
             gpg --homedir $GPG_DIR --no-tty --quiet --import $KEY_FILE
-            gpg --homedir $GPG_DIR -ab << parameters.artifact >>
-      - run:
-          name: "Move artifact and signature"
-          command: |
-            mv << parameters.artifact >> << parameters.target_directory >>
-            mv << parameters.artifact >>.asc << parameters.target_directory >>
+            for artifact in *; do
+              echo "Signing: $artifact"
+              gpg --homedir $GPG_DIR -ab "$artifact"
+            done
       - run:
           name: "Cleanup GPG dir and key file"
           when: always
@@ -138,6 +134,14 @@ jobs:
       - package_quarkus_app:
           archive: "artifacts/integration-adapter.tar.bz2"
           build_directory: "integration-adapter/build"
+      - run:
+          name: "Move DARs to artifacts"
+          command: |
+            mv daml-model/build/daml/rln*.dar artifacts
+      - sign_artifacts:
+          artifact_directory: artifacts
+      - store_artifacts:
+          path: artifacts
 
 parameters:
   do_release:
