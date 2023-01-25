@@ -37,7 +37,7 @@ public class BicPartyIdMapper {
                 .forEach(bankBic -> {
                     logger.info("BankBic read from ledger {}", bankBic);
                     String bic = bankBic.bic;
-                    Set<String> bankShardPartyIds = bankBic.banks.map.keySet();
+                    Set<String> bankShardPartyIds = bankBic.bankShards.map.keySet();
                     bicToPartyIds.put(bic, bankShardPartyIds);
                     bankShardPartyIds.forEach(bankPartyId -> partyIdToBic.put(bankPartyId, bic));
                 });

@@ -36,8 +36,8 @@ class BicPartyIdMapperTest {
 
         Set<String> bankAShardPartyIds = new Set<>(Map.of(BANK_A1_PARTY_ID, Unit.getInstance(), BANK_A2_PARTY_ID, Unit.getInstance()));
         Set<String> bankBShardPartyIds = new Set<>(Collections.singletonMap(BANK_B1_PARTY_ID, Unit.getInstance()));
-        BankBIC bankA1 = new BankBIC(BANK_A_BIC, bankAShardPartyIds, EMPTY_SET, EMPTY_SET);
-        BankBIC bankB1 = new BankBIC(BANK_B_BIC, bankBShardPartyIds, EMPTY_SET, EMPTY_SET);
+        BankBIC bankA1 = new BankBIC(BANK_A_BIC, bankAShardPartyIds, EMPTY_SET, EMPTY_SET, EMPTY_SET);
+        BankBIC bankB1 = new BankBIC(BANK_B_BIC, bankBShardPartyIds, EMPTY_SET, EMPTY_SET, EMPTY_SET);
 
         CreatedEvent event1 = Mockito.mock(CreatedEvent.class);
         CreatedEvent event2 = Mockito.mock(CreatedEvent.class);
