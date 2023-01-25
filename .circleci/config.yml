@@ -36,25 +36,20 @@ commands:
         type: string
     steps:
       - run:
-          name: "Prepare GPG dir and key file"
-          command: |
-            export KEY_FILE=$(mktemp)
-            export GPG_DIR=$(mktemp -d)
-            echo "$gpg_code_signing" | base64 -d > $KEY_FILE
-      - run:
           name: "Signing the artifacts"
           command: |
-            gpg --homedir $GPG_DIR --no-tty --quiet --import $KEY_FILE
+            KEY_FILE=$(mktemp)
+            GPG_DIR=$(mktemp -d)
+            cleanup() {
+                rm -rf "$KEY_FILE" "$GPG_DIR"
+            }
+            trap cleanup EXIT
+            echo "$gpg_code_signing" | base64 -d > "$KEY_FILE"
+            gpg --homedir "$GPG_DIR" --no-tty --quiet --import "$KEY_FILE"
             for artifact in *; do
               echo "Signing: $artifact"
-              gpg --homedir $GPG_DIR -ab "$artifact"
+              gpg --homedir "$GPG_DIR" -ab "$artifact"
             done
-      - run:
-          name: "Cleanup GPG dir and key file"
-          when: always
-          command: |
-            echo "Key file: $KEY_FILE"
-            rm -rf "$KEY_FILE" "$GPG_DIR"
 
 jobs:
   test_daml_java:
