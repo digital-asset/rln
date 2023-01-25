@@ -84,6 +84,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
     return transactionsApi.getTransactions(incompleteOnly, address, limit, offset);
   }
 
+  // Endpoint part of Minimum Necessary Requirements of the GUI
   @Override
   public List<Balance> getAddressBalance(String address) {
     try {
@@ -138,7 +139,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
 
   // Wallet management ----------
 
-  // Necessary endpoint
+  // Endpoint part of Minimum Necessary Requirements of the GUI
   // Get all the wallets
   @Override
   public List<WalletDTO> getWallets() {
