@@ -31,7 +31,7 @@ public class PartyApiImpl {
     var bic = partyManager.getBic(guiBackendConfiguration.partyDamlId());
     return new PartyDTO(
         guiBackendConfiguration.baseUrl(),
-        bic,
+        List.of(bic),
         guiBackendConfiguration.partyId(),
         guiBackendConfiguration.partyName());
   }
@@ -50,7 +50,7 @@ public class PartyApiImpl {
   private PartyDTO toPartyDTO(SetlParty setlParty) {
     return new PartyDTO(
         setlParty.getBaseUrl(),
-        partyManager.getBic(setlParty.getDamlPartyId()),
+        List.of(partyManager.getBic(setlParty.getDamlPartyId())),
         setlParty.getId(),
         setlParty.getName());
   }

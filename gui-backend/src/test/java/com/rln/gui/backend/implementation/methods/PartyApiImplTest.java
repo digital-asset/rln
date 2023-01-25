@@ -22,7 +22,7 @@ class PartyApiImplTest extends LedgerBaseTest {
 
   @Test
   void getMyParty() {
-    PartyDTO expected = new PartyDTO(LedgerBaseTest.BASEURL, LedgerBaseTest.BANK_BIC, LedgerBaseTest.PARTY_ID, LedgerBaseTest.PARTY_NAME);
+    PartyDTO expected = new PartyDTO(LedgerBaseTest.BASEURL, List.of(LedgerBaseTest.BANK_BIC), LedgerBaseTest.PARTY_ID, LedgerBaseTest.PARTY_NAME);
 
     PartyDTO result = RestAssured.given()
         .when().get("/api/parties/me")
