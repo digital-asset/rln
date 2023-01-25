@@ -13,7 +13,7 @@ import DA.Foldable (forA_)
 import DA.Optional (fromSomeNote, whenSome)
 import qualified DA.TextMap as TextMap
 import DA.TextMap (TextMap)
-import DA.Action (void)
+import DA.Action (foldlA, void)
 
 type EntityNameBicParticipantName = (Text, Text, Text)
 type EntityToBicMapping = [EntityNameBicParticipantName]
@@ -63,11 +63,12 @@ onboarding partyInfo = do
 
 setupParties : [PartyInfo] -> Script (TextMap Party)
 setupParties partyInfo = do
-  parties <- forA partyInfo (\info -> do 
+  foldlA createParty TextMap.empty partyInfo
+  where
+    createParty parties info = do
       debug $ "Creating party: " <> info.name
-      allocatePartyOn info.name (ParticipantName info.participantName)
-    )
-  pure $ TextMap.fromList $ zipWith (\info party -> (info.name, party)) partyInfo parties
+      party <- allocatePartyOn info.name (ParticipantName info.participantName)
+      pure $ TextMap.insert info.name party parties
 
 setupAccount : Party -> Party -> TextMap Party -> PartyInfo -> Script GuiBackendConfigEntry
 setupAccount scheduler assembler parties partyInfo = do
