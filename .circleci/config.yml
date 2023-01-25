@@ -100,7 +100,8 @@ jobs:
             mv daml-model/build/daml/rln*.dar artifacts
       - persist_to_workspace:
           root: artifacts
-          paths: \\*
+          paths:
+            - \\*
   blackduck_check:
     parameters:
       daml_sdk_version:
@@ -164,6 +165,7 @@ workflows:
           context:
             - blackduck
       - sign_artifacts:
-          requires: test_daml_java
+          requires:
+            - test_daml_java
           daml_sdk_version: "2.5.0"
           context: npn-publish
