@@ -37,6 +37,7 @@ commands:
     steps:
       - run:
           name: "Signing the artifacts"
+          working_directory: << parameters.artifact_directory >>
           command: |
             KEY_FILE=$(mktemp)
             GPG_DIR=$(mktemp -d)
