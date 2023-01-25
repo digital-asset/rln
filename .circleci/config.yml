@@ -19,16 +19,15 @@ commands:
   package_quarkus_app:
     description: "Packaging a Quarkus Application"
     parameters:
-      application_name:
-        type: string
       archive:
+        type: string
+      build_directory:
         type: string
     steps:
       - run:
           name: Creating Tarball
-          working_directory: << parameters.application_name >>/build
           command: |
-            zip -r << parameters.archive >> quarkus-app
+            tar cvfj << parameters.archive >> -C << parameters.build_directory >> quarkus-app
 
   sign_artifact:
     description: "Sign Artifact with GnuPG"
@@ -124,21 +123,21 @@ jobs:
     machine:
       image: ubuntu-2204:2022.04.2
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - install_sdk:
           version: << parameters.daml_sdk_version >>
+      # TODO: Rearrange jobs or workflows to utilize previous results. E.g. using workspaces and `requires`.
       - run:
-          name: Building Artifacts
+          name: Gradle Build
           command: |
             ./gradlew clean build
+      - run: mkdir artifacts
       - package_quarkus_app:
-          application_name: "gui-backend"
-          archive: "gui-backend.zip"
+          archive: "artifacts/gui-backend.tar.bz2"
+          build_directory: "gui-backend/build"
       - package_quarkus_app:
-          application_name: "integration-adapter"
-          archive: "integration-adapter.zip"
+          archive: "artifacts/integration-adapter.tar.bz2"
+          build_directory: "integration-adapter/build"
 
 parameters:
   do_release:
