@@ -32,6 +32,10 @@ import org.slf4j.LoggerFactory;
 
 public class GuiBackendApiImplementation implements DefaultApi {
 
+  public static final WalletDTO ONLY_SUPPORTED_WALLET = WalletDTO.builder()
+      .data("Wallet 1")
+      .id(1L)
+      .build();
   private final Logger logger = LoggerFactory.getLogger(GuiBackendApiImplementation.class);
 
   private final GuiBackendConfiguration configuration;
@@ -134,6 +138,13 @@ public class GuiBackendApiImplementation implements DefaultApi {
 
   // Wallet management ----------
 
+  // Necessary endpoint
+  // Get all the wallets
+  @Override
+  public List<WalletDTO> getWallets() {
+    return List.of(ONLY_SUPPORTED_WALLET);
+  }
+
   // Create a new wallet address
   @Override
   public void post3(Long walletId, @Valid @NotNull WalletAddressDTO walletAddressDTO) {
@@ -143,12 +154,6 @@ public class GuiBackendApiImplementation implements DefaultApi {
   // Create a new wallet
   @Override
   public void postWallets(@Valid @NotNull WalletDTO walletDTO) {
-    throw notImplemented();
-  }
-
-  // Get all the wallets
-  @Override
-  public List<WalletDTO> getWallets() {
     throw notImplemented();
   }
 
