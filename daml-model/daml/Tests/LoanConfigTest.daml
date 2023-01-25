@@ -10,6 +10,7 @@ import Daml.Script
 import Model.Balance
 import Model.LoanConfig
 import Tests.PartyAlloc
+import Tests.Util (balanceOwner)
 
 setup = do
     proposalTime <- getTime
@@ -22,7 +23,7 @@ create_loan_should_increase_balance = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
-        owner = BalanceOwner with party = Some users.alice, name = "Alice"
+        owner = balanceOwner users.alice
         iban = "CH123"
         currency = "USD"
         amount = 0.0
@@ -52,7 +53,7 @@ create_loan_should_increase_balance_partially = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
-        owner = BalanceOwner with party = Some users.alice, name = "Alice"
+        owner = balanceOwner users.alice
         iban = "CH123"
         currency = "USD"
         amount = 0.0
@@ -82,7 +83,7 @@ create_loan_should_fail_on_balance_above_loan_threshold = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
-        owner = BalanceOwner with party = Some users.alice, name = "Alice"
+        owner = balanceOwner users.alice
         iban = "CH123"
         currency = "USD"
         amount = 1000.0
@@ -102,7 +103,7 @@ create_loan_should_fail_on_exceeded_max_threshold = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
-        owner = BalanceOwner with party = Some users.alice, name = "Alice"
+        owner = balanceOwner users.alice
         iban = "CH123"
         currency = "USD"
         amount = 0.0
@@ -122,7 +123,7 @@ create_loan_should_fail_on_partially_exceeded_max_threshold = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
-        owner = BalanceOwner with party = Some users.alice, name = "Alice"
+        owner = balanceOwner users.alice
         iban = "CH123"
         currency = "USD"
         amount = 0.0
@@ -142,7 +143,7 @@ create_payback_should_decrease_on_sufficient_balance = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
-        owner = BalanceOwner with party = Some users.alice, name = "Alice"
+        owner = balanceOwner users.alice
         iban = "CH123"
         currency = "USD"
         amount = 21000.0
@@ -172,7 +173,7 @@ create_payback_should_decrease_on_sufficient_balance_partially = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
-        owner = BalanceOwner with party = Some users.alice, name = "Alice"
+        owner = balanceOwner users.alice
         iban = "CH123"
         currency = "USD"
         amount = 21000.0
@@ -202,7 +203,7 @@ create_payback_should_fail_on_insufficient_balance = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
-        owner = BalanceOwner with party = Some users.alice, name = "Alice"
+        owner = balanceOwner users.alice
         iban = "CH123"
         currency = "USD"
         amount = 0.0
@@ -222,7 +223,7 @@ create_payback_should_fail_on_partially_insufficient_balance = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
-        owner = BalanceOwner with party = Some users.alice, name = "Alice"
+        owner = balanceOwner users.alice
         iban = "CH123"
         currency = "USD"
         amount = 20500.0
@@ -243,7 +244,7 @@ create_loan_and_payback_loan_should_reduce_loan = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
-        owner = BalanceOwner with party = Some users.alice, name = "Alice"
+        owner = balanceOwner users.alice
         iban = "CH123"
         currency = "USD"
         amount = 0.0

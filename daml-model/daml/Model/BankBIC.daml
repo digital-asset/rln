@@ -11,9 +11,10 @@ import qualified DA.Set as S
 template BankBIC
   with
     bic: Text
-    banks: S.Set Party
-    schedulers: S.Set Party
-    assemblers: S.Set Party
+    bankShards: S.Set Party
+    schedulerShards: S.Set Party
+    assemblerShards: S.Set Party
+    otherBanks: S.Set Party
   where
-    signatory L.head $ S.toList banks
-    observer schedulers, banks, assemblers
+    signatory L.head $ S.toList bankShards
+    observer schedulerShards, bankShards, assemblerShards, otherBanks
