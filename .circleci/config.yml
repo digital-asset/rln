@@ -100,8 +100,7 @@ jobs:
             mv daml-model/build/daml/rln*.dar artifacts
       - persist_to_workspace:
           root: artifacts
-          paths:
-            - *
+          paths: \\*
   blackduck_check:
     parameters:
       daml_sdk_version:
