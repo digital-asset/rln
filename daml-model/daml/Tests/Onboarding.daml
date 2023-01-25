@@ -57,10 +57,16 @@ onboarding : [PartyInfo] -> Script Output
 onboarding partyInfo = do
   scheduler <- allocatePartyOn "Scheduler" (ParticipantName "schedulerParticipant")
   assembler <- allocatePartyOn "Assembler" (ParticipantName "assemblerParticipant")
-  parties <- setupParties partyInfo
+  fed <- setupFed
+  parties <- TextMap.insert "FED" fed <$> setupParties partyInfo
   mapA_ (setupBic  scheduler assembler parties) partyInfo
   entries <- mapA (setupBalances parties) partyInfo
   pure $ Output { guiBackendConfig = entries, parties = map damlPartyId entries }
+
+setupFed : Script (Party)
+setupFed = do
+  debug $ "Creating party: FED"
+  allocateParty "FED"
 
 setupParties : [PartyInfo] -> Script (TextMap Party)
 setupParties partyInfo = do
