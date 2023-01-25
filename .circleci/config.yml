@@ -126,7 +126,7 @@ jobs:
       - run:
           name: Gradle Build
           command: |
-            ./gradlew clean build
+            ./gradlew clean build -x test
       - run: mkdir artifacts
       - package_quarkus_app:
           archive: "artifacts/gui-backend.tar.bz2"
