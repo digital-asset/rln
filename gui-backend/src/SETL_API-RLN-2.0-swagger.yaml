@@ -130,13 +130,19 @@ components:
       properties:
         baseUrl:
           type: string
+          example: "http://rlndemo3-participant:8080/api/"
         bic:
-          type: string
+          type: array
+          items:
+            type: string
+          example: ["DEMOUS03XXX"]
         id:
           format: int64
           type: integer
+          example: 19
         name:
           type: string
+          example: "Rln Demo 3"
       required:
         - baseUrl
         - bic
@@ -280,7 +286,7 @@ paths:
         required: true
       responses:
         '200':
-          description: Success response
+          description: Successful response
           content:
             application/json:
               schema:
@@ -333,7 +339,7 @@ paths:
               $ref: '#/components/schemas/TransactionStatusUpdate'
       responses:
         '200':
-          description: Success response
+          description: Successful response
           content:
             application/json:
               schema:
@@ -363,7 +369,7 @@ paths:
               $ref: '#/components/schemas/ApprovalProperties'
       responses:
         '204':
-          description: Success response
+          description: Successful response
           content:
             application/json: {}
   /api/balance/{walletId}:
@@ -428,7 +434,7 @@ paths:
         required: true
       responses:
         '201':
-          description: Success response
+          description: Successful response
           content:
             application/json:
               schema:
@@ -453,7 +459,7 @@ paths:
             type: string
       responses:
         '204':
-          description: Success response
+          description: Successful response
           content:
             '*/*': {}
   /api/ledger/clients:
@@ -480,7 +486,7 @@ paths:
         required: true
       responses:
         '201':
-          description: Success response
+          description: Successful response
           content:
             application/json: {}
   /api/ledger/clients/{clientId}:
@@ -502,7 +508,7 @@ paths:
               type: integer
       responses:
         '204':
-          description: Success response
+          description: Successful response
           content:
             application/json: {}
   /api/parties:
@@ -529,7 +535,7 @@ paths:
         required: true
       responses:
         '201':
-          description: Success response
+          description: Successful response
           content:
             application/json: {}
   /api/parties/me:
@@ -538,7 +544,7 @@ paths:
       operationId: getMyParty
       responses:
         '200':
-          description: Success response
+          description: Successful response
           content:
             application/json:
               schema:
@@ -642,7 +648,7 @@ paths:
         required: true
       responses:
         '201':
-          description: Success response
+          description: Successful response
           content:
             application/json: {}
   /api/wallets/{walletId}/addresses:
@@ -683,7 +689,7 @@ paths:
         required: true
       responses:
         '201':
-          description: Success response
+          description: Successful response
           content:
             application/json: {}
   /api/wallets/{walletId}/addresses/{address}:
@@ -704,7 +710,7 @@ paths:
             type: string
       responses:
         '204':
-          description: Success response
+          description: Successful response
           content:
             application/json: {}
   /finalised:
