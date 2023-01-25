@@ -58,15 +58,15 @@ onboarding partyInfo = do
   scheduler <- allocatePartyOn "Scheduler" (ParticipantName "schedulerParticipant")
   assembler <- allocatePartyOn "Assembler" (ParticipantName "assemblerParticipant")
   parties <- setupParties partyInfo
-  entries <- mapA (\info -> setupAccount scheduler assembler parties info) partyInfo
+  entries <- mapA (setupAccount scheduler assembler parties) partyInfo
   pure $ Output { guiBackendConfig = entries, parties = map damlPartyId entries }
 
 setupParties : [PartyInfo] -> Script (TextMap Party)
 setupParties partyInfo = do
-  parties <- mapA (\info -> do 
+  parties <- forA partyInfo (\info -> do 
       debug $ "Creating party: " <> info.name
       allocatePartyOn info.name (ParticipantName info.participantName)
-    ) partyInfo
+    )
   pure $ TextMap.fromList $ zipWith (\info party -> (info.name, party)) partyInfo parties
 
 setupAccount : Party -> Party -> TextMap Party -> PartyInfo -> Script GuiBackendConfigEntry

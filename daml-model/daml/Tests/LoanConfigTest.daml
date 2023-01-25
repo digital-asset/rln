@@ -10,6 +10,7 @@ import Daml.Script
 import Model.Balance
 import Model.LoanConfig
 import Tests.PartyAlloc
+import Tests.Util (balanceOwner)
 
 setup = do
     proposalTime <- getTime
@@ -279,6 +280,3 @@ create_loan_and_payback_loan_should_reduce_loan = do
     queryContractId bank11 balanceCid >>= optional
         (fail "Balance not found")
         (\x -> x.amount === 20000.0)
-
--- Helper
-balanceOwner party = BalanceOwner with name = show party, party = Some party

@@ -13,7 +13,7 @@ import Model.Balance
 import Model.LoanConfig
 import qualified DA.Map as M
 import Daml.Trigger (Command)
-
+import Tests.Util (balanceOwner)
 
 setup = do
     proposalTime <- getTime
@@ -30,7 +30,7 @@ given_balance_below_threshold_then_create_loan = do
     aliceBalanceCid <- submit bank11 do
         createCmd Balance with
             provider = bank11
-            owner = BalanceOwner with name = "alice", party = Some users.alice
+            owner = balanceOwner users.alice
             iban = "CH123"
             currency = "USD"
             amount = 0.0
@@ -55,7 +55,7 @@ given_balance_above_threshold_then_create_payback = do
     aliceBalanceCid <- submit bank11 do
         createCmd Balance with
             provider = bank11
-            owner = BalanceOwner with name = "alice", party = Some users.alice
+            owner = balanceOwner users.alice
             iban = "CH123"
             currency = "USD"
             amount = 21000.0
@@ -80,7 +80,7 @@ given_balance_at_threshold_then_create_no_loan_and_no_payback = do
     aliceBalanceCid <- submit bank11 do
         createCmd Balance with
             provider = bank11
-            owner = BalanceOwner with name = "alice", party = Some users.alice
+            owner = balanceOwner users.alice
             iban = "CH123"
             currency = "USD"
             amount = 10000.0
