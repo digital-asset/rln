@@ -84,6 +84,23 @@ jobs:
           when: always
       - store_test_results:
           path: ~/test-results
+      - run:
+          name: "Create artifacts directory"
+          command: |
+            mkdir artifacts
+      - package_quarkus_app:
+          archive: "artifacts/gui-backend.tar.bz2"
+          build_directory: "gui-backend/build"
+      - package_quarkus_app:
+          archive: "artifacts/integration-adapter.tar.bz2"
+          build_directory: "integration-adapter/build"
+      - run:
+          name: "Move DARs to artifacts"
+          command: |
+            mv daml-model/build/daml/rln*.dar artifacts
+      - persist_to_workspace:
+          root: artifacts
+          paths: *
   blackduck_check:
     parameters:
       daml_sdk_version:
@@ -109,41 +126,33 @@ jobs:
             --detect.excluded.detector.types=pip \
             --detect.notices.report=false \
             --detect.timeout=3600
-  make_release:
+  sign_artifacts:
     parameters:
       daml_sdk_version:
         type: string
     machine:
       image: ubuntu-2204:2022.04.2
     steps:
-      - checkout
-      - install_sdk:
-          version: << parameters.daml_sdk_version >>
-      # TODO: Rearrange jobs or workflows to utilize previous results. E.g. using workspaces and `requires`.
+      - attach_workspace:
+          at: artifacts
       - run:
-          name: Gradle Build
+          name: "Signing artifacts with GnuPG"
+          working_directory: artifacts
           command: |
-            ./gradlew clean build -x test
-      - run: mkdir artifacts
-      - package_quarkus_app:
-          archive: "artifacts/gui-backend.tar.bz2"
-          build_directory: "gui-backend/build"
-      - package_quarkus_app:
-          archive: "artifacts/integration-adapter.tar.bz2"
-          build_directory: "integration-adapter/build"
-      - run:
-          name: "Move DARs to artifacts"
-          command: |
-            mv daml-model/build/daml/rln*.dar artifacts
-      - sign_artifacts:
-          artifact_directory: artifacts
+            KEY_FILE=$(mktemp)
+            GPG_DIR=$(mktemp -d)
+            cleanup() {
+                rm -rf "$KEY_FILE" "$GPG_DIR"
+            }
+            trap cleanup EXIT
+            echo "$gpg_code_signing" | base64 -d > "$KEY_FILE"
+            gpg --homedir "$GPG_DIR" --no-tty --quiet --import "$KEY_FILE"
+            for artifact in *; do
+              echo "Signing: $artifact"
+              gpg --homedir "$GPG_DIR" -ab "$artifact"
+            done
       - store_artifacts:
           path: artifacts
-
-parameters:
-  do_release:
-    type: boolean
-    default: false
 
 workflows:
   checkout-build-test:
@@ -154,9 +163,7 @@ workflows:
           daml_sdk_version: "2.5.0"
           context:
             - blackduck
-  release:
-#    when: << pipeline.parameters.do_release >>
-    jobs:
-      - make_release:
+      - sign_artifacts:
+          requires: test_daml_java
           daml_sdk_version: "2.5.0"
           context: npn-publish
