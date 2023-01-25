@@ -9,7 +9,7 @@ import Daml.Script
 import Model.BankBIC
 import Model.Balance
 import DA.Set qualified as Set
-import DA.Foldable (forA_)
+import DA.Foldable (mapA_, forA_)
 import DA.Optional (fromSomeNote, whenSome)
 import qualified DA.TextMap as TextMap
 import DA.TextMap (TextMap)
@@ -58,7 +58,8 @@ onboarding partyInfo = do
   scheduler <- allocatePartyOn "Scheduler" (ParticipantName "schedulerParticipant")
   assembler <- allocatePartyOn "Assembler" (ParticipantName "assemblerParticipant")
   parties <- setupParties partyInfo
-  entries <- mapA (setupAccount scheduler assembler parties) partyInfo
+  mapA_ (setupBic  scheduler assembler parties) partyInfo
+  entries <- mapA (setupBalances parties) partyInfo
   pure $ Output { guiBackendConfig = entries, parties = map damlPartyId entries }
 
 setupParties : [PartyInfo] -> Script (TextMap Party)
@@ -70,8 +71,8 @@ setupParties partyInfo = do
       party <- allocatePartyOn info.name (ParticipantName info.participantName)
       pure $ TextMap.insert info.name party parties
 
-setupAccount : Party -> Party -> TextMap Party -> PartyInfo -> Script GuiBackendConfigEntry
-setupAccount scheduler assembler parties partyInfo = do
+setupBic : Party -> Party -> TextMap Party -> PartyInfo -> Script ()
+setupBic scheduler assembler parties partyInfo = do
   let party = fromSomeNote
         ("No party found for: " <> partyInfo.name)
         (TextMap.lookup partyInfo.name parties)
@@ -86,11 +87,20 @@ setupAccount scheduler assembler parties partyInfo = do
         assemblerShards = Set.singleton assembler
         otherBanks = Set.fromList . textMapValues $ TextMap.filter (/= party) parties
 
+setupBalances : TextMap Party -> PartyInfo -> Script GuiBackendConfigEntry
+setupBalances parties partyInfo = do
+  let party = fromSomeNote
+        ("No party found for: " <> partyInfo.name)
+        (TextMap.lookup partyInfo.name parties)
+
   whenSome partyInfo.account \account -> do
     let provider = fromSomeNote
             ("No party found for provider: " <> account.provider)
             (TextMap.lookup account.provider parties)
-    debug $ "Creating Account with IBAN " <> account.iban <> " for " <> partyInfo.name <> " with provider " <> account.provider
+    debug $ 
+         "Creating Account with IBAN " <> account.iban 
+      <> " for " <> partyInfo.name 
+      <> " with provider " <> account.provider
     void $ provider `submit` createCmd Balance
       with
         iban = account.iban
@@ -100,12 +110,15 @@ setupAccount scheduler assembler parties partyInfo = do
         amount = 0.0
 
   forA_ partyInfo.clients \client -> do
-    debug $ "Creating Client Account with IBAN " <> client.iban <> " for " <> client.name <> " with provider " <> partyInfo.name
+    debug $ 
+         "Creating Client Account with IBAN " <> client.iban 
+      <> " for " <> client.name 
+      <> " with provider " <> partyToText party
     void $ party `submit` createCmd Balance
       with
         iban = client.iban
         provider = party
-        owner = BalanceOwner with name = client.name, party = Some party
+        owner = BalanceOwner with name = client.name, party = None
         currency = "USD"
         amount = 0.0
 

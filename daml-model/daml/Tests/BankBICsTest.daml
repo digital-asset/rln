@@ -15,14 +15,14 @@ import Model.BankBIC
 
 createBankBICs : [(Party, Text)] -> S.Set Party -> S.Set Party -> Script ()
 createBankBICs banksWithBICs schedulerShards assemblerShards = do
-  forA_ banksWithBICs (\(bank, bic) -> submit bank $ createCmd BankBIC 
-    with 
-        bankShards = S.singleton bank
-        otherBanks = S.delete bank $ S.fromList (map fst banksWithBICs)
-        ..
-    )
-  pure ()
-
+    forA_ banksWithBICs (\(bank, bic) -> submit bank $ createCmd BankBIC 
+      with 
+          bankShards = S.singleton bank
+          otherBanks = S.delete bank allBanks
+          ..
+      )
+    pure ()
+  where allBanks = S.fromList $ fst <$> banksWithBICs
 
 populateBanks : Script ()
 populateBanks = script do
