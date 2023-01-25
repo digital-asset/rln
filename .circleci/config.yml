@@ -53,7 +53,8 @@ commands:
           name: "Cleanup GPG dir and key file"
           when: always
           command: |
-            rm -rf $KEY_FILE $GPG_DIR
+            echo "Key file: $KEY_FILE"
+            rm -rf "$KEY_FILE" "$GPG_DIR"
 
 jobs:
   test_daml_java:
