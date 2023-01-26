@@ -16,12 +16,14 @@ import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxA
 import com.rln.gui.backend.implementation.balanceManagement.AccountEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.AutoApproveEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.BalanceTestUtil;
+import com.rln.gui.backend.implementation.config.SetlParty;
 import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.ApprovalProperties.ApprovalModeEnum;
 import com.rln.gui.backend.model.LedgerAddressDTO;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
@@ -31,37 +33,20 @@ import java.util.List;
 import javax.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.BDDMockito;
 
 @TestProfile(GuiBackendTestProfile.class)
 @QuarkusTest
 class AutoapproveApiImplTest extends LedgerBaseTest {
+
+  @InjectMock
+  SetlPartySupplier setlPartySupplier;
 
   @Inject
   AutoApproveEventListener autoApproveEventListener;
 
   @Inject
   AccountEventListener accountEventListener;
-
-  // TODO the corresponding endpoint seems to be deleted from the Swagger definition
-//  @Test
-//  void apiAutoapproveListGet() throws InvalidProtocolBufferException {
-//    var createdMarker = publishLimitMarker(getCurrentBankPartyId(), USD, TRANSACTION_AMOUNT);
-//    List<ApprovalProperties> result = RestAssured.given()
-//        .when().get("/api/autoapprove/list")
-//        .then()
-//        .statusCode(200)
-//        .extract().body().as(new TypeRef<>() {
-//        });
-//
-//    Assertions.assertEquals(1, result.size());
-//    var autoApproveResult = result.get(0);
-//    // Assertions.assertEquals(getCurrentBankPartyId().getValue(), autoApproveResult.getUsername());
-//    // TODO fix this
-//    Assertions.assertEquals(USD, autoApproveResult.getAddress());
-//    Assertions.assertEquals(TRANSACTION_AMOUNT, autoApproveResult.getLimit());
-//
-//    cleanupMarker(getCurrentBankPartyId(), createdMarker);
-//  }
 
   @Test
   void apiAutoapprovePost() throws InvalidProtocolBufferException {
@@ -135,10 +120,9 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     Assertions.assertEquals("LIMIT", ledgerAddressInfo.getApprovalMode());
     Assertions.assertEquals(TRANSACTION_AMOUNT.doubleValue(), ledgerAddressInfo.getApprovalLimit());
     Assertions.assertTrue(ledgerAddressInfo.getIsIBAN());
-    // The following fields are just filled with dummy values
     Assertions.assertEquals(null, ledgerAddressInfo.getId());
-    Assertions.assertEquals(0, ledgerAddressInfo.getClientId());
-    Assertions.assertTrue(ledgerAddressInfo.getBearerToken().isEmpty());
+    Assertions.assertEquals(null, ledgerAddressInfo.getClientId());
+    Assertions.assertEquals("DummyToken", ledgerAddressInfo.getBearerToken());
 
     cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
     cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID, balanceLimit);
@@ -146,6 +130,8 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetAddressSettingsListWhenManual() throws InvalidProtocolBufferException {
+    BDDMockito.given(setlPartySupplier.getParties())
+        .willReturn(List.of(new SetlParty(BASEURL, PARTY_ID, getCurrentBankPartyId().getValue(), PARTY_NAME)));
     var liquidAmount = 500;
     var balance = BalanceTestUtil
         .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
@@ -159,17 +145,14 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
 
     Assertions.assertEquals(1, result.size());
-
     var ledgerAddressInfo = result.get(0);
-
     Assertions.assertEquals(SENDER_IBAN, ledgerAddressInfo.getAddress());
     Assertions.assertEquals("MANUAL", ledgerAddressInfo.getApprovalMode());
     Assertions.assertEquals(null, ledgerAddressInfo.getApprovalLimit());
     Assertions.assertTrue(ledgerAddressInfo.getIsIBAN());
-    // The following fields are just filled with dummy values
-    Assertions.assertEquals(null, ledgerAddressInfo.getId());
-    Assertions.assertEquals(0, ledgerAddressInfo.getClientId());
-    Assertions.assertTrue(ledgerAddressInfo.getBearerToken().isEmpty());
+    Assertions.assertEquals(PARTY_ID, ledgerAddressInfo.getId());
+    Assertions.assertEquals(null, ledgerAddressInfo.getClientId());
+    Assertions.assertEquals("DummyToken", ledgerAddressInfo.getBearerToken());
 
     cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
   }

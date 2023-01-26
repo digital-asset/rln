@@ -12,6 +12,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class AccountInfo {
     private String provider;
+    private String owner;
     private String iban;
     private String assetCode;
 
@@ -19,5 +20,6 @@ public class AccountInfo {
     provider = balance.provider;
     iban = balance.iban;
     assetCode = balance.currency;
+    owner = balance.owner.party.orElse(balance.owner.name);
   }
 }
