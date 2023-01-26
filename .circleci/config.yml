@@ -25,12 +25,6 @@ commands:
         type: string
     steps:
       - run:
-          name: Debug
-          command: |
-            pwd
-            ls -la << parameters.build_directory >>
-            ls -la << parameters.build_directory >>/..
-      - run:
           name: Creating Tarball
           command: |
             tar cvfj << parameters.archive >> -C << parameters.build_directory >> quarkus-app
@@ -54,10 +48,10 @@ jobs:
       - store_test_results:
           path: daml-model/.daml/daml-tests.xml
       - run:
-          name: Gradle Tests
+          name: Gradle Build
           working_directory: .
-          command: |
-            ./gradlew test
+          # Do NOT use `test` task, use `build`. That will create actual application artifacts.
+          command: ./gradlew build
       # See: https://circleci.com/docs/collect-test-data/#gradle-junit-test-results
       - run:
           name: Save test results
