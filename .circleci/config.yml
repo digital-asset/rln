@@ -25,6 +25,12 @@ commands:
         type: string
     steps:
       - run:
+          name: Debug
+          command: |
+            pwd
+            ls -la << parameters.build_directory >>
+            ls -la << parameters.build_directory >>/..
+      - run:
           name: Creating Tarball
           command: |
             tar cvfj << parameters.archive >> -C << parameters.build_directory >> quarkus-app
