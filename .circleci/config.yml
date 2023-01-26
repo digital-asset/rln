@@ -29,29 +29,6 @@ commands:
           command: |
             tar cvfj << parameters.archive >> -C << parameters.build_directory >> quarkus-app
 
-  sign_artifacts:
-    description: "Sign Artifacts with GnuPG"
-    parameters:
-      artifact_directory:
-        type: string
-    steps:
-      - run:
-          name: "Signing the artifacts"
-          working_directory: << parameters.artifact_directory >>
-          command: |
-            KEY_FILE=$(mktemp)
-            GPG_DIR=$(mktemp -d)
-            cleanup() {
-                rm -rf "$KEY_FILE" "$GPG_DIR"
-            }
-            trap cleanup EXIT
-            echo "$gpg_code_signing" | base64 -d > "$KEY_FILE"
-            gpg --homedir "$GPG_DIR" --no-tty --quiet --import "$KEY_FILE"
-            for artifact in *; do
-              echo "Signing: $artifact"
-              gpg --homedir "$GPG_DIR" -ab "$artifact"
-            done
-
 jobs:
   test_daml_java:
     parameters:
