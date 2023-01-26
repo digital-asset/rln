@@ -101,7 +101,7 @@ jobs:
       - persist_to_workspace:
           root: artifacts
           paths:
-            - \\*
+            - ./*
   blackduck_check:
     parameters:
       daml_sdk_version:
