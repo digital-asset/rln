@@ -15,6 +15,20 @@ commands:
             curl -sSL https://get.daml.com/ | sh /dev/stdin << parameters.version >>
             # idea from https://circleci.com/docs/2.0/env-vars/
             >> $BASH_ENV echo 'export PATH="$HOME/.daml/bin:$PATH"'
+
+  package_quarkus_app:
+    description: "Packaging a Quarkus Application"
+    parameters:
+      archive:
+        type: string
+      build_directory:
+        type: string
+    steps:
+      - run:
+          name: Creating Tarball
+          command: |
+            tar cvfj << parameters.archive >> -C << parameters.build_directory >> quarkus-app
+
 jobs:
   test_daml_java:
     parameters:
@@ -34,10 +48,10 @@ jobs:
       - store_test_results:
           path: daml-model/.daml/daml-tests.xml
       - run:
-          name: Gradle Tests
+          name: Gradle Build
           working_directory: .
-          command: |
-            ./gradlew test
+          # Do NOT use `test` task, use `build`. That will create actual application artifacts.
+          command: ./gradlew build
       # See: https://circleci.com/docs/collect-test-data/#gradle-junit-test-results
       - run:
           name: Save test results
@@ -47,6 +61,24 @@ jobs:
           when: always
       - store_test_results:
           path: ~/test-results
+      - run:
+          name: "Create artifacts directory"
+          command: |
+            mkdir artifacts
+      - package_quarkus_app:
+          archive: "artifacts/gui-backend.tar.bz2"
+          build_directory: "gui-backend/build"
+      - package_quarkus_app:
+          archive: "artifacts/integration-adapter.tar.bz2"
+          build_directory: "integration-adapter/build"
+      - run:
+          name: "Move DARs to artifacts"
+          command: |
+            mv daml-model/build/daml/rln*.dar artifacts
+      - persist_to_workspace:
+          root: artifacts
+          paths:
+            - ./*
   blackduck_check:
     parameters:
       daml_sdk_version:
@@ -72,6 +104,33 @@ jobs:
             --detect.excluded.detector.types=pip \
             --detect.notices.report=false \
             --detect.timeout=3600
+  sign_artifacts:
+    parameters:
+      daml_sdk_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2022.04.2
+    steps:
+      - attach_workspace:
+          at: artifacts
+      - run:
+          name: "Signing artifacts with GnuPG"
+          working_directory: artifacts
+          command: |
+            KEY_FILE=$(mktemp)
+            GPG_DIR=$(mktemp -d)
+            cleanup() {
+                rm -rf "$KEY_FILE" "$GPG_DIR"
+            }
+            trap cleanup EXIT
+            echo "$gpg_code_signing" | base64 -d > "$KEY_FILE"
+            gpg --homedir "$GPG_DIR" --no-tty --quiet --import "$KEY_FILE"
+            for artifact in *; do
+              echo "Signing: $artifact"
+              gpg --homedir "$GPG_DIR" -ab "$artifact"
+            done
+      - store_artifacts:
+          path: artifacts
 
 workflows:
   checkout-build-test:
@@ -82,3 +141,8 @@ workflows:
           daml_sdk_version: "2.5.0"
           context:
             - blackduck
+      - sign_artifacts:
+          requires:
+            - test_daml_java
+          daml_sdk_version: "2.5.0"
+          context: npn-publish
