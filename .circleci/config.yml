@@ -74,7 +74,7 @@ jobs:
           name: Gradle Tests
           working_directory: .
           command: |
-            ./gradlew clean build -x test
+            ./gradlew test
       # See: https://circleci.com/docs/collect-test-data/#gradle-junit-test-results
       - run:
           name: Save test results
