@@ -72,10 +72,24 @@ public class BalancesApiImpl {
                 .map(AccountInfo::getAssetCode)
                 .orElseThrow(() -> new IbanNotFoundException(address));
 
-        var builder = Balance.builder()
-                .address(address)
-                .assetId(ASSET_ID) // default to 0 now, as we don't have assetId in the system yet
-                .assetName(assetName);
+        var builder = accountCache
+                .getAccountInfo(address)
+                .map(info -> {
+                    Balance.AssetOrLiabilityEnum assetOrLiabilityEnum;
+                    if (info.getProvider().equals(guiBackendConfiguration.partyDamlId())) {
+                        assetOrLiabilityEnum = Balance.AssetOrLiabilityEnum.LIABILITY;
+                    } else {
+                        assetOrLiabilityEnum = Balance.AssetOrLiabilityEnum.ASSET;
+                    }
+                    return Balance.builder()
+                            .address(address)
+                            .assetId(ASSET_ID) // default to 0 now, as we don't have assetId in the system yet
+                            .assetName(assetName)
+                            .assetOrLiability(assetOrLiabilityEnum)
+                            .party(info.getProvider())
+                            .client(info.getOwner());
+                })
+                .orElseThrow(() -> new IbanNotFoundException(address));
 
         var result = new ArrayList<Balance>(3);
         var liquidBalance = builder
@@ -131,10 +145,12 @@ public class BalancesApiImpl {
                 }).collect(Collectors.toList());
     }
 
+    /**
+     * Lists balances of given wallet where the current party is either the owner or the provider
+     * @param walletId wallet
+     * @return list of balances
+     */
     public List<Balance> getBalances(Long walletId) {
-        if (!walletId.equals(guiBackendConfiguration.partyId()))
-            throw new IllegalArgumentException();
-
         return accountCache.getAccounts()
                 .stream()
                 .map(this::getAddressBalance)

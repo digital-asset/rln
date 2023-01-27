@@ -147,7 +147,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
   // Get all the balances for all addresses in a wallet
   @Override
   public List<Balance> getBalances(Long walletId) {
-    if (!walletId.equals(configuration.partyId()))
+    if (!walletId.equals(ONLY_SUPPORTED_WALLET.getId()))
       throw notFound();
 
     return balancesApi.getBalances(walletId);
