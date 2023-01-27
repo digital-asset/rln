@@ -24,6 +24,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public class AutoapproveApiImpl {
+  private static final String defaultBearerToken = "DummyToken";
   private final GuiBackendConfiguration guiBackendConfiguration;
   private final AutoApproveCache autoApproveCache;
   private final AccountCache accountCache;
@@ -74,7 +75,7 @@ public class AutoapproveApiImpl {
           .isIBAN(true)
           .address(account.getIban())
           .id(providerId)
-          .bearerToken("DummyToken") // no one actually checks this
+          .bearerToken(defaultBearerToken) // no one actually checks this
           .clientId(clientId)        // we have to differentiate if the owner is a Daml party or not
           .approvalMode(convertApproveType(autoApproval))
           .approvalLimit(getLimit(autoApproval))
@@ -95,7 +96,7 @@ public class AutoapproveApiImpl {
       result.add(WalletAddressDTO.builder()
           .address(account.getIban())
           .partyId(partySetlId)
-          .bearerToken("DummyToken") // no one actually checks this
+          .bearerToken(defaultBearerToken) // no one actually checks this
           .walletId(GuiBackendApiImplementation.ONLY_SUPPORTED_WALLET_ID)
           .build());
     }
