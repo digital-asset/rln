@@ -1,7 +1,9 @@
 package com.rln.gui.backend.implementation.methods;
 
+import com.rln.gui.backend.implementation.config.SetlClient;
 import com.rln.gui.backend.implementation.config.SetlParty;
 import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
+import com.rln.gui.backend.model.ClientDTO;
 import com.rln.gui.backend.model.PartyDTO;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -27,10 +29,11 @@ class PartyApiImplTest extends LedgerBaseTest {
 
   @Test
   void getMyParty() {
-    PartyDTO expected = new PartyDTO(LedgerBaseTest.BASEURL, List.of(LedgerBaseTest.BANK_BIC), LedgerBaseTest.PARTY_ID, LedgerBaseTest.PARTY_NAME);
+    PartyDTO expected = new PartyDTO(LedgerBaseTest.BASEURL, List.of(LedgerBaseTest.BANK_BIC),
+        LedgerBaseTest.PARTY_ID, LedgerBaseTest.PARTY_NAME);
 
-    PartyDTO result = RestAssured.given()
-        .when().get("/api/parties/me")
+    PartyDTO result = RestAssured
+        .get("/api/parties/me")
         .then()
         .statusCode(200)
         .extract().body().as(new TypeRef<>() {
@@ -41,15 +44,35 @@ class PartyApiImplTest extends LedgerBaseTest {
 
   @Test
   void getParties() {
-    BDDMockito.given(setlPartySupplier.getParties()).willReturn(List.of(new SetlParty(BASEURL, PARTY_ID, getCurrentBankPartyId().getValue(), PARTY_NAME)));
+    BDDMockito.given(setlPartySupplier.getParties()).willReturn(List.of(
+        new SetlParty(BASEURL, PARTY_ID, getCurrentBankPartyId().getValue(), PARTY_NAME,
+            List.of())));
 
-    List<PartyDTO> result = RestAssured.given()
-        .when().get("/api/parties")
+    List<PartyDTO> result = RestAssured
+        .get("/api/parties")
         .then()
         .statusCode(200)
         .extract().body().as(new TypeRef<>() {
         });
 
     MatcherAssert.assertThat(result, Matchers.not(Matchers.empty()));
+  }
+
+  @Test
+  void getClients() {
+    List<SetlClient> clients = List.of(new SetlClient(CLIENT_ID, CLIENT_NAME, SENDER_IBAN));
+    ClientDTO expected = new ClientDTO(CLIENT_ID, CLIENT_NAME);
+    BDDMockito.given(setlPartySupplier.getSetlParty(getCurrentBankPartyId().getValue()))
+        .willReturn(new SetlParty(BASEURL, PARTY_ID, getCurrentBankPartyId().getValue(), PARTY_NAME,
+            clients));
+
+    List<ClientDTO> result = RestAssured
+        .get("/api/ledger/clients")
+        .then()
+        .statusCode(200)
+        .extract().body().as(new TypeRef<>() {
+        });
+
+    MatcherAssert.assertThat(result, Matchers.hasItem(expected));
   }
 }

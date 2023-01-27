@@ -3,6 +3,13 @@
     "id": 1,
     "baseUrl": "http:\/\/cello-participant:8080\/api\/",
     "damlPartyId": "Cello Bank::1220246d023e23ebb1a69f2b2d6b8b5f009a41496b72f69c9cf4a0437dde9a063541",
-    "name": "Cello Bank"
+    "name": "Cello Bank",
+    "clients": [
+      {
+        "clientId": 1,
+        "name": "Alice",
+        "iban": "XYZ-IBAN"
+      }
+    ]
   }
 ]

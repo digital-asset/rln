@@ -5,9 +5,9 @@
 package com.rln.gui.backend.implementation.methods;
 
 import com.rln.client.damlClient.partyManagement.PartyManager;
-import com.rln.damlCodegen.model.balance.Balance;
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.implementation.config.SetlParty;
+import com.rln.gui.backend.model.ClientDTO;
 import com.rln.gui.backend.model.PartyDTO;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,5 +46,17 @@ public class PartyApiImpl {
         List.of(partyManager.getBic(setlParty.getDamlPartyId())),
         setlParty.getId(),
         setlParty.getName());
+  }
+
+  public List<ClientDTO> getClients() {
+    return setlPartySupplier
+        .getSetlParty(guiBackendConfiguration.partyDamlId())
+        .getClients().stream()
+        .map(setlClient ->
+            ClientDTO.builder()
+             .id(setlClient.getClientId())
+             .name(setlClient.getName())
+            .build())
+        .collect(Collectors.toList());
   }
 }

@@ -105,9 +105,9 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetAddressSettingsListWhenLimit() throws InvalidProtocolBufferException {
-    BDDMockito.given(setlPartySupplier.getSetlId(getCurrentBankPartyId().getValue()))
+    BDDMockito.given(setlPartySupplier.getSetlParty(getCurrentBankPartyId().getValue()))
         .willReturn(null);
-    BDDMockito.given(setlPartySupplier.getSetlId(BalanceTestUtil.UNKNOWN_OWNER))
+    BDDMockito.given(setlPartySupplier.getSetlParty(BalanceTestUtil.UNKNOWN_OWNER))
         .willReturn(null);
     var liquidAmount = 500;
     var balance = BalanceTestUtil
@@ -141,9 +141,9 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetAddressSettingsListWhenManual() throws InvalidProtocolBufferException {
-    BDDMockito.given(setlPartySupplier.getSetlId(getCurrentBankPartyId().getValue()))
+    BDDMockito.given(setlPartySupplier.getSetlPartyId(getCurrentBankPartyId().getValue()))
         .willReturn(PARTY_ID);
-    BDDMockito.given(setlPartySupplier.getSetlId(BalanceTestUtil.UNKNOWN_OWNER))
+    BDDMockito.given(setlPartySupplier.getSetlParty(BalanceTestUtil.UNKNOWN_OWNER))
         .willReturn(null);
     var liquidAmount = 500;
     var balance = BalanceTestUtil
@@ -172,7 +172,7 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetWalletAddresses() throws InvalidProtocolBufferException {
-    BDDMockito.given(setlPartySupplier.getSetlId(getCurrentBankPartyId().getValue()))
+    BDDMockito.given(setlPartySupplier.getSetlPartyId(getCurrentBankPartyId().getValue()))
         .willReturn(PARTY_ID);
     BDDMockito.given(remoteOwnedAddressSupplier.getRemoteOwnedAddresses())
         .willReturn(List.of());
