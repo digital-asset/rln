@@ -19,4 +19,5 @@ public interface GuiBackendConfiguration {
   int ledgerBatchSubmissionMaxSize();
 
   Path partiesConfig();
+  Path remoteOwnedAddressesConfig();
 }

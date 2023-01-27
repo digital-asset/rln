@@ -32,9 +32,10 @@ import org.slf4j.LoggerFactory;
 
 public class GuiBackendApiImplementation implements DefaultApi {
 
+  public static final long ONLY_SUPPORTED_WALLET_ID = 1L;
   public static final WalletDTO ONLY_SUPPORTED_WALLET = WalletDTO.builder()
       .data("Wallet 1")
-      .id(1L)
+      .id(ONLY_SUPPORTED_WALLET_ID)
       .build();
   private final Logger logger = LoggerFactory.getLogger(GuiBackendApiImplementation.class);
 
@@ -168,7 +169,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
   // Get all the wallet addresses in the specified wallet
   @Override
   public List<WalletAddressDTO> get3(Long walletId) {
-    throw notImplemented();
+    return autoApproveApi.getForWallet();
   }
 
   // Delete an address from a wallet

@@ -10,11 +10,13 @@ import com.rln.client.damlClient.RLNClient;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker.Contract;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.FullAuto;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxAmount;
+import com.rln.gui.backend.implementation.GuiBackendApiImplementation;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AutoApproveCache;
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.LedgerAddressDTO;
+import com.rln.gui.backend.model.WalletAddressDTO;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,15 +29,17 @@ public class AutoapproveApiImpl {
   private final AccountCache accountCache;
   private final RLNClient rlnClient;
   private final SetlPartySupplier setlPartySupplier;
+  private final RemoteOwnedAddressSupplier remoteOwnedAddressSupplier;
 
   public AutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration,
       AutoApproveCache autoApproveCache, AccountCache accountCache, RLNClient rlnClient,
-      SetlPartySupplier setlPartySupplier) {
+      SetlPartySupplier setlPartySupplier, RemoteOwnedAddressSupplier remoteOwnedAddressSupplier) {
     this.guiBackendConfiguration = guiBackendConfiguration;
     this.autoApproveCache = autoApproveCache;
     this.accountCache = accountCache;
     this.rlnClient = rlnClient;
     this.setlPartySupplier = setlPartySupplier;
+    this.remoteOwnedAddressSupplier = remoteOwnedAddressSupplier;
   }
 
   public void updateApprovalProperties(@Valid @NotNull ApprovalProperties autoApprove) {
@@ -74,6 +78,25 @@ public class AutoapproveApiImpl {
           .clientId(clientId)        // we have to differentiate if the owner is a Daml party or not
           .approvalMode(convertApproveType(autoApproval))
           .approvalLimit(getLimit(autoApproval))
+          .build());
+    }
+
+    return result;
+  }
+
+  public List<WalletAddressDTO> getForWallet() {
+    var accounts = accountCache.getAccounts();
+    var remoteOwnedAddresses = remoteOwnedAddressSupplier.getRemoteOwnedAddresses();
+    ArrayList<WalletAddressDTO> result = new ArrayList<>(remoteOwnedAddresses.size() + accounts.size());
+
+    result.addAll(remoteOwnedAddresses);
+    for (var account : accounts) {
+      var partySetlId = setlPartySupplier.getSetlId(account.getProvider());
+      result.add(WalletAddressDTO.builder()
+          .address(account.getIban())
+          .partyId(partySetlId)
+          .bearerToken("DummyToken") // no one actually checks this
+          .walletId(GuiBackendApiImplementation.ONLY_SUPPORTED_WALLET_ID)
           .build());
     }
 

@@ -13,6 +13,7 @@ import com.rln.gui.backend.implementation.converter.TransferProposalToApiTypeCon
 import com.rln.gui.backend.implementation.methods.AutoapproveApiImpl;
 import com.rln.gui.backend.implementation.methods.BalancesApiImpl;
 import com.rln.gui.backend.implementation.methods.PartyApiImpl;
+import com.rln.gui.backend.implementation.methods.RemoteOwnedAddressSupplier;
 import com.rln.gui.backend.implementation.methods.SetlPartySupplier;
 import com.rln.gui.backend.implementation.methods.TransactionsApiImpl;
 import com.rln.gui.backend.ods.TransferProposalRepository;
@@ -23,7 +24,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MethodsProducer {
+
   Logger logger = LoggerFactory.getLogger(DamlClientProducer.class);
+
+  @ApplicationScoped
+  @Produces
+  public RemoteOwnedAddressSupplier getRemoteOwnedAddressSupplier(GuiBackendConfiguration guiBackendConfiguration) {
+    return new RemoteOwnedAddressSupplier(guiBackendConfiguration.remoteOwnedAddressesConfig());
+  }
 
   @ApplicationScoped
   @Produces
@@ -35,8 +43,9 @@ public class MethodsProducer {
   @Produces
   public AutoapproveApiImpl getAutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration,
       RLNClient rlnClient, AutoApproveCache autoApproveCache, AccountCache accountCache,
-      SetlPartySupplier setlPartySupplier) {
-    return new AutoapproveApiImpl(guiBackendConfiguration, autoApproveCache, accountCache, rlnClient, setlPartySupplier);
+      SetlPartySupplier setlPartySupplier, RemoteOwnedAddressSupplier remoteOwnedAddressSupplier) {
+    return new AutoapproveApiImpl(guiBackendConfiguration, autoApproveCache, accountCache,
+        rlnClient, setlPartySupplier, remoteOwnedAddressSupplier);
   }
 
   @Singleton
@@ -56,7 +65,8 @@ public class MethodsProducer {
       LockedBalanceCache lockedBalanceCache,
       AccountCache accountCache,
       RLNClient rlnClient) {
-    return new BalancesApiImpl(guiBackendConfiguration, liquidBalanceCache, incomingBalanceCache, lockedBalanceCache, accountCache, rlnClient);
+    return new BalancesApiImpl(guiBackendConfiguration, liquidBalanceCache, incomingBalanceCache,
+        lockedBalanceCache, accountCache, rlnClient);
   }
 
   @Singleton

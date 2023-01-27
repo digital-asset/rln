@@ -147,8 +147,11 @@ public class LedgerBaseTest {
 
     @Override
     public Path partiesConfig() {
-      return Path.of("some.config");
+      return Path.of("some-parties.config");
     }
+
+    @Override
+    public Path remoteOwnedAddressesConfig() { return Path.of("some-addresses.config"); }
   }
 
   @BeforeAll
