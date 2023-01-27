@@ -13,14 +13,15 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.damlCodegen.model.balance.Balance;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxAmount;
+import com.rln.gui.backend.implementation.GuiBackendApiImplementation;
 import com.rln.gui.backend.implementation.balanceManagement.AccountEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.AutoApproveEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.BalanceTestUtil;
-import com.rln.gui.backend.implementation.config.SetlParty;
 import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.ApprovalProperties.ApprovalModeEnum;
 import com.rln.gui.backend.model.LedgerAddressDTO;
+import com.rln.gui.backend.model.WalletAddressDTO;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectMock;
@@ -42,6 +43,9 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
   @InjectMock
   SetlPartySupplier setlPartySupplier;
 
+  @InjectMock
+  RemoteOwnedAddressSupplier remoteOwnedAddressSupplier;
+
   @Inject
   AutoApproveEventListener autoApproveEventListener;
 
@@ -58,8 +62,8 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
         .then()
         .statusCode(204);
 
-    var autoApproveContractWithId= SANDBOX.getLedgerAdapter().getMatchedContract(
-      getCurrentBankPartyId(),
+    var autoApproveContractWithId = SANDBOX.getLedgerAdapter().getMatchedContract(
+        getCurrentBankPartyId(),
         AutoApproveTransferProposalMarker.TEMPLATE_ID,
         ContractId::new);
     var autoApprove = AutoApproveTransferProposalMarker.fromValue(autoApproveContractWithId.record);
@@ -69,7 +73,8 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     LimitedMaxAmount limitedMaxAmount = (LimitedMaxAmount) autoApprove.autoApproveType;
     Assertions.assertEquals(TRANSACTION_AMOUNT, limitedMaxAmount.bigDecimalValue);
 
-    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID, autoApproveContractWithId.contractId);
+    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID,
+        autoApproveContractWithId.contractId);
   }
 
   @Test
@@ -83,7 +88,7 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
         .then()
         .statusCode(204);
 
-    var autoApproveContractWithId= SANDBOX.getLedgerAdapter().getMatchedContract(
+    var autoApproveContractWithId = SANDBOX.getLedgerAdapter().getMatchedContract(
         getCurrentBankPartyId(),
         AutoApproveTransferProposalMarker.TEMPLATE_ID,
         ContractId::new);
@@ -94,7 +99,8 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     LimitedMaxAmount limitedMaxAmount = (LimitedMaxAmount) autoApprove.autoApproveType;
     Assertions.assertEquals(TRANSACTION_AMOUNT_2, limitedMaxAmount.bigDecimalValue);
 
-    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID, autoApproveContractWithId.contractId);
+    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID,
+        autoApproveContractWithId.contractId);
   }
 
   @Test
@@ -105,7 +111,8 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
         .willReturn(null);
     var liquidAmount = 500;
     var balance = BalanceTestUtil
-        .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+        .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX,
+            getCurrentBankPartyId(), Balance.TEMPLATE_ID);
     var balanceLimit = publishLimitMarker(getCurrentBankPartyId(), SENDER_IBAN, TRANSACTION_AMOUNT);
 
     List<LedgerAddressDTO> result = RestAssured.given()
@@ -114,7 +121,6 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
         .statusCode(200)
         .extract().body().as(new TypeRef<>() {
         });
-
 
     Assertions.assertEquals(1, result.size());
 
@@ -129,7 +135,8 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     Assertions.assertEquals("DummyToken", ledgerAddressInfo.getBearerToken());
 
     cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
-    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID, balanceLimit);
+    cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID,
+        balanceLimit);
   }
 
   @Test
@@ -140,7 +147,8 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
         .willReturn(null);
     var liquidAmount = 500;
     var balance = BalanceTestUtil
-        .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+        .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX,
+            getCurrentBankPartyId(), Balance.TEMPLATE_ID);
 
     List<LedgerAddressDTO> result = RestAssured.given()
         .when().get("/api/ledger/addresses")
@@ -148,7 +156,6 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
         .statusCode(200)
         .extract().body().as(new TypeRef<>() {
         });
-
 
     Assertions.assertEquals(1, result.size());
     var ledgerAddressInfo = result.get(0);
@@ -163,15 +170,53 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
   }
 
-  private ContractId publishLimitMarker(Party party, String address, BigDecimal amount)
-      throws InvalidProtocolBufferException {
-    var autoApproveMarker = new AutoApproveTransferProposalMarker(party.getValue(), Instant.now(), address, new LimitedMaxAmount(amount));
-    SANDBOX.getLedgerAdapter().createContract(getCurrentBankPartyId().asParty().get(),
-        AutoApproveTransferProposalMarker.TEMPLATE_ID, autoApproveMarker.toValue());
-    return SANDBOX.getLedgerAdapter().getCreatedContractId(party, AutoApproveTransferProposalMarker.TEMPLATE_ID, ContractId::new);
+  @Test
+  void apiGetWalletAddresses() throws InvalidProtocolBufferException {
+    BDDMockito.given(setlPartySupplier.getSetlId(getCurrentBankPartyId().getValue()))
+        .willReturn(PARTY_ID);
+    BDDMockito.given(remoteOwnedAddressSupplier.getRemoteOwnedAddresses())
+        .willReturn(List.of());
+    var balance = BalanceTestUtil
+        .populateBalance(0, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX,
+            getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+
+    List<WalletAddressDTO> result = RestAssured.get("/api/wallets/1/addresses")
+        .then()
+        .statusCode(200)
+        .extract().body().as(new TypeRef<>() {
+        });
+
+    Assertions.assertEquals(1, result.size());
+    var walletAddress = result.get(0);
+    Assertions.assertEquals(SENDER_IBAN, walletAddress.getAddress());
+    Assertions.assertEquals(PARTY_ID, walletAddress.getPartyId());
+    Assertions.assertEquals(GuiBackendApiImplementation.ONLY_SUPPORTED_WALLET_ID,
+        walletAddress.getWalletId());
+    Assertions.assertEquals("DummyToken", walletAddress.getBearerToken());
+
+    cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
   }
 
-  private void cleanupMarker(Party partyId, Identifier identifier, ContractId contractId) throws InvalidProtocolBufferException {
+  @Test
+  void apiGetWalletAddressesForUnsupportedId() {
+    RestAssured.get("/api/wallets/2/addresses")
+        .then()
+        .statusCode(404);
+  }
+
+  private ContractId publishLimitMarker(Party party, String address, BigDecimal amount)
+      throws InvalidProtocolBufferException {
+    var autoApproveMarker = new AutoApproveTransferProposalMarker(party.getValue(), Instant.now(),
+        address, new LimitedMaxAmount(amount));
+    SANDBOX.getLedgerAdapter().createContract(getCurrentBankPartyId().asParty().get(),
+        AutoApproveTransferProposalMarker.TEMPLATE_ID, autoApproveMarker.toValue());
+    return SANDBOX.getLedgerAdapter()
+        .getCreatedContractId(party, AutoApproveTransferProposalMarker.TEMPLATE_ID,
+            ContractId::new);
+  }
+
+  private void cleanupMarker(Party partyId, Identifier identifier, ContractId contractId)
+      throws InvalidProtocolBufferException {
     SANDBOX.getLedgerAdapter().exerciseChoice(partyId,
         new ExerciseCommand(identifier, contractId.getValue(), "Archive", new DamlRecord()));
   }

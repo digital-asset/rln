@@ -2,13 +2,11 @@ package com.rln.gui.backend.implementation.methods;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.implementation.config.SetlParty;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SetlPartySupplier {
