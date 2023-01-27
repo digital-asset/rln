@@ -25,7 +25,6 @@ import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -133,29 +132,8 @@ public class BalancesApiImpl {
     }
 
     public List<Balance> getBalances(Long walletId) {
-
-        /*
-        final var party = guiBackendConfiguration.partyDamlId();
-        final var filter = new FiltersByParty(Map.of(
-                party,
-                new InclusiveFilter(
-                        Set.of(
-                                com.rln.damlCodegen.model.balance.Balance.TEMPLATE_ID,
-                                LockedBalance.TEMPLATE_ID,
-                                IncomingBalance.TEMPLATE_ID
-                        ),
-                        Map.of()
-                ))
-        );
-        var balances = new ArrayList<Balance>();
-        rlnClient.getActiveContracts(filter)
-                .map(event -> com.rln.damlCodegen.model.balance.Balance.valueDecoder().decode(event.getArguments()))
-                .map(this::toBalance)
-                .toObservable()
-                .subscribe(balances::add);
-
-        return balances;
-        */
+        if (!walletId.equals(guiBackendConfiguration.partyId()))
+            throw new IllegalArgumentException();
 
         return accountCache.getAccounts()
                 .stream()
@@ -163,7 +141,6 @@ public class BalancesApiImpl {
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
     }
-
 
     private Balance toBalance(com.rln.damlCodegen.model.balance.Balance contract) {
         var assetName = accountCache
@@ -178,8 +155,4 @@ public class BalancesApiImpl {
                 .build();
     }
 
-    public Object testWalletAddress(String address,
-                                    @Valid @NotNull WalletAddressTestDTO walletAddressTestDTO) {
-        return null;
-    }
 }
