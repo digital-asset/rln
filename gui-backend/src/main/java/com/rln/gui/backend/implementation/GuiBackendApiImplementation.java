@@ -170,7 +170,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
   @Override
   public List<WalletAddressDTO> get3(Long walletId) {
     if (walletId != ONLY_SUPPORTED_WALLET_ID) {
-      throw forbidden();
+      throw notFound();
     }
     return autoApproveApi.getForWallet();
   }
