@@ -5,6 +5,7 @@
 package com.rln.gui.backend.implementation.balanceManagement.data;
 
 import com.rln.damlCodegen.model.balance.Balance;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -20,6 +21,7 @@ public class AccountInfo {
     provider = balance.provider;
     iban = balance.iban;
     assetCode = balance.currency;
+    Objects.requireNonNull(balance.owner);
     owner = balance.owner.party.orElse(balance.owner.name);
   }
 }

@@ -4,34 +4,24 @@
  */
 package com.rln.gui.backend.implementation.methods;
 
-import com.daml.ledger.javaapi.data.Filter;
-import com.daml.ledger.javaapi.data.InclusiveFilter;
 import com.rln.client.damlClient.AutoApproveParameters;
 import com.rln.client.damlClient.AutoApproveParameters.ApprovalMode;
 import com.rln.client.damlClient.RLNClient;
-import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker.Contract;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.FullAuto;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxAmount;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AccountCache;
 import com.rln.gui.backend.implementation.balanceManagement.cache.AutoApproveCache;
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
-import com.rln.gui.backend.implementation.config.SetlParty;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.LedgerAddressDTO;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public class AutoapproveApiImpl {
-
-  private static final Filter AUTO_APPROVE_MARKER_FILTER = new InclusiveFilter(
-      Set.of(AutoApproveTransferProposalMarker.TEMPLATE_ID), Map.of());
-
   private final GuiBackendConfiguration guiBackendConfiguration;
   private final AutoApproveCache autoApproveCache;
   private final AccountCache accountCache;
@@ -74,8 +64,8 @@ public class AutoapproveApiImpl {
 
     for (var account : accounts) {
       var autoApproval = autoApproveCache.getMarker(account.getIban());
-      var providerId = getSetlId(account.getProvider());
-      var clientId = getSetlId(account.getOwner());
+      var providerId = setlPartySupplier.getSetlId(account.getProvider());
+      var clientId = setlPartySupplier.getSetlId(account.getOwner());
       result.add(LedgerAddressDTO.builder()
           .isIBAN(true)
           .address(account.getIban())
@@ -88,14 +78,6 @@ public class AutoapproveApiImpl {
     }
 
     return result;
-  }
-
-  private Long getSetlId(String damlPartyId) {
-    return setlPartySupplier.getParties().stream()
-        .filter(setlParty -> setlParty.getDamlPartyId().equals(damlPartyId))
-        .findFirst()
-        .map(SetlParty::getId)
-        .orElse(null);
   }
 
   private String convertApproveType(Contract autoApproval) {
