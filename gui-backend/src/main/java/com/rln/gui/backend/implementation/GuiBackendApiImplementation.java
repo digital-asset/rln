@@ -169,6 +169,9 @@ public class GuiBackendApiImplementation implements DefaultApi {
   // Get all the wallet addresses in the specified wallet
   @Override
   public List<WalletAddressDTO> get3(Long walletId) {
+    if (walletId != ONLY_SUPPORTED_WALLET_ID) {
+      throw forbidden();
+    }
     return autoApproveApi.getForWallet();
   }
 

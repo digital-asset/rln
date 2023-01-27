@@ -180,8 +180,7 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
         .populateBalance(0, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX,
             getCurrentBankPartyId(), Balance.TEMPLATE_ID);
 
-    List<WalletAddressDTO> result = RestAssured.given()
-        .when().get("/api/wallets/1/addresses")
+    List<WalletAddressDTO> result = RestAssured.get("/api/wallets/1/addresses")
         .then()
         .statusCode(200)
         .extract().body().as(new TypeRef<>() {
@@ -196,6 +195,13 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     Assertions.assertEquals("DummyToken", walletAddress.getBearerToken());
 
     cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
+  }
+
+  @Test
+  void apiGetWalletAddressesForUnsupportedId() {
+    RestAssured.get("/api/wallets/2/addresses")
+        .then()
+        .statusCode(403);
   }
 
   private ContractId publishLimitMarker(Party party, String address, BigDecimal amount)
