@@ -4,12 +4,9 @@
  */
 package com.rln.gui.backend.implementation.methods;
 
-import com.daml.ledger.javaapi.data.Filter;
-import com.daml.ledger.javaapi.data.InclusiveFilter;
 import com.rln.client.damlClient.AutoApproveParameters;
 import com.rln.client.damlClient.AutoApproveParameters.ApprovalMode;
 import com.rln.client.damlClient.RLNClient;
-import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker;
 import com.rln.damlCodegen.workflow.transferproposal.AutoApproveTransferProposalMarker.Contract;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.FullAuto;
 import com.rln.damlCodegen.workflow.transferproposal.autoapprovetype.LimitedMaxAmount;
@@ -21,35 +18,25 @@ import com.rln.gui.backend.model.LedgerAddressDTO;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public class AutoapproveApiImpl {
-
-  private static final Filter AUTO_APPROVE_MARKER_FILTER = new InclusiveFilter(
-    Set.of(AutoApproveTransferProposalMarker.TEMPLATE_ID), Map.of());
-
   private final GuiBackendConfiguration guiBackendConfiguration;
   private final AutoApproveCache autoApproveCache;
   private final AccountCache accountCache;
   private final RLNClient rlnClient;
+  private final SetlPartySupplier setlPartySupplier;
 
-  public AutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration, AutoApproveCache autoApproveCache, AccountCache accountCache, RLNClient rlnClient) {
+  public AutoapproveApiImpl(GuiBackendConfiguration guiBackendConfiguration,
+      AutoApproveCache autoApproveCache, AccountCache accountCache, RLNClient rlnClient,
+      SetlPartySupplier setlPartySupplier) {
     this.guiBackendConfiguration = guiBackendConfiguration;
     this.autoApproveCache = autoApproveCache;
     this.accountCache = accountCache;
     this.rlnClient = rlnClient;
+    this.setlPartySupplier = setlPartySupplier;
   }
-
-  // TODO Looks like this endpoint is gone?
-//  @Override
-//  public List<AutoapproveListInner> apiAutoapproveListGet() {
-//    var getAutoApproveMarkers = rlnClient.getActiveContracts(new FiltersByParty(
-//      Collections.singletonMap(guiBackendConfiguration.partyId(), AUTO_APPROVE_MARKER_FILTER)));
-//    return getAutoApproveMarkers.map(TransferProposalToApiTypeConverter::createdEventToAutoapproveListInner).toList().blockingGet();
-//  }
 
   public void updateApprovalProperties(@Valid @NotNull ApprovalProperties autoApprove) {
     var marker = autoApproveCache.getMarker(autoApprove.getAddress());
@@ -57,12 +44,12 @@ public class AutoapproveApiImpl {
     var now = Instant.now();
     // What happens, when username is NOT the current party (in the name of which the GUI backend is running)?
     var parameters = new AutoApproveParameters(
-      now,
-      guiBackendConfiguration.partyDamlId(),
-      autoApprove.getAddress(),
-      markerId,
-      convertApprovalMode(autoApprove),
-      autoApprove.getLimit()
+        now,
+        guiBackendConfiguration.partyDamlId(),
+        autoApprove.getAddress(),
+        markerId,
+        convertApprovalMode(autoApprove),
+        autoApprove.getLimit()
     );
     rlnClient.createOrUpdateAutoApproveMarker(parameters);
   }
@@ -76,12 +63,15 @@ public class AutoapproveApiImpl {
     ArrayList<LedgerAddressDTO> result = new ArrayList<>(accounts.size());
 
     for (var account : accounts) {
-      var autoApproval = autoApproveCache.getMarker(account);
+      var autoApproval = autoApproveCache.getMarker(account.getIban());
+      var providerId = setlPartySupplier.getSetlId(account.getProvider());
+      var clientId = setlPartySupplier.getSetlId(account.getOwner());
       result.add(LedgerAddressDTO.builder()
           .isIBAN(true)
-          .address(account)
-          .bearerToken("")
-          .clientId(0L)
+          .address(account.getIban())
+          .id(providerId)
+          .bearerToken("DummyToken") // no one actually checks this
+          .clientId(clientId)        // we have to differentiate if the owner is a Daml party or not
           .approvalMode(convertApproveType(autoApproval))
           .approvalLimit(getLimit(autoApproval))
           .build());

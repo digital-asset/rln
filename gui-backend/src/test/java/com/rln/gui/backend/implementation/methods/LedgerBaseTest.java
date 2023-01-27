@@ -147,7 +147,7 @@ public class LedgerBaseTest {
 
     @Override
     public Path partiesConfig() {
-      return null;
+      return Path.of("some.config");
     }
   }
 

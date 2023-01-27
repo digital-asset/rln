@@ -115,6 +115,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
   }
 
   // Get all the known ledger addresses
+  // This endpoint includes addresses where the current party is provider or owner
   @Override
   public List<LedgerAddressDTO> get() {
     return autoApproveApi.get();

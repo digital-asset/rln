@@ -35,6 +35,7 @@ public class BalanceTestUtil {
     public static final String IBAN2 = "IBAN2";
     public static final String ASSET_CODE1 = "USD";
     public static final String ASSET_CODE2 = "NTD";
+    public static final String UNKNOWN_OWNER = "Unknown";
     private static final Logger logger = LoggerFactory.getLogger(BalanceTestUtil.class);
     private static final Random rand = new Random();
 
@@ -78,7 +79,7 @@ public class BalanceTestUtil {
     }
 
     public static DamlRecord createBalance(String iban, String provider, Optional<String> owner, String currency, Double amount, Identifier templateId) {
-        Balance balance = new Balance(iban, provider, new BalanceOwner(owner.orElse("Unknown"), owner), currency, BigDecimal.valueOf(amount));
+        Balance balance = new Balance(iban, provider, new BalanceOwner(owner.orElse(UNKNOWN_OWNER), owner), currency, BigDecimal.valueOf(amount));
         String context = generateRandomString(8);
         logger.info("===================== context {}", context);
 
