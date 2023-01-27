@@ -172,7 +172,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
     if (walletId != ONLY_SUPPORTED_WALLET_ID) {
       throw notFound();
     }
-    return autoApproveApi.getForWallet();
+    return autoApproveApi.getWalletAddresses();
   }
 
   // Delete an address from a wallet

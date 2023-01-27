@@ -85,7 +85,7 @@ public class AutoapproveApiImpl {
     return result;
   }
 
-  public List<WalletAddressDTO> getForWallet() {
+  public List<WalletAddressDTO> getWalletAddresses() {
     var accounts = accountCache.getAccounts();
     var remoteOwnedAddresses = remoteOwnedAddressSupplier.getRemoteOwnedAddresses();
     ArrayList<WalletAddressDTO> result = new ArrayList<>(remoteOwnedAddresses.size() + accounts.size());
