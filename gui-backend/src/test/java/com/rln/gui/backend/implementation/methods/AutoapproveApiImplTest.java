@@ -99,6 +99,10 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetAddressSettingsListWhenLimit() throws InvalidProtocolBufferException {
+    BDDMockito.given(setlPartySupplier.getSetlId(getCurrentBankPartyId().getValue()))
+        .willReturn(null);
+    BDDMockito.given(setlPartySupplier.getSetlId(BalanceTestUtil.UNKNOWN_OWNER))
+        .willReturn(null);
     var liquidAmount = 500;
     var balance = BalanceTestUtil
         .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
@@ -130,8 +134,10 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetAddressSettingsListWhenManual() throws InvalidProtocolBufferException {
-    BDDMockito.given(setlPartySupplier.getParties())
-        .willReturn(List.of(new SetlParty(BASEURL, PARTY_ID, getCurrentBankPartyId().getValue(), PARTY_NAME)));
+    BDDMockito.given(setlPartySupplier.getSetlId(getCurrentBankPartyId().getValue()))
+        .willReturn(PARTY_ID);
+    BDDMockito.given(setlPartySupplier.getSetlId(BalanceTestUtil.UNKNOWN_OWNER))
+        .willReturn(null);
     var liquidAmount = 500;
     var balance = BalanceTestUtil
         .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
