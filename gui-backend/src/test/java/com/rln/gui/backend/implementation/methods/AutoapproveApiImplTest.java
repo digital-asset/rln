@@ -201,7 +201,7 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
   void apiGetWalletAddressesForUnsupportedId() {
     RestAssured.get("/api/wallets/2/addresses")
         .then()
-        .statusCode(403);
+        .statusCode(404);
   }
 
   private ContractId publishLimitMarker(Party party, String address, BigDecimal amount)
