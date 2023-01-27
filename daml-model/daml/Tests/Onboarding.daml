@@ -25,16 +25,18 @@ data PartyInfo = PartyInfo with
   bic : Optional Text
   baseUrl : Text
   participantName : Text
-  account : Optional Account
+  accounts : Optional [Account]
   clients : [ClientInfo]
 
 data Account = Account with
   provider : Text
   iban : Iban
+  bearerToken : Text
 
 type Iban = Text
 
 data ClientInfo = ClientInfo with
+    clientId : Int
     name : Text
     iban : Iban
   deriving (Eq, Show)
@@ -51,7 +53,9 @@ data GuiBackendConfigEntry = GuiBackendConfigEntry with
     baseUrl : Text
     damlPartyId : Party
     name : Text
+    clients : [ClientInfo]
   deriving (Eq, Show)
+
 
 onboarding : [PartyInfo] -> Script Output
 onboarding partyInfo = do
@@ -99,21 +103,22 @@ setupBalances parties partyInfo = do
         ("No party found for: " <> partyInfo.name)
         (TextMap.lookup partyInfo.name parties)
 
-  whenSome partyInfo.account \account -> do
-    let provider = fromSomeNote
-            ("No party found for provider: " <> account.provider)
-            (TextMap.lookup account.provider parties)
-    debug $ 
-         "Creating Account with IBAN " <> account.iban 
-      <> " for " <> partyInfo.name 
-      <> " with provider " <> account.provider
-    void $ provider `submit` createCmd Balance
-      with
-        iban = account.iban
-        provider
-        owner = BalanceOwner with name = partyInfo.name, party = Some party
-        currency = "USD"
-        amount = 0.0
+  whenSome partyInfo.accounts \accounts -> do
+    forA_ accounts \account -> do
+      let provider = fromSomeNote
+              ("No party found for provider: " <> account.provider)
+              (TextMap.lookup account.provider parties)
+      debug $ 
+          "Creating Account with IBAN " <> account.iban 
+        <> " for " <> partyInfo.name 
+        <> " with provider " <> account.provider
+      void $ provider `submit` createCmd Balance
+        with
+          iban = account.iban
+          provider
+          owner = BalanceOwner with name = partyInfo.name, party = Some party
+          currency = "USD"
+          amount = 0.0
 
   forA_ partyInfo.clients \client -> do
     debug $ 
@@ -134,6 +139,7 @@ setupBalances parties partyInfo = do
       baseUrl = partyInfo.baseUrl
       damlPartyId = party
       name = partyInfo.name
+      clients = partyInfo.clients
 
 -- Helper
 
