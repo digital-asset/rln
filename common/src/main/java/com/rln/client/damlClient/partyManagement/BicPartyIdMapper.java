@@ -30,8 +30,12 @@ public class BicPartyIdMapper {
         // In Bank mode: we are only expecting to get one contract that contains bic to all bank party shards
         // In Scheduler mode: we are expecting to see many bankBic contracts from different banks
         logger.info("Reading BankBicMapping with bankBicReadingParty {}", bankBicReadingParty);
-        Flowable<CreatedEvent> activeContracts = rlnClient.getActiveContracts(new FiltersByParty(Collections.singletonMap(bankBicReadingParty,
-                new InclusiveFilter(Set.of(BankBIC.TEMPLATE_ID)))));
+        Flowable<CreatedEvent> activeContracts = rlnClient.getActiveContracts(
+                new FiltersByParty(Collections.singletonMap(
+                        bankBicReadingParty,
+                        new InclusiveFilter(Set.of(BankBIC.TEMPLATE_ID))
+                ))
+        );
 
         activeContracts.map(e -> BankBIC.fromValue(e.getArguments()))
                 .forEach(bankBic -> {
