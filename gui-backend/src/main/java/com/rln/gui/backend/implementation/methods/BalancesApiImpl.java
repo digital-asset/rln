@@ -18,7 +18,6 @@ import com.rln.gui.backend.implementation.balanceManagement.exception.NonZeroBal
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.model.Balance;
 import com.rln.gui.backend.model.BalanceChange;
-import com.rln.gui.backend.model.WalletAddressTestDTO;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -147,12 +146,14 @@ public class BalancesApiImpl {
 
     /**
      * Lists balances of given wallet where the current party is either the owner or the provider
+     *
      * @param walletId wallet
      * @return list of balances
      */
     public List<Balance> getBalances(Long walletId) {
         return accountCache.getAccounts()
                 .stream()
+                .map(AccountInfo::getIban)
                 .map(this::getAddressBalance)
                 .flatMap(List::stream)
                 .collect(Collectors.toList());

@@ -281,10 +281,10 @@ class BalancesApiImplTest extends LedgerBaseTest {
     }
 
 
-    private Map<String, Object> createBalanceChangeRequest(String assetId, String addetName, double change) {
+    private Map<String, Object> createBalanceChangeRequest(String assetId, String assetName, double change) {
         Map<String, Object> transferProposalRequest = new HashMap<>();
         transferProposalRequest.put("assetId", assetId);
-        transferProposalRequest.put("assetName", addetName);
+        transferProposalRequest.put("assetName", assetName);
         transferProposalRequest.put("change", change);
         return transferProposalRequest;
     }
