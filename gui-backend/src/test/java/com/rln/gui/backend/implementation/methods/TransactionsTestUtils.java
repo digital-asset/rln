@@ -15,6 +15,7 @@ import com.rln.gui.backend.implementation.common.CompoundUniqueIdUtil.Subject;
 import com.rln.gui.backend.implementation.common.GuiBackendConstants;
 import com.rln.gui.backend.model.Transaction;
 import com.rln.gui.backend.model.TransactionStatusUpdate.StatusEnum;
+import com.rln.gui.backend.test.util.Eventually;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import java.math.BigDecimal;
@@ -52,17 +53,18 @@ public class TransactionsTestUtils {
   public static void checkListedTransactionsForSenderReceiver(String contractId, String groupId, String messageId, String senderIban,
                                                               String receiverIban, String bic, String assetCode,
                                                               BigDecimal amount, String status) {
-    List<Transaction> result = RestAssured.given()
+    Eventually.eventually(() -> {
+      List<Transaction> result = RestAssured.given()
         .when().get("/api/transactions")
         .then()
         .statusCode(200)
         .extract().body().as(new TypeRef<>() {
         });
+      Assertions.assertEquals(2, result.size());
 
-    Assertions.assertEquals(2, result.size());
-
-    checkListedTransactionResult(contractId, result.get(0), groupId, messageId, senderIban, Subject.SENDER, status, bic, assetCode, amount.negate());
-    checkListedTransactionResult(contractId, result.get(1), groupId, messageId, receiverIban, Subject.RECEIVER, status, bic, assetCode, amount);
+      checkListedTransactionResult(contractId, result.get(0), groupId, messageId, senderIban, Subject.SENDER, status, bic, assetCode, amount.negate());
+      checkListedTransactionResult(contractId, result.get(1), groupId, messageId, receiverIban, Subject.RECEIVER, status, bic, assetCode, amount);
+    });
   }
 
   public static void checkListedTransactionResult(String contractId, Transaction listedItem, String groupId, String messageId,

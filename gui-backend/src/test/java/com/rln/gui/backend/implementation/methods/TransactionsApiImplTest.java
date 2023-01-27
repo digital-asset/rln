@@ -17,6 +17,7 @@ import com.rln.gui.backend.implementation.common.GuiBackendConstants;
 import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import com.rln.gui.backend.model.Transaction;
 import com.rln.gui.backend.ods.TransferProposalManager;
+import com.rln.gui.backend.test.util.Eventually;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectMock;
@@ -26,7 +27,11 @@ import io.restassured.http.ContentType;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -95,20 +100,23 @@ class TransactionsApiImplTest extends LedgerBaseTest {
         getCurrentBankPartyId(), getSchedulerPartyId(), getAssemblerPartyId(),
         GROUP_ID, MESSAGE_ID, USD_INSTRUMENT_SETTLEMENT_STEP).getValue();
 
-    List<Transaction> result = RestAssured.given()
-        .when().get("/api/approval/list")
-        .then()
-        .statusCode(200)
-        .extract().body().as(new TypeRef<>() {
-        });
+    Eventually.eventually(() -> {
+      List<Transaction> result = RestAssured.given()
+          .when().get("/api/approval/list")
+          .then()
+          .statusCode(200)
+          .extract().body().as(new TypeRef<>() {
+          });
 
-    Assertions.assertEquals(2, result.size());
-    TransactionsTestUtils
+      Assertions.assertEquals(2, result.size());
+
+      TransactionsTestUtils
         .checkListedApprovalResult(transferProposalCid, result.get(0), GROUP_ID, MESSAGE_ID,
-            SENDER_IBAN, Subject.SENDER, BANK_BIC, TRANSACTION_AMOUNT.negate());
-    TransactionsTestUtils
+          SENDER_IBAN, Subject.SENDER, BANK_BIC, TRANSACTION_AMOUNT.negate());
+      TransactionsTestUtils
         .checkListedApprovalResult(transferProposalCid, result.get(1), GROUP_ID, MESSAGE_ID,
-            RECEIVER_IBAN, Subject.RECEIVER, BANK_BIC, TRANSACTION_AMOUNT);
+          RECEIVER_IBAN, Subject.RECEIVER, BANK_BIC, TRANSACTION_AMOUNT);
+    });
     cleanupContract(getSchedulerPartyId(), TransferProposal.TEMPLATE_ID, transferProposalCid);
   }
 
@@ -117,7 +125,6 @@ class TransactionsApiImplTest extends LedgerBaseTest {
     var transferProposalCid = publishTransferProposalToLedger(
         getCurrentBankPartyId(), getSchedulerPartyId(), getAssemblerPartyId(),
         GROUP_ID, MESSAGE_ID, USD_INSTRUMENT_SETTLEMENT_STEP).getValue();
-
     TransactionsTestUtils
         .checkListedTransactionsForSenderReceiver(transferProposalCid, GROUP_ID, MESSAGE_ID,
             SENDER_IBAN, RECEIVER_IBAN,
