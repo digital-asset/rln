@@ -74,17 +74,11 @@ public class BalancesApiImpl {
         var builder = accountCache
                 .getAccountInfo(address)
                 .map(info -> {
-                    Balance.AssetOrLiabilityEnum assetOrLiabilityEnum;
-                    if (info.getProvider().equals(guiBackendConfiguration.partyDamlId())) {
-                        assetOrLiabilityEnum = Balance.AssetOrLiabilityEnum.LIABILITY;
-                    } else {
-                        assetOrLiabilityEnum = Balance.AssetOrLiabilityEnum.ASSET;
-                    }
                     return Balance.builder()
                             .address(address)
                             .assetId(ASSET_ID) // default to 0 now, as we don't have assetId in the system yet
                             .assetName(assetName)
-                            .assetOrLiability(assetOrLiabilityEnum)
+                            .assetOrLiability(getAssetOrLiabilityEnum(info))
                             .party(info.getProvider())
                             .client(info.getOwner());
                 })
@@ -159,17 +153,12 @@ public class BalancesApiImpl {
                 .collect(Collectors.toList());
     }
 
-    private Balance toBalance(com.rln.damlCodegen.model.balance.Balance contract) {
-        var assetName = accountCache
-                .getAccountInfo(contract.iban)
-                .map(AccountInfo::getAssetCode)
-                .orElseThrow(() -> new IbanNotFoundException(contract.iban));
-
-        return Balance.builder()
-                .address(contract.iban)
-                .assetId(ASSET_ID) // default to 0 now, as we don't have assetId in the system yet
-                .assetName(assetName)
-                .build();
+    private Balance.AssetOrLiabilityEnum getAssetOrLiabilityEnum(AccountInfo accountInfo) {
+        if (accountInfo.getProvider().equals(guiBackendConfiguration.partyDamlId())) {
+            return Balance.AssetOrLiabilityEnum.LIABILITY;
+        } else {
+            return Balance.AssetOrLiabilityEnum.ASSET;
+        }
     }
 
 }
