@@ -47,14 +47,6 @@ class EventuallyTest {
     ));
   }
 
-  @Test
-  void codeThatFailsForGivenAttempts_test() {
-    var code = codeThatFailsForGivenAttempts(2);
-    Assertions.assertThrows(RuntimeException.class, code);
-    Assertions.assertThrows(RuntimeException.class, code);
-    Assertions.assertDoesNotThrow(code);
-  }
-
   private Executable codeThatFailsForGivenAttempts(int attemptsToFail) {
     var attempts = new AtomicInteger(1);
     return () -> {
@@ -63,7 +55,22 @@ class EventuallyTest {
   }
 
   @Test
-  void codeThatFailsForGivenMillis_test() {
+  void test_codeThatFailsForGivenAttempts() {
+    var code = codeThatFailsForGivenAttempts(2);
+    Assertions.assertThrows(RuntimeException.class, code);
+    Assertions.assertThrows(RuntimeException.class, code);
+    Assertions.assertDoesNotThrow(code);
+  }
+
+  private Executable codeThatFailsForGivenMillis(long millis) {
+    var start = System.currentTimeMillis();
+    return () -> {
+      if (System.currentTimeMillis() - start <= millis) simulateFailure();
+    };
+  }
+
+  @Test
+  void test_codeThatFailsForGivenMillis() {
     var code = codeThatFailsForGivenMillis(50);
     Assertions.assertThrows(RuntimeException.class, code);
     Assertions.assertThrows(RuntimeException.class, () -> {
@@ -74,13 +81,6 @@ class EventuallyTest {
       Thread.sleep(40);
       code.execute();
     });
-  }
-
-  private Executable codeThatFailsForGivenMillis(long millis) {
-    var start = System.currentTimeMillis();
-    return () -> {
-      if (System.currentTimeMillis() - start <= millis) simulateFailure();
-    };
   }
 
   private static void simulateFailure() {
