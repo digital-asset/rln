@@ -180,7 +180,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
   // Get all the clients
   @Override
   public List<ClientDTO> get1() {
-    throw notImplemented();
+    return partyApi.getClients();
   }
 
   // * what is the body?
