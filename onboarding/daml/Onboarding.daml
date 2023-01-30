@@ -22,7 +22,7 @@ type Parties = [Party]
 data PartyInfo = PartyInfo with
   id : Int
   name : Text
-  bic : Optional Text
+  bic : Text
   baseUrl : Text
   participantName : Text
   accounts : Optional [Account]
@@ -82,15 +82,14 @@ setupBic scheduler assembler parties partyInfo = do
         ("No party found for: " <> partyInfo.name)
         (TextMap.lookup partyInfo.name parties)
 
-  whenSome partyInfo.bic \bic -> do
-    debug $ "Creating BankBic " <> bic <> " for " <> partyInfo.name
-    void $ party `submit` createCmd BankBIC
-      with
-        bic = bic
-        bankShards = Set.singleton party
-        schedulerShards = Set.singleton scheduler
-        assemblerShards = Set.singleton assembler
-        otherBanks = Set.fromList . textMapValues $ TextMap.filter (/= party) parties
+  debug $ "Creating BankBic " <> partyInfo.bic <> " for " <> partyInfo.name
+  void $ party `submit` createCmd BankBIC
+    with
+      bic = partyInfo.bic
+      bankShards = Set.singleton party
+      schedulerShards = Set.singleton scheduler
+      assemblerShards = Set.singleton assembler
+      otherBanks = Set.fromList . textMapValues $ TextMap.filter (/= party) parties
 
 setupBalances : TextMap Party -> PartyInfo -> Script GuiBackendConfigEntry
 setupBalances parties partyInfo = do
