@@ -10,7 +10,7 @@ import Model.BankBIC
 import Model.Balance
 import DA.Set qualified as Set
 import DA.Foldable (mapA_, forA_)
-import DA.Optional (fromSomeNote, whenSome)
+import DA.Optional (mapOptional, fromSomeNote, whenSome)
 import qualified DA.TextMap as TextMap
 import DA.TextMap (TextMap)
 import DA.Action (foldlA, void)
@@ -65,7 +65,42 @@ onboarding partyInfo = do
   parties <- setupParties partyInfo
   mapA_ (setupBic  scheduler assembler parties) partyInfo
   entries <- mapA (setupBalances parties) partyInfo
-  pure $ Output { guiBackendConfig = entries, parties = map damlPartyId entries }
+  pure $ createOutput entries
+
+
+extractConfig : [PartyInfo] -> Script Output
+extractConfig partyInfo = do
+  let participantNames = fmap (\info -> ParticipantName info.participantName) partyInfo
+  knownParties <- fmap (.party) <$> listKnownParties
+  knownParties <- foldlA
+    (\result participant -> ((++ result) . fmap (.party)) <$> listKnownPartiesOn participant)
+    knownParties
+    participantNames
+  bics <- foldlA
+    (\result party -> do
+      partyBics <- fmap snd <$> queryFilter @BankBIC party (\x -> signatory x == [party])
+      let partyBicMapping = TextMap.fromList $ fmap (\x -> (x.bic, party)) partyBics
+      pure $ TextMap.union result partyBicMapping)
+    TextMap.empty
+    knownParties
+  let entries = mapOptional
+        (\info -> (\party ->
+          GuiBackendConfigEntry
+            with
+              id = info.id
+              baseUrl = info.baseUrl
+              damlPartyId = party
+              name = info.name
+              clients = info.clients
+          )
+          <$> TextMap.lookup info.bic bics)
+        partyInfo
+  pure $ createOutput entries
+
+
+createOutput : [GuiBackendConfigEntry] -> Output
+createOutput entries = Output { guiBackendConfig = entries, parties = map damlPartyId entries }
+
 
 setupParties : [PartyInfo] -> Script (TextMap Party)
 setupParties partyInfo = do
