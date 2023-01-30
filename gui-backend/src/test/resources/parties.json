@@ -8,7 +8,8 @@
       {
         "clientId": 1,
         "name": "Alice",
-        "iban": "XYZ-IBAN"
+        "iban": "XYZ-IBAN",
+        "bearerToken": "token-XYZ-IBAN"
       }
     ]
   }
