@@ -13,4 +13,5 @@ public class SetlClient {
   private long clientId;
   private String name;
   private String iban;
+  private String bearerToken;
 }

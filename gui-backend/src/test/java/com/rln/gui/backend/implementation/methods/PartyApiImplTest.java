@@ -60,7 +60,7 @@ class PartyApiImplTest extends LedgerBaseTest {
 
   @Test
   void getClients() {
-    List<SetlClient> clients = List.of(new SetlClient(CLIENT_ID, CLIENT_NAME, SENDER_IBAN));
+    List<SetlClient> clients = List.of(new SetlClient(CLIENT_ID, CLIENT_NAME, SENDER_IBAN, "token-" + SENDER_IBAN));
     ClientDTO expected = new ClientDTO(CLIENT_ID, CLIENT_NAME);
     BDDMockito.given(setlPartySupplier.getSetlParty(getCurrentBankPartyId().getValue()))
         .willReturn(new SetlParty(BASEURL, PARTY_ID, getCurrentBankPartyId().getValue(), PARTY_NAME,
