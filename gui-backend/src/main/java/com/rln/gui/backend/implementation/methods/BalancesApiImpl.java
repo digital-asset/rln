@@ -18,16 +18,18 @@ import com.rln.gui.backend.implementation.balanceManagement.exception.NonZeroBal
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.model.Balance;
 import com.rln.gui.backend.model.BalanceChange;
-import com.rln.gui.backend.model.WalletAddressTestDTO;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 public class BalancesApiImpl {
+
+    private static final Long ASSET_ID = 0L;
 
     private final GuiBackendConfiguration guiBackendConfiguration;
     private final LiquidBalanceCache liquidBalanceCache;
@@ -37,12 +39,12 @@ public class BalancesApiImpl {
     private final RLNClient rlnClient;
 
     public BalancesApiImpl(
-        GuiBackendConfiguration guiBackendConfiguration,
-        LiquidBalanceCache liquidBalanceCache,
-        IncomingBalanceCache incomingBalanceCache,
-        LockedBalanceCache lockedBalanceCache,
-        AccountCache accountCache,
-        RLNClient rlnClient) {
+            GuiBackendConfiguration guiBackendConfiguration,
+            LiquidBalanceCache liquidBalanceCache,
+            IncomingBalanceCache incomingBalanceCache,
+            LockedBalanceCache lockedBalanceCache,
+            AccountCache accountCache,
+            RLNClient rlnClient) {
         this.guiBackendConfiguration = guiBackendConfiguration;
         this.liquidBalanceCache = liquidBalanceCache;
         this.incomingBalanceCache = incomingBalanceCache;
@@ -52,11 +54,11 @@ public class BalancesApiImpl {
     }
 
     /**
-     *  walletId should be matched to existing iban of current bank
-     *  return different types of balance following below:
-     *      LIQUID: liquid
-     *      ACTUAL: liquid + locked
-     *      FUTURE: liquid + incoming
+     * walletId should be matched to existing iban of current bank
+     * return different types of balance following below:
+     * LIQUID: liquid
+     * ACTUAL: liquid + locked
+     * FUTURE: liquid + incoming
      */
     public List<Balance> getAddressBalance(String address) throws IbanNotFoundException {
         var liquidBalanceAmount = liquidBalanceCache
@@ -69,26 +71,34 @@ public class BalancesApiImpl {
                 .map(AccountInfo::getAssetCode)
                 .orElseThrow(() -> new IbanNotFoundException(address));
 
-        var builder = Balance.builder()
-            .address(address)
-            .assetId(0L) // default to 0 now, as we don't have assetId in the system yet
-            .assetName(assetName);
+        var builder = accountCache
+                .getAccountInfo(address)
+                .map(info -> {
+                    return Balance.builder()
+                            .address(address)
+                            .assetId(ASSET_ID) // default to 0 now, as we don't have assetId in the system yet
+                            .assetName(assetName)
+                            .assetOrLiability(getAssetOrLiabilityEnum(info))
+                            .party(info.getProvider())
+                            .client(info.getOwner());
+                })
+                .orElseThrow(() -> new IbanNotFoundException(address));
 
         var result = new ArrayList<Balance>(3);
         var liquidBalance = builder
-            .balance(liquidBalanceAmount)
-            .type(BalanceType.LIQUID.name()).build();
+                .balance(liquidBalanceAmount)
+                .type(BalanceType.LIQUID.name()).build();
         result.add(liquidBalance);
         lockedBalanceAmount.ifPresent(actualLockedAmount -> {
             var actualBalance = builder
-                .balance(liquidBalanceAmount.add(actualLockedAmount))
-                .type(BalanceType.ACTUAL.name()).build();
+                    .balance(liquidBalanceAmount.add(actualLockedAmount))
+                    .type(BalanceType.ACTUAL.name()).build();
             result.add(actualBalance);
         });
         incomingBalanceAmount.ifPresent(actualIncomingAmount -> {
             var futureBalance = builder
-                .balance(liquidBalanceAmount.add(actualIncomingAmount))
-                .type(BalanceType.FUTURE.name()).build();
+                    .balance(liquidBalanceAmount.add(actualIncomingAmount))
+                    .type(BalanceType.FUTURE.name()).build();
             result.add(futureBalance);
         });
 
@@ -98,9 +108,9 @@ public class BalancesApiImpl {
     public List<Balance> getLocalBalance(String address) throws IbanNotFoundException {
         var accountInfo = accountCache.getAccountInfo(address);
         return accountInfo
-            .filter(isLocal())
-            .map(info -> getAddressBalance(address))
-            .orElseThrow(() -> new IbanNotFoundException(address));
+                .filter(isLocal())
+                .map(info -> getAddressBalance(address))
+                .orElseThrow(() -> new IbanNotFoundException(address));
     }
 
     private Predicate<AccountInfo> isLocal() {
@@ -109,8 +119,8 @@ public class BalancesApiImpl {
 
     public void delete(String provider, String address) throws NonZeroBalanceException {
         var balances = getAddressBalance(address);
-        var allBalancesAreZero= balances.stream()
-            .allMatch(balance -> balance.getBalance().compareTo(BigDecimal.ZERO) == 0);
+        var allBalancesAreZero = balances.stream()
+                .allMatch(balance -> balance.getBalance().compareTo(BigDecimal.ZERO) == 0);
         if (!allBalancesAreZero) {
             throw new NonZeroBalanceException(address);
         }
@@ -120,20 +130,35 @@ public class BalancesApiImpl {
     public List<Balance> changeBalance(String provider, String address, @Valid @NotNull BalanceChange balanceChange) {
         rlnClient.changeBalance(new ChangeBalanceParameters(provider, address, balanceChange.getChange()));
         return getAddressBalance(address)
-            .stream().map(balance -> {
-                if(BalanceType.LIQUID.toString().equals(balance.getType())) {
-                    balance.setBalance(balance.getBalance().add(balanceChange.getChange()));
-                }
-                return balance;
-            }).collect(Collectors.toList());
+                .stream().map(balance -> {
+                    if (BalanceType.LIQUID.toString().equals(balance.getType())) {
+                        balance.setBalance(balance.getBalance().add(balanceChange.getChange()));
+                    }
+                    return balance;
+                }).collect(Collectors.toList());
     }
 
+    /**
+     * Lists balances of given wallet where the current party is either the owner or the provider
+     *
+     * @param walletId wallet
+     * @return list of balances
+     */
     public List<Balance> getBalances(Long walletId) {
-        return null;
+        return accountCache.getAccounts()
+                .stream()
+                .map(AccountInfo::getIban)
+                .map(this::getAddressBalance)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
     }
 
-    public Object testWalletAddress(String address,
-        @Valid @NotNull WalletAddressTestDTO walletAddressTestDTO) {
-        return null;
+    private Balance.AssetOrLiabilityEnum getAssetOrLiabilityEnum(AccountInfo accountInfo) {
+        if (accountInfo.getProvider().equals(guiBackendConfiguration.partyDamlId())) {
+            return Balance.AssetOrLiabilityEnum.LIABILITY;
+        } else {
+            return Balance.AssetOrLiabilityEnum.ASSET;
+        }
     }
+
 }

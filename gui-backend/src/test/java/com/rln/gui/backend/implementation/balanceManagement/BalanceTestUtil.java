@@ -35,6 +35,8 @@ public class BalanceTestUtil {
     public static final String IBAN2 = "IBAN2";
     public static final String ASSET_CODE1 = "USD";
     public static final String ASSET_CODE2 = "NTD";
+    public static final Long WALLET_1 = 1L;
+    public static final Long WALLET_2 = 2L;
     public static final String UNKNOWN_OWNER = "Unknown";
     private static final Logger logger = LoggerFactory.getLogger(BalanceTestUtil.class);
     private static final Random rand = new Random();
