@@ -143,19 +143,18 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
   void apiGetAddressSettingsListWhenManual() throws InvalidProtocolBufferException {
     BDDMockito.given(setlPartySupplier.getSetlPartyId(getCurrentBankPartyId().getValue()))
         .willReturn(PARTY_ID);
-    BDDMockito.given(setlPartySupplier.getSetlParty(BalanceTestUtil.UNKNOWN_OWNER))
+    BDDMockito.given(setlPartySupplier.getSetlPartyId(BalanceTestUtil.UNKNOWN_OWNER))
         .willReturn(null);
     var liquidAmount = 500;
     var balance = BalanceTestUtil
         .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX,
             getCurrentBankPartyId(), Balance.TEMPLATE_ID);
 
-    List<LedgerAddressDTO> result = RestAssured.given()
-        .when().get("/api/ledger/addresses")
+    List<LedgerAddressDTO> result = RestAssured
+        .get("/api/ledger/addresses")
         .then()
         .statusCode(200)
-        .extract().body().as(new TypeRef<>() {
-        });
+        .extract().body().as(new TypeRef<>() {});
 
     Assertions.assertEquals(1, result.size());
     var ledgerAddressInfo = result.get(0);
