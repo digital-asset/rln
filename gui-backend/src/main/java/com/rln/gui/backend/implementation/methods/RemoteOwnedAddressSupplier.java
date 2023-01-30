@@ -2,7 +2,7 @@ package com.rln.gui.backend.implementation.methods;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rln.gui.backend.model.WalletAddressDTO;
+import com.rln.gui.backend.implementation.config.WalletAddress;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -10,18 +10,18 @@ import java.util.List;
 public class RemoteOwnedAddressSupplier {
 
   private final Path remoteOwnedAddressConfig;
-  private final List<WalletAddressDTO> remoteOwnedAddresses;
+  private final List<WalletAddress> remoteOwnedAddresses;
 
   public RemoteOwnedAddressSupplier(Path remoteOwnedAddressConfig) {
     this.remoteOwnedAddressConfig = remoteOwnedAddressConfig;
     this.remoteOwnedAddresses = readRemoteOwnedAddresses();
   }
 
-  public List<WalletAddressDTO> getRemoteOwnedAddresses() {
+  public List<WalletAddress> getRemoteOwnedAddresses() {
     return remoteOwnedAddresses;
   }
 
-  private List<WalletAddressDTO> readRemoteOwnedAddresses() {
+  private List<WalletAddress> readRemoteOwnedAddresses() {
     try {
       return new ObjectMapper().readValue(
           remoteOwnedAddressConfig.toFile(),

@@ -1,0 +1,8 @@
+[
+  {
+    "partyId": 1,
+    "address": "IBAN",
+    "walletId": "1",
+    "bearerToken": "BearerToken"
+  }
+]
