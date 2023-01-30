@@ -37,15 +37,8 @@ public class PartyApiImpl {
   public List<PartyDTO> getParties() {
     return setlPartySupplier.getParties().stream()
         .map(this::toPartyDTO)
+        .filter(partyDTO -> !isMyParty(partyDTO))
         .collect(Collectors.toList());
-  }
-
-  private PartyDTO toPartyDTO(SetlParty setlParty) {
-    return new PartyDTO(
-        setlParty.getBaseUrl(),
-        List.of(partyManager.getBic(setlParty.getDamlPartyId())),
-        setlParty.getId(),
-        setlParty.getName());
   }
 
   public List<ClientDTO> getClients() {
@@ -58,5 +51,17 @@ public class PartyApiImpl {
              .name(setlClient.getName())
             .build())
         .collect(Collectors.toList());
+  }
+
+  private boolean isMyParty(PartyDTO partyDTO) {
+    return partyDTO.getId().equals(getMyParty().getId());
+  }
+
+  private PartyDTO toPartyDTO(SetlParty setlParty) {
+    return new PartyDTO(
+        setlParty.getBaseUrl(),
+        List.of(partyManager.getBic(setlParty.getDamlPartyId())),
+        setlParty.getId(),
+        setlParty.getName());
   }
 }
