@@ -105,9 +105,9 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetAddressSettingsListWhenLimit() throws InvalidProtocolBufferException {
-    BDDMockito.given(setlPartySupplier.getSetlParty(getCurrentBankPartyId().getValue()))
+    BDDMockito.given(setlPartySupplier.getSetlPartyId(getCurrentBankPartyId().getValue()))
         .willReturn(null);
-    BDDMockito.given(setlPartySupplier.getSetlParty(BalanceTestUtil.UNKNOWN_OWNER))
+    BDDMockito.given(setlPartySupplier.getSetlPartyId(BalanceTestUtil.UNKNOWN_OWNER))
         .willReturn(null);
     var liquidAmount = 500;
     var balance = BalanceTestUtil
