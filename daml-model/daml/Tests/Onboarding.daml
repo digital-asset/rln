@@ -39,6 +39,7 @@ data ClientInfo = ClientInfo with
     clientId : Int
     name : Text
     iban : Iban
+    bearerToken : Text
   deriving (Eq, Show)
 
 data Output = Output with
