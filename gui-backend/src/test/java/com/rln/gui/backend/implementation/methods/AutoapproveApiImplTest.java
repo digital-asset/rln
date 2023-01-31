@@ -206,7 +206,7 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     Assertions.assertEquals(PARTY_ID, walletAddress.getPartyId());
     Assertions.assertEquals(GuiBackendApiImplementation.ONLY_SUPPORTED_WALLET_ID,
         walletAddress.getWalletId());
-    Assertions.assertEquals("DummyToken", walletAddress.getBearerToken());
+    Assertions.assertEquals("token-SENDER_IBAN", walletAddress.getBearerToken());
 
     cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
   }
