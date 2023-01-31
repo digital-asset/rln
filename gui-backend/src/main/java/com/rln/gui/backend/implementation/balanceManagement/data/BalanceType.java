@@ -5,5 +5,5 @@
 package com.rln.gui.backend.implementation.balanceManagement.data;
 
 public enum BalanceType {
-    LIQUID, ACTUAL, FUTURE
+    PESSIMISTIC, ACTUAL, HOT
 }
