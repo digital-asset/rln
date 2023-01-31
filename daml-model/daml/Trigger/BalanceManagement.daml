@@ -11,7 +11,6 @@ import Daml.Trigger
 import Workflow.TransactionManifest
 import Workflow.Instruction
 
-
 balanceManagementTrigger : Trigger UnProcessedSettlements
 balanceManagementTrigger = Trigger
   { initialize = pure []
@@ -26,9 +25,12 @@ balanceManagementTrigger = Trigger
   }
 
 type GroupId = Text
-data Settlement =
-    Finalized with groupId : GroupId, finalizationId : (ContractId SettlementFinalized)
-  | Rejected with groupId : GroupId, rejectionId : (ContractId SettlementRejected)
+data Settlement = Settlement with
+    groupId : GroupId
+    status  : SettlementStatus
+data SettlementStatus =
+    Finalized (ContractId SettlementFinalized)
+  | Rejected (ContractId SettlementRejected)
 type UnProcessedSettlements = [Settlement]
 
 addToUnProcessedTransactions : Message -> TriggerUpdateA UnProcessedSettlements ()
@@ -37,24 +39,36 @@ addToUnProcessedTransactions (MTransaction Transaction{events}) =
   where
     markedAsProcessed (CreatedEvent created) = do
       whenSome (fromCreated @SettlementFinalized created) $
-        \(_, evidence, SettlementFinalized{groupId}) -> modify (Finalized groupId evidence ::)
+        \(_, evidence, SettlementFinalized{groupId}) ->
+          modify (Settlement groupId (Finalized evidence) ::)
       whenSome (fromCreated @SettlementRejected created) $
-        \(_, evidence, SettlementRejected{groupId}) -> modify (Rejected groupId evidence ::)
-    markedAsProcessed _else = pure ()
+        \(_, evidence, SettlementRejected{groupId}) ->
+          modify (Settlement groupId (Rejected evidence) ::)
+    markedAsProcessed _else =
+        pure ()
 addToUnProcessedTransactions _any = pure ()
 
 updateBalance: Party -> TriggerA UnProcessedSettlements ()
-updateBalance provider = do 
-  let 
+updateBalance provider = do
+    instructions <- query @Instruction
+    forA_ instructions encumberInstruction
+    unprocessedTransactions <- get
+    forA_ unprocessedTransactions settleInstructionsForTransaction
+    put []
+  where
+    encumberInstruction : (ContractId Instruction, Instruction) -> TriggerA UnProcessedSettlements ()
+    encumberInstruction (cid, Instruction{encumbered = False}) =
+      dedupExerciseD "Encumber" cid Encumber
+    encumberInstruction _ = pure ()
+    getAllEncumberedInstructionCidsForGroupId: GroupId -> TriggerA UnProcessedSettlements [ContractId Instruction]
+    getAllEncumberedInstructionCidsForGroupId targetGroupId =
+      map fst <$> queryFilter @Instruction \i -> i.groupId == targetGroupId && i.encumbered
     settleInstructionsForTransaction: Settlement -> TriggerA UnProcessedSettlements ()
-    settleInstructionsForTransaction transaction = do 
-      case transaction of 
-       Finalized groupId evidence -> mapA_ (`dedupExercise` Settle with evidence) =<< getAllInstructionsForGroupId groupId
-       Rejected groupId evidence -> mapA_ (`dedupExercise` Cancel with evidence) =<< getAllInstructionsForGroupId groupId
-       where getAllInstructionsForGroupId: GroupId -> TriggerA UnProcessedSettlements [ContractId Instruction]
-             getAllInstructionsForGroupId targetGroupId = do 
-               map fst <$> queryFilter @Instruction ((==targetGroupId) . (.groupId))
-  unprocessedTransactions <- get
-  forA_ unprocessedTransactions settleInstructionsForTransaction
-  put []
-  pure ()
+    settleInstructionsForTransaction transaction = do
+      instructionsInGroup <- getAllEncumberedInstructionCidsForGroupId $ transaction.groupId
+      let exerciseCall = case transaction.status of
+            Finalized evidence -> (\cid -> dedupExerciseD "Settle" cid Settle with evidence)
+            Rejected evidence -> (\cid -> dedupExerciseD "Cancel" cid Cancel with evidence)
+      forA_ instructionsInGroup exerciseCall
+
+dedupExerciseD msg = debug msg >> dedupExercise

@@ -4,8 +4,6 @@
 --
 
 module Tests.TransferWorkflow where
-import DA.Action (void)
-import DA.Optional (whenSome)
 import Daml.Script
 import Model.Balance
 import Tests.PartyAlloc
@@ -14,6 +12,7 @@ import Workflow.InitiateTransfer
 import Workflow.TransferProposal
 import Workflow.Instruction
 import Workflow.TransactionManifest
+import DA.Traversable qualified as Traversable
 
 {-
        CB
@@ -168,13 +167,6 @@ to listen to TransferProposal and decide whether to approve/reject and lock/crea
 --}
 approveProposalAndHandleBalances: Party -> ContractId TransferProposal -> Bool -> Script (ContractId ApprovedTransferProposal, Optional (ContractId Instruction))
 approveProposalAndHandleBalances provider transferProposalCid settleOnLedger = do
-  Some transferProposal@TransferProposal{step = SettlementStep{delivery = Instrument{..}; ..}, owner} <- queryContractId provider transferProposalCid
-  let
-    identifier = toIdentifier transferProposal
-  if settleOnLedger then do
-    whenSome sender (\iban -> void $ provider `submit` exerciseByKeyCmd @Balance (BalanceKey with provider = owner; ..) (Lock with amountToLock = amount; ..))
-    whenSome receiver (\iban -> do
-      balanceOwner <- getBalanceOwnerFromKey (BalanceKey with provider = owner; iban)
-      void $ provider `submit` createCmd IncomingBalance with balance = (Balance with currency = label; owner = balanceOwner; ..); identifier)
-  else pure ()
-  provider `submit` exerciseCmd transferProposalCid ApproveProposal with reason = None; settleOnLedger
+  (approved, maybeInstruction) <- provider `submit` exerciseCmd transferProposalCid ApproveProposal with reason = None; settleOnLedger
+  instruction <- Traversable.mapA (\cid -> provider `submit` exerciseCmd cid Encumber) maybeInstruction
+  pure (approved, instruction)

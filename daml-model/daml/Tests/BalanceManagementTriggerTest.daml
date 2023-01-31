@@ -13,21 +13,24 @@ import Trigger.BalanceManagement
 import Workflow.Data
 import Workflow.Instruction
 import Workflow.TransactionManifest
+import DA.Optional (optionalToList)
+import Daml.Trigger (Command)
 
-balanceManagementTriggerTest: Script ()
-balanceManagementTriggerTest = do
+balanceManagementTriggerTest_encumber: Script ()
+balanceManagementTriggerTest_encumber = do
   Banks{bank11} <- actionPartyAllocation
   ServiceParties{assembler} <- servicePartyAllocation
 
-  let
-    provider = bank11
-    groupId = "groupId"
-    messageId1 = "messageId1"
-    messageId2 = "messageId2"
-    amount = 100.0
-    label = "USD"
-    delivery = Instrument with ..
-    step = SettlementStep with sender = Some "senderIban"; receiver = None; delivery
+  let provider = bank11
+      groupId = "groupId"
+      messageId1 = "messageId1"
+      messageId2 = "messageId2"
+      amount = 100.0
+      label = "USD"
+      delivery = Instrument with ..
+      step = SettlementStep with sender = Some "senderIban"; receiver = None; delivery
+      encumbered = False
+      numOfEncumbers = 3
 
   instructionCid1 <- submit bank11 do createCmd Instruction with messageId = messageId1; ..
   instructionCid2 <- submit bank11 do createCmd Instruction with messageId = messageId2; ..
@@ -36,30 +39,79 @@ balanceManagementTriggerTest = do
 
   -- case 1 received SettlementFinalized, instructions of current group Settled
   evidence <- assembler `submit` createCmd SettlementFinalized with assembler, groupId = "groupId", approvers = [bank11]
-  verifyInstructions bank11 2 $ Finalized groupId evidence
+
+  (_, commands) <- simulateRule bank11 numOfEncumbers $ Some $ Settlement groupId $ Finalized evidence
+  assertExerciseCmd commands $ \(_cid : ContractId Instruction, exercisedChoice) -> do
+    case exercisedChoice of
+      Encumber -> Right ()
+
+balanceManagementTriggerTest_finalize: Script ()
+balanceManagementTriggerTest_finalize = do
+  Banks{bank11} <- actionPartyAllocation
+  ServiceParties{assembler} <- servicePartyAllocation
+
+  let provider = bank11
+      groupId = "groupId"
+      messageId1 = "messageId1"
+      messageId2 = "messageId2"
+      amount = 100.0
+      label = "USD"
+      delivery = Instrument with ..
+      step = SettlementStep with sender = Some "senderIban"; receiver = None; delivery
+      encumbered = True
+      numOfSettles = 2
+
+  instructionCid1 <- submit bank11 do createCmd Instruction with messageId = messageId1; ..
+  instructionCid2 <- submit bank11 do createCmd Instruction with messageId = messageId2; ..
+  -- instruction in different groups, should not be Settle/Cancel
+  instructionCid3 <- submit bank11 do createCmd Instruction with groupId = "other groupdId"; messageId = "other messageId"; ..
+
+  -- case 1 received SettlementFinalized, instructions of current group Settled
+  evidence <- assembler `submit` createCmd SettlementFinalized with assembler, groupId = "groupId", approvers = [bank11]
+  verifyInstructionFinalization bank11 numOfSettles $ Settlement groupId $ Finalized evidence
+
+balanceManagementTriggerTest_reject: Script ()
+balanceManagementTriggerTest_reject = do
+  Banks{bank11} <- actionPartyAllocation
+  ServiceParties{assembler} <- servicePartyAllocation
+
+  let provider = bank11
+      groupId = "groupId"
+      messageId1 = "messageId1"
+      messageId2 = "messageId2"
+      amount = 100.0
+      label = "USD"
+      delivery = Instrument with ..
+      step = SettlementStep with sender = Some "senderIban"; receiver = None; delivery
+      encumbered = True
+      numOfCancels = 2
+
+  instructionCid1 <- submit bank11 do createCmd Instruction with messageId = messageId1; ..
+  instructionCid2 <- submit bank11 do createCmd Instruction with messageId = messageId2; ..
+  -- instruction in different groups, should not be Settle/Cancel
+  instructionCid3 <- submit bank11 do createCmd Instruction with groupId = "other groupdId"; messageId = "other messageId"; ..
 
   -- case 2 receive SettlementRejected, instructions of current group Canceled
   evidence <- assembler `submit` createCmd SettlementRejected with assembler, groupId = "groupId", approvers = [bank11]
-  verifyInstructions bank11 2 $ Rejected groupId evidence
+  verifyInstructionFinalization bank11 numOfCancels $ Settlement groupId $ Rejected evidence
 
-verifyInstructions: Party -> Int -> Settlement -> Script ()
-verifyInstructions triggerSender expectedNumberOfInstruction settlement = do
+simulateRule : Party -> Int -> Optional Settlement -> Script ([(ContractId Instruction, Instruction)], [Command])
+simulateRule triggerSender expectedNumberOfInstruction settlement = do
   instructions <- query @Instruction triggerSender
-  let
-    acs = mconcat $ map  (toACS . fst) instructions
-    (currentGroupId, isSettled) = case settlement of
-      Finalized gid _ -> (gid, True)
-      Rejected gid _ -> (gid, False)
-    expectedInstructionCids: [ContractId Instruction] = map fst $ filter ((== currentGroupId) . (.groupId) . snd) instructions
+  let acs = mconcat $ map  (toACS . fst) instructions
 
-  (unProcessedTransactions, commands') <- testRule balanceManagementTrigger triggerSender [] acs M.empty [settlement]
+  (unProcessedTransactions, commands') <- testRule balanceManagementTrigger triggerSender [] acs M.empty $ optionalToList settlement
 
-  let
-    commands = flattenCommands commands'
-
+  let commands = flattenCommands commands'
   assertMsg "All Transactions should be processed" $ null unProcessedTransactions
   assertMsg "Number of commands does not match with expected number of instructions" $ (length commands == expectedNumberOfInstruction)
-  if isSettled then assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
+  pure (instructions, commands)
+
+verifyInstructionFinalization: Party -> Int -> Settlement -> Script ()
+verifyInstructionFinalization triggerSender expectedNumberOfInstruction settlement = do
+  (instructions, commands) <- simulateRule triggerSender expectedNumberOfInstruction $ Some settlement
+  let expectedInstructionCids: [ContractId Instruction] = map fst $ filter ((== settlement.groupId) . (.groupId) . snd) instructions
+  if isFinalized settlement.status then assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
     assertMsg "Instruction contractId used in Settle exercise is incorrect" $ cid `elem` expectedInstructionCids
     case exercisedChoice of
       Settle _ -> Right ()
@@ -67,3 +119,7 @@ verifyInstructions triggerSender expectedNumberOfInstruction settlement = do
     assertMsg "Instruction contractId used in Cancel exercise is incorrect" $ cid `elem` expectedInstructionCids
     case exercisedChoice of
       Cancel _ -> Right ()
+
+isFinalized : SettlementStatus -> Bool
+isFinalized (Finalized _) = True
+isFinalized _ = False

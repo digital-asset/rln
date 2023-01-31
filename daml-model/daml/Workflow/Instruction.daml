@@ -18,15 +18,30 @@ template Instruction
     groupId: Text
     messageId: Text
     step: SettlementStep
+    -- whether locking and incoming handling is done for this or not
+    encumbered: Bool
   where
     signatory provider
     let identifier = toIdentifier this
+
+    choice Encumber: ContractId Instruction
+      with
+      controller provider
+       do
+          assertMsg "Encumber: Instruction already encumbered." $ not encumbered
+          whenSome step.sender $ \iban ->
+            void $ exerciseByKey @Balance (BalanceKey with ..) $ Lock with amountToLock = step.delivery.amount; ..
+          whenSome step.receiver $ \iban -> do
+            (_, Balance{..}) <- fetchByKey @Balance (BalanceKey with ..)
+            void $ create IncomingBalance with balance = (Balance with currency = step.delivery.label; amount = step.delivery.amount; ..); identifier
+          create this with encumbered = True
 
     choice Settle: ()
       with
         evidence : ContractId SettlementFinalized
       controller provider
        do
+          assertMsg "Settle: Instruction should be encumbered." encumbered
           verifySettlement groupId evidence
           {-
             1. has sender -> burn locked balance
