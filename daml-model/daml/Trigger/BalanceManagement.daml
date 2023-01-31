@@ -6,11 +6,8 @@
 module Trigger.BalanceManagement where
 
 import DA.Foldable
-import DA.Optional (fromSome, whenSome)
+import DA.Optional (whenSome)
 import Daml.Trigger
-import Model.Balance
-import Workflow.Data
-import Workflow.TransferProposal
 import Workflow.TransactionManifest
 import Workflow.Instruction
 
@@ -53,40 +50,25 @@ addToUnProcessedTransactions _any = pure ()
 
 updateBalance: Party -> TriggerA UnProcessedSettlements ()
 updateBalance provider = do
+    instructions <- query @Instruction
+    forA_ instructions encumberInstruction
     unprocessedTransactions <- get
     forA_ unprocessedTransactions settleInstructionsForTransaction
     put []
   where
-    getAllInstructionCidsForGroupId: GroupId -> TriggerA UnProcessedSettlements [ContractId Instruction]
-    getAllInstructionCidsForGroupId targetGroupId =
-      map fst <$> queryFilter @Instruction ((==targetGroupId) . (.groupId))
+    encumberInstruction : (ContractId Instruction, Instruction) -> TriggerA UnProcessedSettlements ()
+    encumberInstruction (cid, Instruction{encumbered = False}) =
+      dedupExerciseD "Encumber" cid Encumber
+    encumberInstruction _ = pure ()
+    getAllEncumberedInstructionCidsForGroupId: GroupId -> TriggerA UnProcessedSettlements [ContractId Instruction]
+    getAllEncumberedInstructionCidsForGroupId targetGroupId =
+      map fst <$> queryFilter @Instruction \i -> i.groupId == targetGroupId && i.encumbered
     settleInstructionsForTransaction: Settlement -> TriggerA UnProcessedSettlements ()
     settleInstructionsForTransaction transaction = do
-      instructions <- getAllInstructionCidsForGroupId $ transaction.groupId
+      instructionsInGroup <- getAllEncumberedInstructionCidsForGroupId $ transaction.groupId
       let exerciseCall = case transaction.status of
-            Finalized evidence -> (`dedupExercise` Settle with evidence)
-            Rejected evidence -> (`dedupExercise` Cancel with evidence)
-      forA_ instructions exerciseCall
+            Finalized evidence -> (\cid -> dedupExerciseD "Settle" cid Settle with evidence)
+            Rejected evidence -> (\cid -> dedupExerciseD "Cancel" cid Cancel with evidence)
+      forA_ instructionsInGroup exerciseCall
 
-lockBalanceCommand: TransferProposal -> ContractId Balance -> Command
-lockBalanceCommand transferProposal@TransferProposal{step = SettlementStep{..}} balanceCid =
-  let lockBalance = Lock with amountToLock = delivery.amount;
-                                identifier = toIdentifier transferProposal in
-  exerciseCmd balanceCid lockBalance
-
-createIncomingBalance: TransferProposal -> TriggerA () Command
-createIncomingBalance transferProposal@TransferProposal{owner; step = SettlementStep{..}} = do
-  let iban = fromSome receiver
-      provider = owner
-      currency = delivery.label
-      amount = delivery.amount
-  balanceOwner <- getBalanceOwnerFromKey (BalanceKey with provider; iban)
-  pure $ createCmd IncomingBalance with
-    balance = Balance with owner = balanceOwner, ..
-    identifier = toIdentifier transferProposal
-
-getBalanceOwnerFromKey: BalanceKey -> TriggerA () BalanceOwner
-getBalanceOwnerFromKey balanceKey = do
-  queryContractKey @Balance balanceKey >>= \case
-    Some (_, Balance{..}) -> pure $ owner
-    None -> error $ "No Balance found for balanceKey: " <> (show balanceKey)
+dedupExerciseD msg = debug msg >> dedupExercise

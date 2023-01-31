@@ -40,7 +40,7 @@ template TransferProposal
           now <- getTime
           approvedProposal <- create ApprovedTransferProposal with approvalTime = now, ..
           maybeInstruction <- if settleOnLedger
-            then Some <$> create Instruction with provider = owner; ..
+            then Some <$> create Instruction with encumbered = False, provider = owner; ..
             else pure None
           pure (approvedProposal, maybeInstruction)
     choice RejectProposal : ContractId RejectedTransferProposal
