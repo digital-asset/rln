@@ -15,6 +15,7 @@ import com.rln.gui.backend.implementation.balanceManagement.BalanceEventListener
 import com.rln.gui.backend.implementation.balanceManagement.BalanceTestUtil;
 import com.rln.gui.backend.implementation.balanceManagement.data.BalanceType;
 import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
+import com.rln.gui.backend.test.util.Util;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.*;
 
 @TestProfile(GuiBackendTestProfile.class)
@@ -63,11 +65,11 @@ class BalancesApiImplTest extends LedgerBaseTest {
 
         // THEN
         for (var balance : balances) {
-            if (balance.getType().equals(BalanceType.LIQUID.name())) {
+            if (balance.getType().equals(BalanceType.PESSIMISTIC.name())) {
                 MatcherAssert.assertThat(balance.getBalance().doubleValue(), Matchers.is(liquidAmount));
             } else if (balance.getType().equals(BalanceType.ACTUAL.name())) {
                 MatcherAssert.assertThat(balance.getBalance().doubleValue(), Matchers.is(liquidAmount + 2 * lockedAmount));
-            } else if (balance.getType().equals(BalanceType.FUTURE.name())) {
+            } else if (balance.getType().equals(BalanceType.HOT.name())) {
                 MatcherAssert.assertThat(balance.getBalance().doubleValue(), Matchers.is((liquidAmount + 2 * incomingAmount)));
             }
         }
@@ -86,8 +88,13 @@ class BalancesApiImplTest extends LedgerBaseTest {
     @Test
     void GIVEN_only_liquid_balance_on_ledger_WHEN_get_request_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
         // GIVEN 1 balance, 2 locked balances, 2 incoming balances
-        double liquidAmount = 100.0;
-        var balanceId = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+        var liquidAmount = BigDecimal.valueOf(100);
+        var balanceId = BalanceTestUtil.populateBalance(liquidAmount.doubleValue(),
+                BalanceTestUtil.IBAN1,
+                BalanceTestUtil.ASSET_CODE1,
+                SANDBOX,
+                getCurrentBankPartyId(),
+                Balance.TEMPLATE_ID);
 
         // WHEN
         List<com.rln.gui.backend.model.Balance> balances = RestAssured
@@ -98,8 +105,10 @@ class BalancesApiImplTest extends LedgerBaseTest {
                 });
 
         // THEN
-        Assertions.assertEquals(1, balances.size());
-        MatcherAssert.assertThat(balances.get(0).getBalance().doubleValue(), Matchers.is(liquidAmount));
+        Assertions.assertEquals(3, balances.size());
+        Util.assertBigDecimalEquals(balances.get(0).getBalance(), liquidAmount);
+        Util.assertBigDecimalEquals(balances.get(1).getBalance(), liquidAmount);
+        Util.assertBigDecimalEquals(balances.get(2).getBalance(), liquidAmount);
 
         LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balanceId.getValue());
     }
@@ -114,8 +123,8 @@ class BalancesApiImplTest extends LedgerBaseTest {
 
     @Test
     void GIVEN_local_balance_on_ledger_WHEN_get_request_local_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {
-        double liquidAmount = 100.0;
-        var localBalance = BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX,
+        var liquidAmount = BigDecimal.valueOf(100);
+        var localBalance = BalanceTestUtil.populateBalance(liquidAmount.doubleValue(), BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX,
                 getCurrentBankPartyId(), Balance.TEMPLATE_ID);
 
         // WHEN
@@ -127,8 +136,10 @@ class BalancesApiImplTest extends LedgerBaseTest {
                 });
 
         // THEN
-        MatcherAssert.assertThat(balances, Matchers.hasSize(1));
-        MatcherAssert.assertThat(balances.get(0).getBalance().doubleValue(), Matchers.is(liquidAmount));
+        MatcherAssert.assertThat(balances, Matchers.hasSize(3));
+        Util.assertBigDecimalEquals(balances.get(0).getBalance(), liquidAmount);
+        Util.assertBigDecimalEquals(balances.get(1).getBalance(), liquidAmount);
+        Util.assertBigDecimalEquals(balances.get(2).getBalance(), liquidAmount);
 
         LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, localBalance.getValue());
     }
@@ -153,8 +164,8 @@ class BalancesApiImplTest extends LedgerBaseTest {
     void GIVEN_only_zero_liquid_balance_on_ledger_WHEN_get_request_delete_address_THEN_balance_deleted()
             throws InvalidProtocolBufferException, InterruptedException {
         // GIVEN 1 balance, 2 locked balances, 2 incoming balances
-        double liquidAmount = 0.0;
-        BalanceTestUtil.populateBalance(liquidAmount, BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
+        var liquidAmount = BigDecimal.ZERO;
+        BalanceTestUtil.populateBalance(liquidAmount.doubleValue(), BalanceTestUtil.IBAN1, BalanceTestUtil.ASSET_CODE1, SANDBOX, getCurrentBankPartyId(), Balance.TEMPLATE_ID);
 
         // WHEN
         RestAssured.delete(String.format("/api/ledger/addresses/%s", BalanceTestUtil.IBAN1))
@@ -221,14 +232,14 @@ class BalancesApiImplTest extends LedgerBaseTest {
     void GIVEN_wallet_on_ledger_WHEN_get_get_balances_endpoint_THEN_return_correct_balances()
             throws InvalidProtocolBufferException {
         // GIVEN 1 balance, 2 locked balances, 2 incoming balances
-        final double liquidAmount = 100.0;
-        final double lockedAmount = 200.0;
-        final double incomingAmount = 300.0;
+        final var liquidAmount = BigDecimal.valueOf(100);
+        final var lockedAmount = BigDecimal.valueOf(200);
+        final var incomingAmount = BigDecimal.valueOf(300);
 
         var contracts = new ArrayList<List<ContractId>>();
         for (String iban : List.of(BalanceTestUtil.IBAN1, BalanceTestUtil.IBAN2)) {
             var balanceId1 = BalanceTestUtil.populateBalance(
-                    liquidAmount,
+                    liquidAmount.doubleValue(),
                     iban,
                     BalanceTestUtil.ASSET_CODE1,
                     SANDBOX,
@@ -236,7 +247,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
                     Balance.TEMPLATE_ID
             );
             var lockedId1 = BalanceTestUtil.populateBalance(
-                    lockedAmount,
+                    lockedAmount.doubleValue(),
                     iban,
                     BalanceTestUtil.ASSET_CODE1,
                     SANDBOX,
@@ -244,7 +255,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
                     LockedBalance.TEMPLATE_ID
             );
             var incomingId1 = BalanceTestUtil.populateBalance(
-                    incomingAmount,
+                    incomingAmount.doubleValue(),
                     iban,
                     BalanceTestUtil.ASSET_CODE1,
                     SANDBOX,
@@ -264,22 +275,21 @@ class BalancesApiImplTest extends LedgerBaseTest {
 
 
         for (var balance : balances) {
-            if (balance.getType().equals(BalanceType.LIQUID.name())) {
-                MatcherAssert.assertThat(balance.getBalance().doubleValue(), Matchers.is(liquidAmount));
+            if (balance.getType().equals(BalanceType.PESSIMISTIC.name())) {
+                Util.assertBigDecimalEquals(liquidAmount, balance.getBalance());
             } else if (balance.getType().equals(BalanceType.ACTUAL.name())) {
-                MatcherAssert.assertThat(balance.getBalance().doubleValue(), Matchers.is(liquidAmount + lockedAmount));
-            } else if (balance.getType().equals(BalanceType.FUTURE.name())) {
-                MatcherAssert.assertThat(balance.getBalance().doubleValue(), Matchers.is((incomingAmount + liquidAmount)));
+                Util.assertBigDecimalEquals(liquidAmount.add(lockedAmount), balance.getBalance());
+            } else if (balance.getType().equals(BalanceType.HOT.name())) {
+                Util.assertBigDecimalEquals((liquidAmount.add(incomingAmount)), balance.getBalance());
             }
         }
 
-        for (List<ContractId> c: contracts) {
+        for (List<ContractId> c : contracts) {
             LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), Balance.TEMPLATE_ID, c.get(0).getValue());
             LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), LockedBalance.TEMPLATE_ID, c.get(1).getValue());
             LedgerBaseTest.cleanupContract(getCurrentBankPartyId(), IncomingBalance.TEMPLATE_ID, c.get(2).getValue());
         }
     }
-
 
     private Map<String, Object> createBalanceChangeRequest(String assetId, String assetName, double change) {
         Map<String, Object> transferProposalRequest = new HashMap<>();
