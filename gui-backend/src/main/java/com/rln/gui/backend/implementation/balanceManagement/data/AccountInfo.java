@@ -36,4 +36,8 @@ public class AccountInfo {
     public boolean isLiabilityOf(String party) {
         return party.equals(providerParty);
     }
+
+    public String getBearerToken() {
+        return "token-" + iban;
+    }
 }

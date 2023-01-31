@@ -24,7 +24,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public class AutoapproveApiImpl {
-  private static final String defaultBearerToken = "DummyToken";
   private final GuiBackendConfiguration guiBackendConfiguration;
   private final AutoApproveCache autoApproveCache;
   private final AccountCache accountCache;
@@ -97,7 +96,7 @@ public class AutoapproveApiImpl {
       result.add(WalletAddressDTO.builder()
           .address(account.getIban())
           .partyId(setlPartyId)
-          .bearerToken(defaultBearerToken) // no one actually checks this
+          .bearerToken(account.getBearerToken())
           .walletId(GuiBackendApiImplementation.ONLY_SUPPORTED_WALLET_ID)
           .build());
     }
