@@ -17,6 +17,7 @@ import com.rln.damlCodegen.model.balance.BalanceOwner;
 import com.rln.damlCodegen.model.balance.IncomingBalance;
 import com.rln.damlCodegen.model.balance.LockedBalance;
 
+import com.rln.gui.backend.implementation.methods.LedgerBaseTest;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -81,7 +82,8 @@ public class BalanceTestUtil {
     }
 
     public static DamlRecord createBalance(String iban, String provider, Optional<String> owner, String currency, Double amount, Identifier templateId) {
-        Balance balance = new Balance(iban, provider, new BalanceOwner(owner.orElse(UNKNOWN_OWNER), owner), currency, BigDecimal.valueOf(amount));
+        Balance balance = new Balance(iban, provider, new BalanceOwner(owner.orElse(
+            LedgerBaseTest.CLIENT_NAME), owner), currency, BigDecimal.valueOf(amount));
         String context = generateRandomString(8);
         logger.info("===================== context {}", context);
 

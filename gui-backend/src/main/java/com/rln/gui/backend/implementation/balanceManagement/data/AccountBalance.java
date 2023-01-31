@@ -2,7 +2,6 @@ package com.rln.gui.backend.implementation.balanceManagement.data;
 
 import lombok.Getter;
 
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -35,11 +34,11 @@ public class AccountBalance {
     }
 
     public String getProvider() {
-        return accountInfo.getProvider();
+        return accountInfo.getProviderParty();
     }
 
     public String getOwner() {
-        return accountInfo.getOwner();
+        return accountInfo.getOwnerParty();
     }
 
     public void addLiquid(BigDecimal change) {

@@ -13,15 +13,16 @@ import com.rln.gui.backend.implementation.balanceManagement.cache.LiquidBalanceC
 import com.rln.gui.backend.implementation.balanceManagement.cache.LockedBalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.data.AccountBalance;
 import com.rln.gui.backend.implementation.balanceManagement.data.AccountInfo;
+import com.rln.gui.backend.implementation.balanceManagement.data.BalanceType;
 import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFoundException;
 import com.rln.gui.backend.implementation.balanceManagement.exception.NonZeroBalanceException;
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
-import com.rln.gui.backend.model.Balance;
 import com.rln.gui.backend.model.BalanceChange;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -83,7 +84,7 @@ public class BalancesApiImpl {
     }
 
     private Predicate<AccountInfo> isLocal() {
-        return info -> info.getProvider().equals(guiBackendConfiguration.partyDamlId());
+        return info -> info.getProviderParty().equals(guiBackendConfiguration.partyDamlId());
     }
 
     public void delete(String provider, String address) throws NonZeroBalanceException {

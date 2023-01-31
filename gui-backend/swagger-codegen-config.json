@@ -4,7 +4,7 @@
     "invokerPackage": "com.rln.gui.backend",
     "generatePom": false,
     "interfaceOnly": true,
-    "additionalModelTypeAnnotations": ";@lombok.Builder;@lombok.AllArgsConstructor",
+    "additionalModelTypeAnnotations": ";@lombok.Builder;@lombok.AllArgsConstructor;@lombok.NoArgsConstructor",
     "hideGenerationTimestamp": true,
     "useSwaggerAnnotations": false,
     "openApiSpecFileLocation": "",
