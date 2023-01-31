@@ -36,21 +36,18 @@ balanceManagementTriggerTest = do
 
   -- case 1 received SettlementFinalized, instructions of current group Settled
   evidence <- assembler `submit` createCmd SettlementFinalized with assembler, groupId = "groupId", approvers = [bank11]
-  verifyInstructions bank11 2 $ Finalized groupId evidence
+  verifyInstructions bank11 2 $ Settlement groupId $ Finalized evidence
 
   -- case 2 receive SettlementRejected, instructions of current group Canceled
   evidence <- assembler `submit` createCmd SettlementRejected with assembler, groupId = "groupId", approvers = [bank11]
-  verifyInstructions bank11 2 $ Rejected groupId evidence
+  verifyInstructions bank11 2 $ Settlement groupId $ Rejected evidence
 
 verifyInstructions: Party -> Int -> Settlement -> Script ()
 verifyInstructions triggerSender expectedNumberOfInstruction settlement = do
   instructions <- query @Instruction triggerSender
   let
     acs = mconcat $ map  (toACS . fst) instructions
-    (currentGroupId, isSettled) = case settlement of
-      Finalized gid _ -> (gid, True)
-      Rejected gid _ -> (gid, False)
-    expectedInstructionCids: [ContractId Instruction] = map fst $ filter ((== currentGroupId) . (.groupId) . snd) instructions
+    expectedInstructionCids: [ContractId Instruction] = map fst $ filter ((== settlement.groupId) . (.groupId) . snd) instructions
 
   (unProcessedTransactions, commands') <- testRule balanceManagementTrigger triggerSender [] acs M.empty [settlement]
 
@@ -59,7 +56,7 @@ verifyInstructions triggerSender expectedNumberOfInstruction settlement = do
 
   assertMsg "All Transactions should be processed" $ null unProcessedTransactions
   assertMsg "Number of commands does not match with expected number of instructions" $ (length commands == expectedNumberOfInstruction)
-  if isSettled then assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
+  if isFinalized settlement.status then assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
     assertMsg "Instruction contractId used in Settle exercise is incorrect" $ cid `elem` expectedInstructionCids
     case exercisedChoice of
       Settle _ -> Right ()
@@ -67,3 +64,7 @@ verifyInstructions triggerSender expectedNumberOfInstruction settlement = do
     assertMsg "Instruction contractId used in Cancel exercise is incorrect" $ cid `elem` expectedInstructionCids
     case exercisedChoice of
       Cancel _ -> Right ()
+
+isFinalized : SettlementStatus -> Bool
+isFinalized (Finalized _) = True
+isFinalized _ = False

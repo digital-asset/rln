@@ -10,7 +10,7 @@ module Trigger.AutoApprove where
 import DA.Action (void, when)
 import DA.Foldable (forA_)
 import DA.List (head)
-import DA.Optional (fromSome, optionalToList)
+import DA.Optional (optionalToList)
 import Daml.Trigger
 import Model.Blacklist
 import Model.Balance
@@ -58,41 +58,18 @@ autoApprove sender = do
         handleProposalForReceiver transferProposal cid
 
 -- Helper functions
-lockBalanceCommand: TransferProposal -> ContractId Balance -> Command
-lockBalanceCommand transferProposal@TransferProposal{step = SettlementStep{..}} balanceCid =
-  let lockBalance = Lock with amountToLock = delivery.amount;
-                                identifier = toIdentifier transferProposal in
-  exerciseCmd balanceCid lockBalance
-
-getBalanceOwnerFromKey: BalanceKey -> TriggerA () BalanceOwner
-getBalanceOwnerFromKey balanceKey = do
-  queryContractKey @Balance balanceKey >>= \case
-    Some (_, Balance{..}) -> pure $ owner
-    None -> error $ "No Balance found for balanceKey: " <> (show balanceKey)
-
-createIncomingBalance: TransferProposal -> TriggerA () Command
-createIncomingBalance transferProposal@TransferProposal{owner; step = SettlementStep{..}} = do
-  let iban = fromSome receiver
-      provider = owner
-      currency = delivery.label
-      amount = delivery.amount
-  balanceOwner <- getBalanceOwnerFromKey (BalanceKey with provider; iban)
-  pure $ createCmd IncomingBalance with
-    balance = Balance with owner = balanceOwner, ..
-    identifier = toIdentifier transferProposal
-
 rejectProposal: Text -> ContractId TransferProposal -> TriggerA () ()
 rejectProposal reason proposalCid =
   let rejection = RejectProposal with reason = Some reason in
   void $ emitCommands [exerciseCmd proposalCid rejection] [toAnyContractId proposalCid]
 
-approveProposal: Text -> ContractId TransferProposal -> Optional (ContractId Balance) -> Command -> TriggerA () ()
-approveProposal reason proposalCid balanceCidOpt balanceCmd =
+approveProposal: Text -> ContractId TransferProposal -> Optional (ContractId Balance) -> TriggerA () ()
+approveProposal reason proposalCid balanceCidOpt =
   let approval = ApproveProposal with
                       reason = Some reason;
                        settleOnLedger = True
       pendingCids = map toAnyContractId (optionalToList balanceCidOpt) <> [toAnyContractId proposalCid] in
-  void $ emitCommands [exerciseCmd proposalCid approval, balanceCmd] pendingCids
+  void $ emitCommands [exerciseCmd proposalCid approval] pendingCids
 
 involveBlackListParty : TransferProposal -> Blacklist -> Bool
 involveBlackListParty TransferProposal{step, approvers} Blacklist{banks, accounts} =
@@ -147,14 +124,12 @@ handleProposalForSender transferProposal sender blacklist cid = do
             "Approved Proposal as sender has enough balance and no banks/accounts are blacklisted"
             cid
             (Some balanceCid)
-            (lockBalanceCommand transferProposal balanceCid)
     _ ->
       rejectProposal "Rejected due to not enough balance"  cid
 
 handleProposalForReceiver : TransferProposal -> ContractId TransferProposal -> TriggerA () ()
-handleProposalForReceiver transferProposal cid = do
-  createIncomingBalanceCmd <- createIncomingBalance transferProposal
-  approveProposal "Approved Proposal for receiver" cid None createIncomingBalanceCmd
+handleProposalForReceiver transferProposal cid =
+  approveProposal "Approved Proposal for receiver" cid None
 
 matchesMarker : Decimal -> AutoApproveTransferProposalMarker -> Bool
 matchesMarker _ AutoApproveTransferProposalMarker { autoApproveType = FullAuto } = True
