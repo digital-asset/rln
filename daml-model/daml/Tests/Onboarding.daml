@@ -62,16 +62,10 @@ onboarding : [PartyInfo] -> Script Output
 onboarding partyInfo = do
   scheduler <- allocatePartyOn "Scheduler" (ParticipantName "schedulerParticipant")
   assembler <- allocatePartyOn "Assembler" (ParticipantName "assemblerParticipant")
-  fed <- setupFed
-  parties <- TextMap.insert "FED" fed <$> setupParties partyInfo
+  parties <- setupParties partyInfo
   mapA_ (setupBic  scheduler assembler parties) partyInfo
   entries <- mapA (setupBalances parties) partyInfo
   pure $ Output { guiBackendConfig = entries, parties = map damlPartyId entries }
-
-setupFed : Script (Party)
-setupFed = do
-  debug $ "Creating party: FED"
-  allocateParty "FED"
 
 setupParties : [PartyInfo] -> Script (TextMap Party)
 setupParties partyInfo = do
@@ -109,9 +103,9 @@ setupBalances parties partyInfo = do
       let provider = fromSomeNote
               ("No party found for provider: " <> account.provider)
               (TextMap.lookup account.provider parties)
-      debug $ 
-          "Creating Account with IBAN " <> account.iban 
-        <> " for " <> partyInfo.name 
+      debug $
+          "Creating Account with IBAN " <> account.iban
+        <> " for " <> partyInfo.name
         <> " with provider " <> account.provider
       void $ provider `submit` createCmd Balance
         with
@@ -122,9 +116,9 @@ setupBalances parties partyInfo = do
           amount = 0.0
 
   forA_ partyInfo.clients \client -> do
-    debug $ 
-         "Creating Client Account with IBAN " <> client.iban 
-      <> " for " <> client.name 
+    debug $
+         "Creating Client Account with IBAN " <> client.iban
+      <> " for " <> client.name
       <> " with provider " <> partyToText party
     void $ party `submit` createCmd Balance
       with
