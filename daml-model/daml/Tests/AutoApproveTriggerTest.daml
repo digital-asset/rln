@@ -140,7 +140,7 @@ getAutoApproveTriggerResult triggerParty autoApproveMarker transferProposalCid b
 
 verifyProposalApproved: ContractId TransferProposal -> [Command] -> Script ()
 verifyProposalApproved transferProposalCid commands = do
-  assertMsg "only one approve exercise command should be created" $ length commands == 2 -- approve proposal command + create inconming or lock balance command
+  assertMsg "only one approve exercise command should be created" $ length commands == 1 -- just approve proposal command
   assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
     assertMsg "TransferProposal contractId used in approve exercise is incorrect" $ cid == transferProposalCid
     case exercisedChoice of
