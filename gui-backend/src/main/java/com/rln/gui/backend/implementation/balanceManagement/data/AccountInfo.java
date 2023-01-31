@@ -12,16 +12,19 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class AccountInfo {
-    private String provider;
-    private String owner;
-    private String iban;
-    private String assetCode;
+
+  private final String ownerName;
+  private String providerParty;
+  private String ownerParty;
+  private String iban;
+  private String assetCode;
 
   public AccountInfo(Balance balance) {
-    provider = balance.provider;
+    providerParty = balance.provider;
     iban = balance.iban;
     assetCode = balance.currency;
     Objects.requireNonNull(balance.owner);
-    owner = balance.owner.party.orElse(balance.owner.name);
+    ownerParty = balance.owner.party.orElse(null);
+    ownerName = balance.owner.name;
   }
 }

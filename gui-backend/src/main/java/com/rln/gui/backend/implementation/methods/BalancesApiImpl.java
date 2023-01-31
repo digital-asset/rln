@@ -79,8 +79,8 @@ public class BalancesApiImpl {
                             .assetId(ASSET_ID) // default to 0 now, as we don't have assetId in the system yet
                             .assetName(assetName)
                             .assetOrLiability(getAssetOrLiabilityEnum(info))
-                            .party(info.getProvider())
-                            .client(info.getOwner());
+                            .party(info.getProviderParty())
+                            .client(info.getOwnerParty());
                 })
                 .orElseThrow(() -> new IbanNotFoundException(address));
 
@@ -114,7 +114,7 @@ public class BalancesApiImpl {
     }
 
     private Predicate<AccountInfo> isLocal() {
-        return info -> info.getProvider().equals(guiBackendConfiguration.partyDamlId());
+        return info -> info.getProviderParty().equals(guiBackendConfiguration.partyDamlId());
     }
 
     public void delete(String provider, String address) throws NonZeroBalanceException {
@@ -154,7 +154,7 @@ public class BalancesApiImpl {
     }
 
     private Balance.AssetOrLiabilityEnum getAssetOrLiabilityEnum(AccountInfo accountInfo) {
-        if (accountInfo.getProvider().equals(guiBackendConfiguration.partyDamlId())) {
+        if (accountInfo.getProviderParty().equals(guiBackendConfiguration.partyDamlId())) {
             return Balance.AssetOrLiabilityEnum.LIABILITY;
         } else {
             return Balance.AssetOrLiabilityEnum.ASSET;

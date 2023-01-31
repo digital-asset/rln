@@ -17,6 +17,8 @@ import com.rln.gui.backend.implementation.GuiBackendApiImplementation;
 import com.rln.gui.backend.implementation.balanceManagement.AccountEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.AutoApproveEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.BalanceTestUtil;
+import com.rln.gui.backend.implementation.config.SetlClient;
+import com.rln.gui.backend.implementation.config.SetlParty;
 import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.ApprovalProperties.ApprovalModeEnum;
@@ -31,6 +33,9 @@ import io.restassured.http.ContentType;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -39,6 +44,21 @@ import org.mockito.BDDMockito;
 @TestProfile(GuiBackendTestProfile.class)
 @QuarkusTest
 class AutoapproveApiImplTest extends LedgerBaseTest {
+  private final static SetlClient CLIENT =
+      SetlClient.builder()
+        .clientId(CLIENT_ID)
+        .bearerToken(BEARER_TOKEN)
+        .iban(SENDER_IBAN)
+        .name(CLIENT_NAME)
+        .build();
+  private final static Function<Party, SetlParty> PROVIDER = providerDamlParty ->
+      SetlParty.builder()
+        .baseUrl(BASEURL)
+        .damlPartyId(providerDamlParty.getValue())
+        .id(PARTY_ID)
+        .name(PARTY_NAME)
+        .clients(List.of(CLIENT))
+        .build();
 
   @InjectMock
   SetlPartySupplier setlPartySupplier;
@@ -105,22 +125,19 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetAddressSettingsListWhenLimit() throws InvalidProtocolBufferException {
-    BDDMockito.given(setlPartySupplier.getSetlPartyId(getCurrentBankPartyId().getValue()))
-        .willReturn(null);
-    BDDMockito.given(setlPartySupplier.getSetlPartyId(BalanceTestUtil.UNKNOWN_OWNER))
-        .willReturn(null);
+    BDDMockito.given(setlPartySupplier.getSetlParty(getCurrentBankPartyId().getValue()))
+        .willReturn(PROVIDER.apply(getCurrentBankPartyId()));
     var liquidAmount = 500;
     var balance = BalanceTestUtil
         .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX,
             getCurrentBankPartyId(), Balance.TEMPLATE_ID);
     var balanceLimit = publishLimitMarker(getCurrentBankPartyId(), SENDER_IBAN, TRANSACTION_AMOUNT);
 
-    List<LedgerAddressDTO> result = RestAssured.given()
-        .when().get("/api/ledger/addresses")
+    List<LedgerAddressDTO> result = RestAssured
+        .get("/api/ledger/addresses")
         .then()
         .statusCode(200)
-        .extract().body().as(new TypeRef<>() {
-        });
+        .extract().body().as(new TypeRef<>() {});
 
     Assertions.assertEquals(1, result.size());
 
@@ -130,9 +147,9 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     Assertions.assertEquals("LIMIT", ledgerAddressInfo.getApprovalMode());
     Assertions.assertEquals(TRANSACTION_AMOUNT.doubleValue(), ledgerAddressInfo.getApprovalLimit());
     Assertions.assertTrue(ledgerAddressInfo.getIsIBAN());
-    Assertions.assertEquals(null, ledgerAddressInfo.getId());
-    Assertions.assertEquals(null, ledgerAddressInfo.getClientId());
-    Assertions.assertEquals("DummyToken", ledgerAddressInfo.getBearerToken());
+    Assertions.assertEquals(PARTY_ID, ledgerAddressInfo.getId());
+    Assertions.assertEquals(CLIENT_ID, ledgerAddressInfo.getClientId());
+    Assertions.assertEquals(BEARER_TOKEN, ledgerAddressInfo.getBearerToken());
 
     cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
     cleanupMarker(getCurrentBankPartyId(), AutoApproveTransferProposalMarker.TEMPLATE_ID,
@@ -141,10 +158,8 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetAddressSettingsListWhenManual() throws InvalidProtocolBufferException {
-    BDDMockito.given(setlPartySupplier.getSetlPartyId(getCurrentBankPartyId().getValue()))
-        .willReturn(PARTY_ID);
-    BDDMockito.given(setlPartySupplier.getSetlPartyId(BalanceTestUtil.UNKNOWN_OWNER))
-        .willReturn(null);
+    BDDMockito.given(setlPartySupplier.getSetlParty(getCurrentBankPartyId().getValue()))
+        .willReturn(PROVIDER.apply(getCurrentBankPartyId()));
     var liquidAmount = 500;
     var balance = BalanceTestUtil
         .populateBalance(liquidAmount, SENDER_IBAN, BalanceTestUtil.ASSET_CODE1, SANDBOX,
@@ -163,8 +178,8 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
     Assertions.assertEquals(null, ledgerAddressInfo.getApprovalLimit());
     Assertions.assertTrue(ledgerAddressInfo.getIsIBAN());
     Assertions.assertEquals(PARTY_ID, ledgerAddressInfo.getId());
-    Assertions.assertEquals(null, ledgerAddressInfo.getClientId());
-    Assertions.assertEquals("DummyToken", ledgerAddressInfo.getBearerToken());
+    Assertions.assertEquals(CLIENT_ID, ledgerAddressInfo.getClientId());
+    Assertions.assertEquals(BEARER_TOKEN, ledgerAddressInfo.getBearerToken());
 
     cleanupMarker(getCurrentBankPartyId(), Balance.TEMPLATE_ID, balance);
   }

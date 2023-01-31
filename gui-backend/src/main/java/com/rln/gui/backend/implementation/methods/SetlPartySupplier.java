@@ -14,12 +14,12 @@ public class SetlPartySupplier {
 
   private final Path setlPartiesConfig;
   private final List<SetlParty> parties;
-  private final Map<String, SetlParty> damlPartyToSetlId;
+  private final Map<String, SetlParty> damlPartyToSetlParty;
 
   public SetlPartySupplier(Path setlPartiesConfig) {
     this.setlPartiesConfig = setlPartiesConfig;
     this.parties = readSetlPartiesFromConfig();
-    this.damlPartyToSetlId = getParties().stream()
+    this.damlPartyToSetlParty = getParties().stream()
         .collect(Collectors.toMap(SetlParty::getDamlPartyId, i -> i));
   }
 
@@ -28,11 +28,11 @@ public class SetlPartySupplier {
   }
 
   public SetlParty getSetlParty(String damlPartyId) {
-    return damlPartyToSetlId.get(damlPartyId);
+    return damlPartyToSetlParty.get(damlPartyId);
   }
 
   public Long getSetlPartyId(String damlPartyId) {
-    return Optional.ofNullable(damlPartyToSetlId.get(damlPartyId))
+    return Optional.ofNullable(damlPartyToSetlParty.get(damlPartyId))
         .map(SetlParty::getId)
         .orElse(null);
   }

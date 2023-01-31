@@ -91,9 +91,10 @@ public class LedgerBaseTest {
           false);
   protected static final String BASEURL = "baseurl";
   protected static final String PARTY_NAME = "PartyName";
-  protected static final long PARTY_ID = 1L;
-  protected static final String CLIENT_NAME = "Client";
+  protected static final long PARTY_ID = 3L;
+  public static final String CLIENT_NAME = "Client";
   protected static final long CLIENT_ID = 1L;
+  protected static final String BEARER_TOKEN = "Token01";
   private static Party currentBankPartyId;
   private static Party schedulerPartyId;
   private static Party assemblerPartyId;

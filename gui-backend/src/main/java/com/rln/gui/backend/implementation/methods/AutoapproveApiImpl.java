@@ -69,14 +69,15 @@ public class AutoapproveApiImpl {
 
     for (var account : accounts) {
       var autoApproval = autoApproveCache.getMarker(account.getIban());
-      var providerId = setlPartySupplier.getSetlPartyId(account.getProvider());
-      var clientId = setlPartySupplier.getSetlPartyId(account.getOwner());
+      var provider = setlPartySupplier.getSetlParty(account.getProviderParty());
+      var client = provider.getSetlClient(account.getOwnerName());
+
       result.add(LedgerAddressDTO.builder()
           .isIBAN(true)
           .address(account.getIban())
-          .id(providerId)
-          .bearerToken(defaultBearerToken) // no one actually checks this
-          .clientId(clientId)        // we have to differentiate if the owner is a Daml party or not
+          .id(provider.getId())
+          .bearerToken(client.getBearerToken()) // no one actually checks this
+          .clientId(client.getClientId())
           .approvalMode(convertApproveType(autoApproval))
           .approvalLimit(getLimit(autoApproval))
           .build());
@@ -92,10 +93,10 @@ public class AutoapproveApiImpl {
 
     result.addAll(remoteOwnedAddresses);
     for (var account : accounts) {
-      var partySetlId = setlPartySupplier.getSetlPartyId(account.getProvider());
+      var setlPartyId = setlPartySupplier.getSetlPartyId(account.getProviderParty());
       result.add(WalletAddressDTO.builder()
           .address(account.getIban())
-          .partyId(partySetlId)
+          .partyId(setlPartyId)
           .bearerToken(defaultBearerToken) // no one actually checks this
           .walletId(GuiBackendApiImplementation.ONLY_SUPPORTED_WALLET_ID)
           .build());
