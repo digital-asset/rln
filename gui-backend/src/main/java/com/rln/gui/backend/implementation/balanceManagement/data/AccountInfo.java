@@ -30,16 +30,10 @@ public class AccountInfo {
     }
 
     /**
-     * P   O  = A
-     * !P  O = A
-     * P  !O = L
-     * !P !O = L
-     * with P = provider, O = Owner, A = Asset, L = Liability
-     *
-     * @param party party
-     * @return true if asset belongs to party
+     * Determines if this account is considered a liability of given {@code party}. That is when
+     * {@link AccountInfo#providerParty} is the given {@code party}.
      */
-    public boolean isAssetOf(String party) {
-        return party.equals(ownerParty);
+    public boolean isLiabilityOf(String party) {
+        return party.equals(providerParty);
     }
 }

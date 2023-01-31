@@ -266,9 +266,9 @@ public class GuiBackendApiImplementation implements DefaultApi {
     }
 
     private Balance.AssetOrLiabilityEnum getAssetOrLiabilityEnum(AccountInfo accountInfo) {
-        return accountInfo.isAssetOf(configuration.partyDamlId())
-                ? Balance.AssetOrLiabilityEnum.ASSET
-                : Balance.AssetOrLiabilityEnum.LIABILITY;
+        return accountInfo.isLiabilityOf(configuration.partyDamlId())
+          ? Balance.AssetOrLiabilityEnum.LIABILITY
+          : Balance.AssetOrLiabilityEnum.ASSET;
     }
 
     private static WebApplicationException notImplemented() {
