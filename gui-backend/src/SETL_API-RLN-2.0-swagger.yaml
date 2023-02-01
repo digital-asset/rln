@@ -780,8 +780,7 @@ components:
       type: object
       properties:
         id:
-          type: integer
-          format: int64
+          type: string
         status:
           type: string
           enum:
