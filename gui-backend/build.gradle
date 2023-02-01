@@ -59,6 +59,8 @@ dependencies {
     testRuntimeOnly "org.slf4j:slf4j-simple:2.0.0"
 
     swaggerCodegen "org.openapitools:openapi-generator-cli:6.0.1"
+
+    implementation 'com.prowidesoftware:pw-iso20022:SRU2021-9.2.8'
 }
 
 swaggerSources {
