@@ -120,6 +120,11 @@ public class TransactionsApiImpl {
     }
 
   public void create(MessageGroup messageGroup) {
-    throw new UnsupportedOperationException();
+    var initiateTransfer = createInitiateTransfer(messageGroup);
+    rlnClient.createInitiateTransferContract(initiateTransfer);
+  }
+
+  private InitiateTransfer createInitiateTransfer(MessageGroup messageGroup) {
+     throw new UnsupportedOperationException();
   }
 }
