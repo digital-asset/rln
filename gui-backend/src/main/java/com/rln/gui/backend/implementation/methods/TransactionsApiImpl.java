@@ -16,6 +16,7 @@ import com.rln.gui.backend.implementation.converter.TransferProposalToApiTypeCon
 import com.rln.gui.backend.model.Approval;
 import com.rln.gui.backend.model.ApprovalProperties;
 import com.rln.gui.backend.model.Finalised;
+import com.rln.gui.backend.model.MessageGroup;
 import com.rln.gui.backend.model.Transaction;
 import com.rln.gui.backend.model.TransactionStatusUpdate;
 import com.rln.gui.backend.model.TransactionStatusUpdate.StatusEnum;
@@ -117,4 +118,8 @@ public class TransactionsApiImpl {
         var scheduler = schedulerRandomShardPartyPicker.pickRandomShardParty();
         return new InitiateTransfer(groupId, initiator, scheduler, payload);
     }
+
+  public void create(MessageGroup messageGroup) {
+    throw new UnsupportedOperationException();
+  }
 }

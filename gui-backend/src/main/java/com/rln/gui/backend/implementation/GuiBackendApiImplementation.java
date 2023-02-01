@@ -112,7 +112,11 @@ public class GuiBackendApiImplementation implements DefaultApi {
 
     @Override
     public void create(MessageGroup messageGroup) {
-        throw notImplemented();
+        try {
+            transactionsApi.create(messageGroup);
+        } catch (UnsupportedOperationException e) {
+            throw notImplemented();
+        }
     }
 
     // * what is a ledger address?
