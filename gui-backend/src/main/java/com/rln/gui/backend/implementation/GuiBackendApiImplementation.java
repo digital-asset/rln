@@ -92,6 +92,11 @@ public class GuiBackendApiImplementation implements DefaultApi {
         return accountBalanceToBalances(balancesApi.changeBalance(configuration.partyDamlId(), address, balanceChange));
     }
 
+    @Override
+    public void create(MessageGroup messageGroup) {
+        throw notImplemented();
+    }
+
     // * what is a ledger address?
     // Delete the specified ledger address. The address's balance must be zero.
     @Override
@@ -197,7 +202,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
     // * what is the body?
     // Delete a ledger client
     @Override
-    public void delete1(Long clientId, @Valid Long body) {
+    public void delete1(Long clientId) {
         throw notImplemented();
     }
 

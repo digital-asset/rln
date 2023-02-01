@@ -78,7 +78,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
         .accept(ContentType.JSON)
         .contentType(ContentType.JSON)
         .body(TransactionsTestUtils.createApprovalRequest(transferProposalCid))
-        .when().post("/api/approval")
+        .when().post("/api/approval/status")
         .then()
         .statusCode(200);
 
