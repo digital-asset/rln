@@ -14,21 +14,28 @@ import com.rln.gui.backend.implementation.balanceManagement.AccountEventListener
 import com.rln.gui.backend.implementation.balanceManagement.BalanceEventListener;
 import com.rln.gui.backend.implementation.balanceManagement.BalanceTestUtil;
 import com.rln.gui.backend.implementation.balanceManagement.data.BalanceType;
+import com.rln.gui.backend.implementation.config.SetlParty;
 import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import com.rln.gui.backend.test.util.Util;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.*;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @TestProfile(GuiBackendTestProfile.class)
 @QuarkusTest
@@ -39,6 +46,14 @@ class BalancesApiImplTest extends LedgerBaseTest {
 
     @Inject
     BalanceEventListener balanceEventListener;
+
+    @InjectMock
+    SetlPartySupplier setlPartySupplier;
+
+    @BeforeEach
+    public void beforeEach() {
+        when(setlPartySupplier.getSetlParty(anyString())).thenReturn(SetlParty.builder().name("Name").build());
+    }
 
     @Test
     void GIVEN_balances_on_ledger_WHEN_get_request_balance_endpoint_THEN_return_correct_balances() throws InvalidProtocolBufferException {

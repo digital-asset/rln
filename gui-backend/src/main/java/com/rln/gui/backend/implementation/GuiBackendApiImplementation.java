@@ -78,8 +78,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
     @Override
     public List<Balance> getAddressBalance(String address) {
         try {
-            var accountBalance = balancesApi.getAddressBalance(address);
-            return accountBalanceToBalances(accountBalance);
+            return accountBalanceToBalances(balancesApi.getAddressBalance(address));
         } catch (IbanNotFoundException e) {
             throw notFound();
         }
@@ -254,8 +253,8 @@ public class GuiBackendApiImplementation implements DefaultApi {
                 .assetId(AccountBalance.ASSET_ID) // default to 0 now, as we don't have assetId in the system yet
                 .assetName(accountBalance.getAssetName())
                 .assetOrLiability(getAssetOrLiabilityEnum(accountBalance.getAccountInfo()))
-                .party(accountBalance.getProvider())
-                .client(accountBalance.getOwner());
+                .party(accountBalance.getProviderName())
+                .client(accountBalance.getOwnerName());
 
         var pessimistic = balance.type(BalanceType.PESSIMISTIC.name())
                 .balance(accountBalance.getLiquid())

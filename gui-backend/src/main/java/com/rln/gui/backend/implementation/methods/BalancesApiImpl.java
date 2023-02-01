@@ -13,7 +13,6 @@ import com.rln.gui.backend.implementation.balanceManagement.cache.LiquidBalanceC
 import com.rln.gui.backend.implementation.balanceManagement.cache.LockedBalanceCache;
 import com.rln.gui.backend.implementation.balanceManagement.data.AccountBalance;
 import com.rln.gui.backend.implementation.balanceManagement.data.AccountInfo;
-import com.rln.gui.backend.implementation.balanceManagement.data.BalanceType;
 import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFoundException;
 import com.rln.gui.backend.implementation.balanceManagement.exception.NonZeroBalanceException;
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
@@ -22,7 +21,6 @@ import com.rln.gui.backend.model.BalanceChange;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -37,6 +35,7 @@ public class BalancesApiImpl {
     private final LockedBalanceCache lockedBalanceCache;
     private final AccountCache accountCache;
     private final RLNClient rlnClient;
+    private final SetlPartySupplier setlPartySupplier;
 
     public BalancesApiImpl(
             GuiBackendConfiguration guiBackendConfiguration,
@@ -44,13 +43,15 @@ public class BalancesApiImpl {
             IncomingBalanceCache incomingBalanceCache,
             LockedBalanceCache lockedBalanceCache,
             AccountCache accountCache,
-            RLNClient rlnClient) {
+            RLNClient rlnClient,
+            SetlPartySupplier setlPartySupplier) {
         this.guiBackendConfiguration = guiBackendConfiguration;
         this.liquidBalanceCache = liquidBalanceCache;
         this.incomingBalanceCache = incomingBalanceCache;
         this.lockedBalanceCache = lockedBalanceCache;
         this.accountCache = accountCache;
         this.rlnClient = rlnClient;
+        this.setlPartySupplier = setlPartySupplier;
     }
 
     /**
@@ -71,8 +72,15 @@ public class BalancesApiImpl {
                 .map(AccountInfo::getAssetCode)
                 .orElseThrow(() -> new IbanNotFoundException(address));
 
-        var info = accountCache.getAccountInfo(address).orElseThrow(() -> new IbanNotFoundException(address));
-        return new AccountBalance(info, assetName, address, liquidBalanceAmount, incomingBalanceAmount, lockedBalanceAmount);
+        var accountInfo = accountCache.getAccountInfo(address).orElseThrow(() -> new IbanNotFoundException(address));
+        var providerName = setlPartySupplier.getSetlParty(accountInfo.getProviderParty()).getName();
+        return new AccountBalance(accountInfo,
+                providerName,
+                assetName,
+                address,
+                liquidBalanceAmount,
+                incomingBalanceAmount,
+                lockedBalanceAmount);
     }
 
     public AccountBalance getLocalBalance(String address) throws IbanNotFoundException {
@@ -115,7 +123,6 @@ public class BalancesApiImpl {
                 .map(this::getAddressBalance)
                 .collect(Collectors.toList());
     }
-
 
 
 }

@@ -14,9 +14,11 @@ public class AccountBalance {
     private BigDecimal liquid;
     private final BigDecimal incoming;
     private final BigDecimal locked;
+    private final String providerName;
 
     public AccountBalance(
             AccountInfo accountInfo,
+            String providerName,
             String assetName,
             String address,
             BigDecimal liquid,
@@ -26,6 +28,7 @@ public class AccountBalance {
         Objects.requireNonNull(incoming);
         Objects.requireNonNull(locked);
         this.accountInfo = accountInfo;
+        this.providerName = providerName;
         this.assetName = assetName;
         this.address = address;
         this.liquid = liquid;
@@ -33,12 +36,8 @@ public class AccountBalance {
         this.locked = locked;
     }
 
-    public String getProvider() {
-        return accountInfo.getProviderParty();
-    }
-
-    public String getOwner() {
-        return accountInfo.getOwnerParty();
+    public String getOwnerName() {
+        return accountInfo.getOwnerName();
     }
 
     public void addLiquid(BigDecimal change) {
