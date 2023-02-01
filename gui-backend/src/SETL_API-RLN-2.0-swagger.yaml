@@ -750,9 +750,8 @@ components:
           type: string
           description: The ID of the enclosing transaction group.
         id:
-          type: integer
-          description: The internal numerical ID of this transaction
-          format: int64
+          type: string
+          description: The internal ID of this transaction
         messageId:
           type: string
           description: The ID of the message that enclosed this transaction.
