@@ -19,9 +19,6 @@ import com.rln.damlCodegen.workflow.data.IBANs;
 import com.rln.damlCodegen.workflow.data.Instrument;
 import com.rln.damlCodegen.workflow.data.Leg;
 import com.rln.damlCodegen.workflow.data.SettlementStep;
-import com.rln.damlCodegen.workflow.data.ibans.ReceiverOnly;
-import com.rln.damlCodegen.workflow.data.ibans.SenderAndReceiver;
-import com.rln.damlCodegen.workflow.data.ibans.SenderOnly;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
