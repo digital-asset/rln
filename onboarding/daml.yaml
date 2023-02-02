@@ -1,0 +1,10 @@
+sdk-version: 2.5.0
+name: rln-onboarding
+source: daml
+version: 2.0.0
+dependencies:
+  - daml-prim
+  - daml-stdlib
+  - daml-script
+data-dependencies:
+  - ../daml-model/build/daml/rln-2.0.0.dar

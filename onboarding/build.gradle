@@ -1,0 +1,41 @@
+import org.yaml.snakeyaml.Yaml
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'org.yaml', name: 'snakeyaml', version: '1.33'
+    }
+}
+
+plugins {
+    id "base"
+}
+
+repositories {
+    mavenCentral()
+}
+
+group "com.rln"
+version "2"
+
+def damlYaml = new Yaml().load( new File("${projectDir}/daml.yaml").newInputStream() )
+def damlOutput = "${buildDir}/daml/rln-onboarding-${damlYaml.version}.dar"
+
+tasks.register('compileDaml', Exec) {
+    onlyIf { !file(damlOutput).exists() }
+    commandLine "daml", "build", "-o", damlOutput
+}
+
+tasks.register('damlClean') {
+    delete damlOutput
+}
+
+clean {
+    dependsOn damlClean
+}
+
+build {
+    dependsOn ":daml-model:build", compileDaml
+}

@@ -3,7 +3,7 @@
 -- SPDX-License-Identifier: Apache-2.0
 --
 
-module Tests.Onboarding where
+module Onboarding where
 
 import Daml.Script
 import Model.BankBIC

@@ -6,7 +6,7 @@ We will provide examples input json files and daml script to show how parties an
 easily.
 
 ### Daml Script
-The [daml script](../src/main/daml/Tests/Onboarding.daml) reads the entityName and BIC mapping from an 
+The [daml script](./daml/Onboarding.daml) reads the entityName and BIC mapping from an 
 [input json file](inputExample.json). Except for entityName and BIC we will also need to provide the participantName
 for each entity, this is so we can deploy the daml script in a distributed manner with canton. The script will then
 create one party for each entity on their participant node (that's why we need participantName) 
