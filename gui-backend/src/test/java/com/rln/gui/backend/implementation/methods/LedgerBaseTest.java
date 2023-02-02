@@ -20,6 +20,7 @@ import com.rln.damlCodegen.da.types.Tuple2;
 import com.rln.damlCodegen.workflow.data.Instrument;
 import com.rln.damlCodegen.workflow.data.Leg;
 import com.rln.damlCodegen.workflow.data.SettlementStep;
+import com.rln.damlCodegen.workflow.data.ibans.SenderAndReceiver;
 import com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer;
 import com.rln.damlCodegen.workflow.transactionmanifest.TransactionManifest;
 import com.rln.damlCodegen.workflow.transferproposal.TransferProposal;
@@ -75,7 +76,7 @@ public class LedgerBaseTest {
   protected static final BigDecimal TRANSACTION_AMOUNT_2 = BigDecimal.ONE.setScale(10);
   protected static final Instrument USD_INSTRUMENT = new Instrument(TRANSACTION_AMOUNT, USD);
   protected static final SettlementStep USD_INSTRUMENT_SETTLEMENT_STEP =
-      new SettlementStep(Optional.of(SENDER_IBAN), Optional.of(RECEIVER_IBAN), USD_INSTRUMENT);
+      new SettlementStep(new SenderAndReceiver(SENDER_IBAN, RECEIVER_IBAN), USD_INSTRUMENT);
   protected static final PartyManager mockPartyManager = Mockito.mock(PartyManager.class);
   protected static final SandboxManager SANDBOX =
       new SandboxManager(

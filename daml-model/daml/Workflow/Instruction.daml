@@ -29,9 +29,9 @@ template Instruction
       controller provider
        do
           assertMsg "Encumber: Instruction already encumbered." $ not encumbered
-          whenSome step.sender $ \iban ->
+          whenSome (senderOf step) $ \iban ->
             void $ exerciseByKey @Balance (BalanceKey with ..) $ Lock with amountToLock = step.delivery.amount; ..
-          whenSome step.receiver $ \iban -> do
+          whenSome (receiverOf step) $ \iban -> do
             (_, Balance{..}) <- fetchByKey @Balance (BalanceKey with ..)
             void $ create IncomingBalance with balance = (Balance with currency = step.delivery.label; amount = step.delivery.amount; ..); identifier
           create this with encumbered = True
@@ -47,15 +47,18 @@ template Instruction
             1. has sender -> burn locked balance
             2. has receiver -> deposit incoming balance
           -}
-          whenSome step.sender (\senderIban -> void $ exerciseByKey
-                                        @LockedBalance
-                                        (PendingBalanceKey with balanceKey = (BalanceKey with iban = senderIban; ..); ..)
-                                        Burn)
+          whenSome (senderOf step) $ \senderIban ->
+            void $ exerciseByKey
+                      @LockedBalance
+                      (PendingBalanceKey with balanceKey = (BalanceKey with iban = senderIban; ..); ..)
+                      Burn
 
-          whenSome step.receiver (\receiverIban -> void $ exerciseByKey
-                                              @IncomingBalance
-                                              (PendingBalanceKey with balanceKey = (BalanceKey with iban = receiverIban; ..); ..)
-                                              Deposit)
+          whenSome (receiverOf step) (\receiverIban ->
+            void $ exerciseByKey
+                    @IncomingBalance
+                    (PendingBalanceKey with balanceKey = (BalanceKey with iban = receiverIban; ..); ..)
+                    Deposit)
+
     choice Cancel: ()
       with
         evidence : ContractId SettlementRejected
@@ -66,16 +69,16 @@ template Instruction
          case 1. has sender -> cancel the instruction will refund the LockedBalance back into Balance
          case 2. has receiver -> cancel the instruction will cancel the incoming Balance
         -}
-        whenSome step.sender (\senderIban -> void $ exerciseByKey
-                                                  @LockedBalance
-                                                  (PendingBalanceKey with balanceKey = (BalanceKey with iban = senderIban; ..); ..)
-                                                  Refund)
-        whenSome step.receiver (\receiverIban -> void $ exerciseByKey
-                                              @IncomingBalance
-                                              (PendingBalanceKey with balanceKey = (BalanceKey with iban = receiverIban; ..); ..)
-                                              CancelIncoming)
-
-
+        whenSome (senderOf step) $ \senderIban ->
+          void $ exerciseByKey
+                  @LockedBalance
+                  (PendingBalanceKey with balanceKey = (BalanceKey with iban = senderIban; ..); ..)
+                  Refund
+        whenSome (receiverOf step) $ \receiverIban ->
+          void $ exerciseByKey
+                  @IncomingBalance
+                  (PendingBalanceKey with balanceKey = (BalanceKey with iban = receiverIban; ..); ..)
+                  CancelIncoming
 
 verifySettlement : Text -> ContractId SettlementFinalized -> Update ()
 verifySettlement groupId evidenceCid = do

@@ -37,7 +37,7 @@ setup = do
     currency = label
     delivery = Instrument with ..
     iban = "alice iban"
-    step = SettlementStep with sender = Some iban; receiver = None; ..
+    step = SettlementStep with ibans = SenderOnly iban; ..
     legPayload = "LegPayload"
     messageId = "messageId"
     groupId = "groupId"

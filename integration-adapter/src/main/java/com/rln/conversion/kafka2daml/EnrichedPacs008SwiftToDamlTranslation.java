@@ -13,7 +13,9 @@ import com.rln.client.damlClient.partyManagement.RandomShardPartyPicker;
 import com.rln.client.kafkaClient.message.EnrichedPacs008;
 import com.rln.client.kafkaClient.message.fields.MessageIdWithStepsAndPayload;
 import com.rln.client.kafkaClient.message.fields.Step;
+import com.rln.common.Utility;
 import com.rln.damlCodegen.da.types.Tuple2;
+import com.rln.damlCodegen.workflow.data.IBANs;
 import com.rln.damlCodegen.workflow.data.Instrument;
 import com.rln.damlCodegen.workflow.data.Leg;
 import com.rln.damlCodegen.workflow.data.SettlementStep;
@@ -23,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 public class EnrichedPacs008SwiftToDamlTranslation implements Function<EnrichedPacs008, CreateProposalsChoiceParameters> {
@@ -76,6 +77,7 @@ public class EnrichedPacs008SwiftToDamlTranslation implements Function<EnrichedP
 
     private SettlementStep toSettlementStep(Step step) {
         Instrument delivery = new Instrument(BigDecimal.valueOf(step.getAmount()), step.getLabel());
-        return new SettlementStep(Optional.ofNullable(step.getSender()), Optional.ofNullable(step.getReceiver()), delivery);
+        IBANs ibans = Utility.toIBANs(step);
+        return new SettlementStep(ibans, delivery);
     }
 }

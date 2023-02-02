@@ -7,7 +7,11 @@ package com.rln.gui.backend.ods;
 import com.daml.ledger.javaapi.data.CreatedEvent;
 import com.daml.ledger.javaapi.data.DamlOptional;
 import com.daml.ledger.javaapi.data.DamlRecord;
+import com.daml.ledger.javaapi.data.Text;
 import com.daml.ledger.javaapi.data.Value;
+import com.daml.ledger.javaapi.data.Variant;
+import com.rln.damlCodegen.da.types.Tuple2;
+import com.rln.damlCodegen.workflow.data.ibans.SenderAndReceiver;
 import com.rln.damlCodegen.workflow.transferproposal.ApprovedTransferProposal;
 import com.rln.gui.backend.implementation.common.CompoundUniqueIdUtil;
 import com.rln.gui.backend.implementation.common.GuiBackendConstants;
@@ -44,6 +48,7 @@ public class TransferProposal {
   private static final String STEP = "step";
   private static final String SENDER = "sender";
   private static final String RECEIVER = "receiver";
+  private static final String IBANS = "ibans";
   private static final String DELIVERY = "delivery";
   private static final String AMOUNT = "amount";
   private static final String LABEL = "label";
@@ -56,8 +61,6 @@ public class TransferProposal {
     var messageId = getField(arguments, MESSAGE_ID, Value::asText).getValue();
     var owner = getField(arguments, OWNER, Value::asParty).getValue();
     var stepRecord = getField(arguments, STEP, Value::asRecord);
-    var sender = getField(stepRecord, SENDER, Value::asOptional);
-    var receiver = getField(stepRecord, RECEIVER, Value::asOptional);
     var delivery = getField(stepRecord, DELIVERY, Value::asRecord);
     var amount = getField(delivery, AMOUNT, Value::asNumeric).getValue();
     var label = getField(delivery, LABEL, Value::asText).getValue();
@@ -70,19 +73,45 @@ public class TransferProposal {
         .partyCode(owner)
         .status(status)
         .assetCode(label);
-    toOptionalString(sender).ifPresent(senderIBAN ->
+    senderOf(stepRecord).ifPresent(senderIBAN ->
       result.add(proposal
         .id(CompoundUniqueIdUtil.getCompoundUniqueId(CompoundUniqueIdUtil.Subject.SENDER, createdEvent.getContractId()))
         .address(senderIBAN)
         .amount(amount.negate())
         .build()));
-    toOptionalString(receiver).ifPresent(receiverIBAN ->
+    receiverOf(stepRecord).ifPresent(receiverIBAN ->
       result.add(proposal
         .id(CompoundUniqueIdUtil.getCompoundUniqueId(CompoundUniqueIdUtil.Subject.RECEIVER, createdEvent.getContractId()))
         .address(receiverIBAN)
         .amount(amount)
         .build()));
     return result.build();
+  }
+
+  private static Optional<String> senderOf(DamlRecord settlementStep) {
+    var ibans = getField(settlementStep, IBANS, Value::asVariant);
+    switch (ibans.getConstructor()) {
+      case "SenderAndReceiver":
+        var record = ibans.getValue().asRecord().get();
+        return Optional.of(getField(record, SENDER, Value::asText).getValue());
+      case "SenderOnly":
+        return ibans.asText().map(Text::getValue);
+      default:
+        return Optional.empty();
+    }
+  }
+
+  private static Optional<String> receiverOf(DamlRecord settlementStep) {
+    var ibans = getField(settlementStep, IBANS, Value::asVariant);
+    switch (ibans.getConstructor()) {
+      case "SenderAndReceiver":
+        var record = ibans.getValue().asRecord().get();
+        return Optional.of(getField(record, RECEIVER, Value::asText).getValue());
+      case "SenderOnly":
+        return ibans.asText().map(Text::getValue);
+      default:
+        return Optional.empty();
+    }
   }
 
   private static String getTransactionProposalStatus(CreatedEvent createdEvent) {

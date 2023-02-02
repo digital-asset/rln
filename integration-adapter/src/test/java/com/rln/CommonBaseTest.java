@@ -11,6 +11,7 @@ import com.rln.client.damlClient.partyManagement.PartyManager;
 import com.rln.client.kafkaClient.message.fields.MessageIdWithStepsAndPayload;
 import com.rln.client.kafkaClient.message.fields.MessageWithBics;
 import com.rln.common.IAConstants;
+import com.rln.common.Utility;
 import com.rln.damlCodegen.da.types.Tuple2;
 import com.rln.damlCodegen.workflow.data.Instrument;
 import com.rln.damlCodegen.workflow.data.Leg;
@@ -178,7 +179,7 @@ public class CommonBaseTest {
                 .map(step ->
                     new Tuple2<String, SettlementStep>(
                         bicToPartyMap.get(step.getApprover()).getValue(),
-                        new SettlementStep(Optional.ofNullable(step.getSender()), Optional.ofNullable(step.getReceiver()),
+                        new SettlementStep(Utility.toIBANs(step),
                             new Instrument(BigDecimal.valueOf(step.getAmount()), step.getLabel()))))
                 .collect(Collectors.toList());
             Leg leg = new Leg(messageIdWithStepsAndPayload.getPayload(), translated);

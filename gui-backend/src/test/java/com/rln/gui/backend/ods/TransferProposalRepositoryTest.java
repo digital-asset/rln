@@ -9,6 +9,7 @@ import com.daml.ledger.javaapi.data.Identifier;
 import com.daml.ledger.javaapi.data.Template;
 import com.rln.damlCodegen.workflow.data.Instrument;
 import com.rln.damlCodegen.workflow.data.SettlementStep;
+import com.rln.damlCodegen.workflow.data.ibans.SenderAndReceiver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -88,8 +89,7 @@ class TransferProposalRepositoryTest {
         Instant.now(),
         Instant.now(),
         new SettlementStep(
-          Optional.of("Alice"),
-          Optional.of("Bob"),
+          new SenderAndReceiver("Alice", "Bob"),
           new Instrument(BigDecimal.TEN, "EUR")
         ),
         List.of("Bank1", "Bank2"),
@@ -109,8 +109,7 @@ class TransferProposalRepositoryTest {
         Instant.now(),
         Instant.now(),
         new SettlementStep(
-          Optional.of("Alice"),
-          Optional.of("Bob"),
+            new SenderAndReceiver("Alice", "Bob"),
           new Instrument(BigDecimal.TEN, "EUR")
         ),
         List.of("Bank1", "Bank2"),
@@ -131,8 +130,7 @@ class TransferProposalRepositoryTest {
         "Assembler",
         Instant.now(),
         new SettlementStep(
-          Optional.of("Alice"),
-          Optional.of("Bob"),
+            new SenderAndReceiver("Alice", "Bob"),
           new Instrument(BigDecimal.TEN, "EUR")
         ),
         List.of("Bank1", "Bank2"),

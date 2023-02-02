@@ -13,8 +13,8 @@ type IBAN = Text
 
 {-
 Loan configuration on account (e.g. Provider/IBAN) level
-The idea is to provide the {accountHolder} with individual loans 
-up until {balanceLoanThreshold} is reached and as long as {maxLoanSize} 
+The idea is to provide the {accountHolder} with individual loans
+up until {balanceLoanThreshold} is reached and as long as {maxLoanSize}
 has not been reached (as tracked by {activeLoan}).
 -}
 template LoanConfig
@@ -44,8 +44,8 @@ template LoanConfig
             && activeLoan <= maxLoanSize
             && balanceLoanThreshold >= 0.0
             && balanceLoanThreshold <= maxLoanSize
-            && balancePaybackThreshold > maxLoanSize 
-        
+            && balancePaybackThreshold > maxLoanSize
+
         let currentMaxLoanAmount balance = min (max (balanceLoanThreshold - balance) 0.0) (maxLoanSize - activeLoan)
             currentMaxPaybackAmount balance = min (max (balance - balancePaybackThreshold) 0.0) activeLoan
             balanceKey = BalanceKey provider account
@@ -59,12 +59,12 @@ template LoanConfig
         {-
         Increases balance of associated account and adds new loan to active loans.
 
-        For example: 
-        - Account A with Balance = 50.0 
+        For example:
+        - Account A with Balance = 50.0
         - LoanConfig with balanceLoanThreshold = 200.0, maxLoanSize = 1000.0, activeLoan = 0.0
-        > In this case, account A would be funded with 150.0 (resulting in a total balance of 200.0) 
+        > In this case, account A would be funded with 150.0 (resulting in a total balance of 200.0)
         > in order to reach the targeted balanceLoanThreshold. Consequently, the new activeLoan = 150.0.
-        > In contrast, if prior to the loan giving activeLoan = 1000.0, no loan would be given as 
+        > In contrast, if prior to the loan giving activeLoan = 1000.0, no loan would be given as
         > the maxLoanSize has already been reached.
         -}
         choice CreateLoan: (ContractId LoanConfig, ContractId Balance)
@@ -84,10 +84,10 @@ template LoanConfig
         {-
         Decreases balance of associated account and subtracts new loan from active loans.
 
-        For example: 
-        - Account A with Balance = 1050.0 
+        For example:
+        - Account A with Balance = 1050.0
         - LoanConfig with balancePaybackThreshold = 1000.0, activeLoan = 550.0
-        > In this case, account A would be decreased by 50.0 (resulting in a total balance of 1000.0), 
+        > In this case, account A would be decreased by 50.0 (resulting in a total balance of 1000.0),
         > in order to pay back the loan partially and reducing the active loan to 500.0
         -}
         choice PaybackLoan: (ContractId LoanConfig, ContractId Balance)
