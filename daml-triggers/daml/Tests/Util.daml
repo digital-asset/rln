@@ -1,0 +1,6 @@
+module Tests.Util where
+
+import Model.Balance
+
+balanceOwner : Party -> BalanceOwner
+balanceOwner party = BalanceOwner with name = partyToText party, party = Some party

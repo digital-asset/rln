@@ -1,0 +1,130 @@
+--
+-- Copyright (c) 2022, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+--
+
+module Tests.LoanManagementTest where
+
+import Trigger.LoanManagement
+import Daml.Trigger.Assert (toACS, testRule, flattenCommands, assertExerciseCmd)
+import Daml.Script
+import Tests.PartyAlloc
+import Model.Balance
+import Model.LoanConfig
+import qualified DA.Map as M
+import Daml.Trigger (Command)
+import Tests.Util (balanceOwner)
+
+setup = do
+    proposalTime <- getTime
+    banks@Banks{..} <- actionPartyAllocation
+    schedulerAndAssembler@ServiceParties{..} <- servicePartyAllocation
+    users@UserParties{..} <- userPartyAllocation
+
+    let approvers = [cb, bank11, bank12, bank21, bank22]
+    pure (banks, schedulerAndAssembler, users)
+
+given_balance_below_threshold_then_create_loan : Script ()
+given_balance_below_threshold_then_create_loan = do
+    (Banks{..}, ServiceParties{..}, users@UserParties{..}) <- setup
+    aliceBalanceCid <- submit bank11 do
+        createCmd Balance with
+            provider = bank11
+            owner = balanceOwner users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 0.0
+
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 0.0
+            balanceLoanThreshold = 1000.0
+            maxLoanSize = 10000.0
+            balancePaybackThreshold = 20000.0
+
+    commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
+    verifyCommandsCount commands 1
+    verifyLoanAmount loanConfigCid commands None
+
+given_balance_above_threshold_then_create_payback : Script ()
+given_balance_above_threshold_then_create_payback = do
+    (Banks{..}, ServiceParties{..}, users@UserParties{..}) <- setup
+    aliceBalanceCid <- submit bank11 do
+        createCmd Balance with
+            provider = bank11
+            owner = balanceOwner users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 21000.0
+
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 0.0
+            balanceLoanThreshold = 1000.0
+            maxLoanSize = 10000.0
+            balancePaybackThreshold = 20000.0
+
+    commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
+    verifyCommandsCount commands 1
+    verifyPaybackAmount loanConfigCid commands None
+
+given_balance_at_threshold_then_create_no_loan_and_no_payback : Script ()
+given_balance_at_threshold_then_create_no_loan_and_no_payback = do
+    (Banks{..}, ServiceParties{..}, users@UserParties{..}) <- setup
+    aliceBalanceCid <- submit bank11 do
+        createCmd Balance with
+            provider = bank11
+            owner = balanceOwner users.alice
+            iban = "CH123"
+            currency = "USD"
+            amount = 10000.0
+
+    loanConfigCid <- submit bank11 $ do createCmd
+        LoanConfig with
+            provider = bank11
+            accountHolder = users.alice
+            account = "CH123"
+            activeLoan = 0.0
+            balanceLoanThreshold = 1000.0
+            maxLoanSize = 10000.0
+            balancePaybackThreshold = 20000.0
+
+    commands <- getTriggerResults bank11 loanConfigCid aliceBalanceCid
+    verifyCommandsCount commands 0
+
+-- Helper functions
+
+getTriggerResults: Party -> ContractId LoanConfig -> ContractId Balance -> Script [Command]
+getTriggerResults triggerParty loanConfigCid balanceCid = do
+  let marker = optional mempty toACS $ Some loanConfigCid
+      acs = marker <> toACS balanceCid
+  (flattenCommands . snd) <$> testRule loanManagementTrigger triggerParty [] acs M.empty ()
+
+verifyLoanAmount: ContractId LoanConfig -> [Command] -> Optional Decimal -> Script ()
+verifyLoanAmount loanConfigCid commands amount = do
+  assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
+    assertMsg "ContractId used in exercise is incorrect" $ cid == loanConfigCid
+    case exercisedChoice of
+      CreateLoan a | a == amount -> Right ()
+      CreateLoan a | a /= amount -> Left $ "Wrong loan amount provided. Expected: " <> show amount <> " but granted " <> show a
+      _ -> Left $ "Did not settle on ledger"
+
+verifyPaybackAmount: ContractId LoanConfig -> [Command] -> Optional Decimal -> Script ()
+verifyPaybackAmount loanConfigCid commands amount = do
+  assertExerciseCmd commands $ \(cid, exercisedChoice) -> do
+    assertMsg "ContractId used in exercise is incorrect" $ cid == loanConfigCid
+    case exercisedChoice of
+      PaybackLoan a | a == amount -> Right ()
+      PaybackLoan a | a /= amount -> Left $ "Wrong payback amount provided. Expected: " <> show amount <> " but granted " <> show a
+      _ -> Left $ "Did not settle on ledger"
+
+verifyCommandsCount: [Command] -> Int -> Script ()
+verifyCommandsCount commands expected = do
+    assertMsg ("Expected " <> show expected <> " but got " <> show len) $ len == expected
+    where len = length commands

@@ -1,0 +1,11 @@
+sdk-version: 2.5.0
+name: rln-triggers
+source: daml
+version: 2.0.0
+dependencies:
+  - daml-prim
+  - daml-stdlib
+  - daml-script
+  - daml-trigger
+data-dependencies:
+  - ../daml-model/.daml/dist/rln-2.0.0.dar
