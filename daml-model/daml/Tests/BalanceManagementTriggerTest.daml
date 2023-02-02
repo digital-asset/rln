@@ -28,7 +28,7 @@ balanceManagementTriggerTest_encumber = do
       amount = 100.0
       label = "USD"
       delivery = Instrument with ..
-      step = SettlementStep with sender = Some "senderIban"; receiver = None; delivery
+      step = SettlementStep with ibans = SenderOnly "senderIban"; delivery
       encumbered = False
       numOfEncumbers = 3
 
@@ -57,7 +57,7 @@ balanceManagementTriggerTest_finalize = do
       amount = 100.0
       label = "USD"
       delivery = Instrument with ..
-      step = SettlementStep with sender = Some "senderIban"; receiver = None; delivery
+      step = SettlementStep with ibans = SenderOnly "senderIban"; delivery
       encumbered = True
       numOfSettles = 2
 
@@ -82,7 +82,7 @@ balanceManagementTriggerTest_reject = do
       amount = 100.0
       label = "USD"
       delivery = Instrument with ..
-      step = SettlementStep with sender = Some "senderIban"; receiver = None; delivery
+      step = SettlementStep with ibans = SenderOnly "senderIban"; delivery
       encumbered = True
       numOfCancels = 2
 

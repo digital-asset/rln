@@ -7,14 +7,21 @@ module Workflow.Data where
 
 type Pacs008 = Text
 
+data IBANs =
+    SenderOnly Text
+  | ReceiverOnly Text
+  | SenderAndReceiver with
+      sender: Text
+      receiver: Text
+  deriving (Eq, Show)
+
 data Instrument = Instrument with
     amount: Decimal
     label: Text
   deriving (Eq, Show)
 
 data SettlementStep = SettlementStep with
-    sender: Optional Text -- sender account iban
-    receiver: Optional Text -- receiver account iban
+    ibans: IBANs
     delivery: Instrument
   deriving (Show, Eq)
 
@@ -26,3 +33,13 @@ data Leg = Leg with
 toIdentifier : (DA.Internal.Record.HasField "groupId" r Text, DA.Internal.Record.HasField "messageId" r Text) => r -> Text
 toIdentifier record =
   record.groupId <> ":" <> record.messageId
+
+getSender : IBANs -> Optional Text
+getSender (SenderOnly iban) = Some iban
+getSender SenderAndReceiver{sender=iban} = Some iban
+getSender _ = None
+
+getReceiver : IBANs -> Optional Text
+getReceiver (ReceiverOnly iban) = Some iban
+getReceiver SenderAndReceiver{receiver=iban} = Some iban
+getReceiver _ = None

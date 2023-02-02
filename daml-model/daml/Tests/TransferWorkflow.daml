@@ -144,11 +144,11 @@ createProposalsAliceToBob ServiceParties{..} Banks{..} initiateTransferCid deliv
       messageIdToLegs = [("Leg1",
         Leg with
           approversToSettlementSteps = [
-              (bank21, SettlementStep with sender = Some "Alice", receiver = None, ..),
-              (bank11, SettlementStep with sender = Some "Bank21", receiver = None, ..),
-              (cb, SettlementStep with sender = Some "Bank11", receiver = Some "Bank12", ..),
-              (bank12, SettlementStep with sender = None, receiver = Some "Bank22", ..),
-              (bank22, SettlementStep with sender = None, receiver = Some "Bob", ..)
+              (bank21, SettlementStep with ibans = SenderOnly "Alice", ..),
+              (bank11, SettlementStep with ibans = SenderOnly "Bank21", ..),
+              (cb, SettlementStep with ibans = (SenderAndReceiver with sender = "Bank11"; receiver = "Bank12"); ..),
+              (bank12, SettlementStep with ibans = ReceiverOnly "Bank22", ..),
+              (bank22, SettlementStep with ibans = ReceiverOnly "Bob", ..)
             ]
           ..
         )]

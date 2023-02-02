@@ -44,17 +44,15 @@ autoApprove sender = do
   let markers = Map.fromList $ (\(_, marker) -> (marker.address, marker)) <$> autoApproveMarkersWithCids
 
   forA_ transferProposals \(cid, transferProposal) ->
-    case (findProposalMarker transferProposal markers, transferProposal.step.sender, transferProposal.step.receiver) of
-      (None, _, _) ->
+    case (findProposalMarker transferProposal markers, transferProposal.step.ibans) of
+      (None, _) ->
         pure ()
-      (Some _, None, None) -> -- impossible
-        pure ()
-      (Some marker, Some sender, Some receiver) -> do
+      (Some marker, SenderAndReceiver {sender, receiver}) -> do
         handleProposalForSender transferProposal sender blacklist cid
         handleProposalForReceiver transferProposal cid
-      (Some marker, Some sender, None) ->
+      (Some marker, SenderOnly sender) ->
         handleProposalForSender transferProposal sender blacklist cid
-      (Some marker, None, Some receiver) ->
+      (Some marker, ReceiverOnly _) ->
         handleProposalForReceiver transferProposal cid
 
 -- Helper functions
@@ -73,26 +71,21 @@ approveProposal reason proposalCid balanceCidOpt =
 
 involveBlackListParty : TransferProposal -> Blacklist -> Bool
 involveBlackListParty TransferProposal{step, approvers} Blacklist{banks, accounts} =
-  let receiverIsBlackListed = case step.receiver of
-                                Some receiverIban -> receiverIban `elem` accounts
-                                None -> False in
-  let senderIsBlackListed = case step.sender of
-                                  Some senderIban -> senderIban `elem` accounts
-                                  None -> False in
-  let bankOnSettlementChainBlackListed = any (`elem` banks) approvers in
+  let receiverIsBlackListed = optional False (`elem` accounts) (getReceiver step.ibans)
+      senderIsBlackListed = optional False (`elem` accounts) (getSender step.ibans)
+      bankOnSettlementChainBlackListed = any (`elem` banks) approvers in
   receiverIsBlackListed || senderIsBlackListed || bankOnSettlementChainBlackListed
 
 findProposalMarker : TransferProposal -> Map.Map Text AutoApproveTransferProposalMarker -> Optional AutoApproveTransferProposalMarker
-findProposalMarker transferProposal@TransferProposal{ step = SettlementStep{ sender, receiver } } markers =
-  case (sender, receiver) of
-    (None, None) -> None
-    (Some iban, None) -> do
+findProposalMarker transferProposal@TransferProposal{step} markers =
+  case step.ibans of
+    SenderOnly iban -> do
       marker <- Map.lookup iban markers
       if matchesMarker transferProposal.step.delivery.amount marker then Some marker else None
-    (None, Some iban) -> do
+    ReceiverOnly iban -> do
       marker <- Map.lookup iban markers
       if matchesMarker transferProposal.step.delivery.amount marker then Some marker else None
-    (Some senderIban, Some receiverIban) -> do
+    SenderAndReceiver {sender=senderIban, receiver=receiverIban} -> do
       marker1 <- Map.lookup senderIban markers
       marker2 <- Map.lookup receiverIban markers
       pure $ getStrictMarker marker1 marker2
