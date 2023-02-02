@@ -19,6 +19,7 @@ import com.rln.common.IAConstants;
 import com.rln.damlCodegen.da.types.Tuple2;
 import com.rln.damlCodegen.workflow.data.Instrument;
 import com.rln.damlCodegen.workflow.data.SettlementStep;
+import com.rln.damlCodegen.workflow.data.ibans.SenderAndReceiver;
 import com.rln.damlCodegen.workflow.transactionmanifest.TransactionManifest;
 import com.rln.damlCodegen.workflow.transferproposal.TransferProposal;
 import com.rln.profile.TestWithSchedulerModeProfile;
@@ -161,7 +162,7 @@ class EnrichedKafkaFlowTest extends LedgerBaseTest {
 
     private DamlRecord buildTransferProposalRecordMatcher(Party ownerParty, String sender, String receiver, BigDecimal amount, String label, String messageID, String groupId) {
         List<String> listOfApproverParties = List.of(ownerParty.getValue());
-        SettlementStep settlementStep = new SettlementStep(Optional.of(sender), Optional.of(receiver), new Instrument(amount, label));
+        SettlementStep settlementStep = new SettlementStep(new SenderAndReceiver(sender, receiver), new Instrument(amount, label));
         return new TransferProposal(ownerParty.getValue(), getSchedulerPartyId().getValue(), getAssemblerPartyId().getValue(), Instant.EPOCH, settlementStep, listOfApproverParties, PAYLOAD, messageID, groupId).toValue();
     }
 

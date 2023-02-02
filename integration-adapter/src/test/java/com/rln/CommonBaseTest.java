@@ -10,11 +10,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rln.client.damlClient.partyManagement.PartyManager;
 import com.rln.client.kafkaClient.message.fields.MessageIdWithStepsAndPayload;
 import com.rln.client.kafkaClient.message.fields.MessageWithBics;
+import com.rln.client.kafkaClient.message.fields.Step;
 import com.rln.common.IAConstants;
 import com.rln.damlCodegen.da.types.Tuple2;
+import com.rln.damlCodegen.workflow.data.IBANs;
 import com.rln.damlCodegen.workflow.data.Instrument;
 import com.rln.damlCodegen.workflow.data.Leg;
 import com.rln.damlCodegen.workflow.data.SettlementStep;
+import com.rln.damlCodegen.workflow.data.ibans.ReceiverOnly;
+import com.rln.damlCodegen.workflow.data.ibans.SenderAndReceiver;
+import com.rln.damlCodegen.workflow.data.ibans.SenderOnly;
 import com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer;
 import com.rln.damlCodegen.workflow.transactionmanifest.FinalizeSettlement;
 import com.rln.damlCodegen.workflow.transactionmanifest.TransactionManifest;
@@ -178,7 +183,7 @@ public class CommonBaseTest {
                 .map(step ->
                     new Tuple2<String, SettlementStep>(
                         bicToPartyMap.get(step.getApprover()).getValue(),
-                        new SettlementStep(Optional.ofNullable(step.getSender()), Optional.ofNullable(step.getReceiver()),
+                        new SettlementStep(toIBANs(step),
                             new Instrument(BigDecimal.valueOf(step.getAmount()), step.getLabel()))))
                 .collect(Collectors.toList());
             Leg leg = new Leg(messageIdWithStepsAndPayload.getPayload(), translated);
@@ -223,6 +228,22 @@ public class CommonBaseTest {
                     isSuccessful = false;
                 }
             }
+        }
+    }
+
+    private static IBANs toIBANs(Step step) {
+        var hasSender = step.getSender() != null;
+        var hasReceiver = step.getReceiver() != null;
+        if (hasSender) {
+            if (hasReceiver) {
+                return new SenderAndReceiver(step.getSender(), step.getReceiver());
+            } else {
+                return new SenderOnly(step.getSender());
+            }
+        } else if (hasReceiver) {
+            return new ReceiverOnly(step.getReceiver());
+        } else {
+            throw new RuntimeException(String.format("CommonBaseTest: step missing both sender and receiver: %s", step));
         }
     }
 }

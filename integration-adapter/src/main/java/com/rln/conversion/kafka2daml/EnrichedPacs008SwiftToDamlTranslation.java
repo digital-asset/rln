@@ -14,16 +14,19 @@ import com.rln.client.kafkaClient.message.EnrichedPacs008;
 import com.rln.client.kafkaClient.message.fields.MessageIdWithStepsAndPayload;
 import com.rln.client.kafkaClient.message.fields.Step;
 import com.rln.damlCodegen.da.types.Tuple2;
+import com.rln.damlCodegen.workflow.data.IBANs;
 import com.rln.damlCodegen.workflow.data.Instrument;
 import com.rln.damlCodegen.workflow.data.Leg;
 import com.rln.damlCodegen.workflow.data.SettlementStep;
+import com.rln.damlCodegen.workflow.data.ibans.ReceiverOnly;
+import com.rln.damlCodegen.workflow.data.ibans.SenderAndReceiver;
+import com.rln.damlCodegen.workflow.data.ibans.SenderOnly;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 public class EnrichedPacs008SwiftToDamlTranslation implements Function<EnrichedPacs008, CreateProposalsChoiceParameters> {
@@ -76,6 +79,23 @@ public class EnrichedPacs008SwiftToDamlTranslation implements Function<EnrichedP
 
     private SettlementStep toSettlementStep(Step step) {
         Instrument delivery = new Instrument(BigDecimal.valueOf(step.getAmount()), step.getLabel());
-        return new SettlementStep(Optional.ofNullable(step.getSender()), Optional.ofNullable(step.getReceiver()), delivery);
+        IBANs ibans = toIBANs(step);
+        return new SettlementStep(ibans, delivery);
+    }
+
+    private IBANs toIBANs(Step step) {
+        var hasSender = step.getSender() != null;
+        var hasReceiver = step.getReceiver() != null;
+        if (hasSender) {
+            if (hasReceiver) {
+                return new SenderAndReceiver(step.getSender(), step.getReceiver());
+            } else {
+                return new SenderOnly(step.getSender());
+            }
+        } else if (hasReceiver) {
+            return new ReceiverOnly(step.getReceiver());
+        } else {
+            throw new RuntimeException(String.format("Step missing both sender and receiver: %s", step));
+        }
     }
 }
