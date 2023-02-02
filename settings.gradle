@@ -9,4 +9,4 @@ pluginManagement {
 }
 
 rootProject.name='rln-adapter'
-include 'common', 'daml-model', 'gui-backend', 'integration-adapter'
+include 'common', 'daml-model', 'gui-backend', 'integration-adapter', 'daml-triggers'
