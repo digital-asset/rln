@@ -29,9 +29,9 @@ template Instruction
       controller provider
        do
           assertMsg "Encumber: Instruction already encumbered." $ not encumbered
-          whenSome (getSender step.ibans) $ \iban ->
+          whenSome (senderOf step) $ \iban ->
             void $ exerciseByKey @Balance (BalanceKey with ..) $ Lock with amountToLock = step.delivery.amount; ..
-          whenSome (getReceiver step.ibans) $ \iban -> do
+          whenSome (receiverOf step) $ \iban -> do
             (_, Balance{..}) <- fetchByKey @Balance (BalanceKey with ..)
             void $ create IncomingBalance with balance = (Balance with currency = step.delivery.label; amount = step.delivery.amount; ..); identifier
           create this with encumbered = True
@@ -47,13 +47,13 @@ template Instruction
             1. has sender -> burn locked balance
             2. has receiver -> deposit incoming balance
           -}
-          whenSome (getSender step.ibans) $ \senderIban ->
+          whenSome (senderOf step) $ \senderIban ->
             void $ exerciseByKey
                       @LockedBalance
                       (PendingBalanceKey with balanceKey = (BalanceKey with iban = senderIban; ..); ..)
                       Burn
 
-          whenSome (getReceiver step.ibans) (\receiverIban ->
+          whenSome (receiverOf step) (\receiverIban ->
             void $ exerciseByKey
                     @IncomingBalance
                     (PendingBalanceKey with balanceKey = (BalanceKey with iban = receiverIban; ..); ..)
@@ -69,12 +69,12 @@ template Instruction
          case 1. has sender -> cancel the instruction will refund the LockedBalance back into Balance
          case 2. has receiver -> cancel the instruction will cancel the incoming Balance
         -}
-        whenSome (getSender step.ibans) $ \senderIban ->
+        whenSome (senderOf step) $ \senderIban ->
           void $ exerciseByKey
                   @LockedBalance
                   (PendingBalanceKey with balanceKey = (BalanceKey with iban = senderIban; ..); ..)
                   Refund
-        whenSome (getReceiver step.ibans) $ \receiverIban ->
+        whenSome (receiverOf step) $ \receiverIban ->
           void $ exerciseByKey
                   @IncomingBalance
                   (PendingBalanceKey with balanceKey = (BalanceKey with iban = receiverIban; ..); ..)

@@ -12,6 +12,7 @@ import com.rln.client.kafkaClient.message.fields.MessageIdWithStepsAndPayload;
 import com.rln.client.kafkaClient.message.fields.MessageWithBics;
 import com.rln.client.kafkaClient.message.fields.Step;
 import com.rln.common.IAConstants;
+import com.rln.common.Utility;
 import com.rln.damlCodegen.da.types.Tuple2;
 import com.rln.damlCodegen.workflow.data.IBANs;
 import com.rln.damlCodegen.workflow.data.Instrument;
@@ -183,7 +184,7 @@ public class CommonBaseTest {
                 .map(step ->
                     new Tuple2<String, SettlementStep>(
                         bicToPartyMap.get(step.getApprover()).getValue(),
-                        new SettlementStep(toIBANs(step),
+                        new SettlementStep(Utility.toIBANs(step),
                             new Instrument(BigDecimal.valueOf(step.getAmount()), step.getLabel()))))
                 .collect(Collectors.toList());
             Leg leg = new Leg(messageIdWithStepsAndPayload.getPayload(), translated);
@@ -228,22 +229,6 @@ public class CommonBaseTest {
                     isSuccessful = false;
                 }
             }
-        }
-    }
-
-    private static IBANs toIBANs(Step step) {
-        var hasSender = step.getSender() != null;
-        var hasReceiver = step.getReceiver() != null;
-        if (hasSender) {
-            if (hasReceiver) {
-                return new SenderAndReceiver(step.getSender(), step.getReceiver());
-            } else {
-                return new SenderOnly(step.getSender());
-            }
-        } else if (hasReceiver) {
-            return new ReceiverOnly(step.getReceiver());
-        } else {
-            throw new RuntimeException(String.format("CommonBaseTest: step missing both sender and receiver: %s", step));
         }
     }
 }

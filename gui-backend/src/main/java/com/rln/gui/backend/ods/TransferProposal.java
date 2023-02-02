@@ -61,11 +61,9 @@ public class TransferProposal {
     var messageId = getField(arguments, MESSAGE_ID, Value::asText).getValue();
     var owner = getField(arguments, OWNER, Value::asParty).getValue();
     var stepRecord = getField(arguments, STEP, Value::asRecord);
-    var ibans = getField(stepRecord, IBANS, Value::asVariant);
     var delivery = getField(stepRecord, DELIVERY, Value::asRecord);
     var amount = getField(delivery, AMOUNT, Value::asNumeric).getValue();
     var label = getField(delivery, LABEL, Value::asText).getValue();
-    var senderAndReceiver = getSenderAndReceiver(ibans);
     var proposal =
       TransferProposal.builder()
         .contractId(createdEvent.getContractId())
@@ -75,13 +73,13 @@ public class TransferProposal {
         .partyCode(owner)
         .status(status)
         .assetCode(label);
-    senderAndReceiver._1.ifPresent(senderIBAN ->
+    senderOf(stepRecord).ifPresent(senderIBAN ->
       result.add(proposal
         .id(CompoundUniqueIdUtil.getCompoundUniqueId(CompoundUniqueIdUtil.Subject.SENDER, createdEvent.getContractId()))
         .address(senderIBAN)
         .amount(amount.negate())
         .build()));
-    senderAndReceiver._2.ifPresent(receiverIBAN ->
+    receiverOf(stepRecord).ifPresent(receiverIBAN ->
       result.add(proposal
         .id(CompoundUniqueIdUtil.getCompoundUniqueId(CompoundUniqueIdUtil.Subject.RECEIVER, createdEvent.getContractId()))
         .address(receiverIBAN)
@@ -90,17 +88,29 @@ public class TransferProposal {
     return result.build();
   }
 
-  private static Tuple2<Optional<String>, Optional<String>> getSenderAndReceiver(Variant ibans) {
-    var value = ibans.getValue();
-    if (ibans.getConstructor().equals("SenderAndReceiver")) {
-      var record = value.asRecord().get();
-      var sender = Optional.of(getField(record, SENDER, Value::asText).getValue());
-      var receiver = Optional.of(getField(record, RECEIVER, Value::asText).getValue());
-      return new Tuple2<>(sender, receiver);
-    } else if (ibans.getConstructor().equals("SenderOnly")) {
-      return new Tuple2<>(value.asText().map(Text::getValue), Optional.empty());
-    } else {  // ibans.getConstructor().equals("ReceiverOnly")
-      return new Tuple2<>(Optional.empty(), value.asText().map(Text::getValue));
+  private static Optional<String> senderOf(DamlRecord settlementStep) {
+    var ibans = getField(settlementStep, IBANS, Value::asVariant);
+    switch (ibans.getConstructor()) {
+      case "SenderAndReceiver":
+        var record = ibans.getValue().asRecord().get();
+        return Optional.of(getField(record, SENDER, Value::asText).getValue());
+      case "SenderOnly":
+        return ibans.asText().map(Text::getValue);
+      default:
+        return Optional.empty();
+    }
+  }
+
+  private static Optional<String> receiverOf(DamlRecord settlementStep) {
+    var ibans = getField(settlementStep, IBANS, Value::asVariant);
+    switch (ibans.getConstructor()) {
+      case "SenderAndReceiver":
+        var record = ibans.getValue().asRecord().get();
+        return Optional.of(getField(record, RECEIVER, Value::asText).getValue());
+      case "SenderOnly":
+        return ibans.asText().map(Text::getValue);
+      default:
+        return Optional.empty();
     }
   }
 

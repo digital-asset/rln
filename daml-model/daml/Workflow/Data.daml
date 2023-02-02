@@ -34,12 +34,12 @@ toIdentifier : (DA.Internal.Record.HasField "groupId" r Text, DA.Internal.Record
 toIdentifier record =
   record.groupId <> ":" <> record.messageId
 
-getSender : IBANs -> Optional Text
-getSender (SenderOnly iban) = Some iban
-getSender SenderAndReceiver{sender=iban} = Some iban
-getSender _ = None
+senderOf : SettlementStep -> Optional Text
+senderOf (SettlementStep {ibans = SenderOnly iban, .. }) = Some iban
+senderOf (SettlementStep {ibans = SenderAndReceiver{sender=iban}, .. }) = Some iban
+senderOf _ = None
 
-getReceiver : IBANs -> Optional Text
-getReceiver (ReceiverOnly iban) = Some iban
-getReceiver SenderAndReceiver{receiver=iban} = Some iban
-getReceiver _ = None
+receiverOf : SettlementStep -> Optional Text
+receiverOf (SettlementStep {ibans = ReceiverOnly iban, .. }) = Some iban
+receiverOf (SettlementStep {ibans = SenderAndReceiver{receiver=iban}, .. }) = Some iban
+receiverOf _ = None

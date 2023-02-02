@@ -71,8 +71,8 @@ approveProposal reason proposalCid balanceCidOpt =
 
 involveBlackListParty : TransferProposal -> Blacklist -> Bool
 involveBlackListParty TransferProposal{step, approvers} Blacklist{banks, accounts} =
-  let receiverIsBlackListed = optional False (`elem` accounts) (getReceiver step.ibans)
-      senderIsBlackListed = optional False (`elem` accounts) (getSender step.ibans)
+  let receiverIsBlackListed = optional False (`elem` accounts) (receiverOf step)
+      senderIsBlackListed = optional False (`elem` accounts) (senderOf step)
       bankOnSettlementChainBlackListed = any (`elem` banks) approvers in
   receiverIsBlackListed || senderIsBlackListed || bankOnSettlementChainBlackListed
 
