@@ -1,3 +1,5 @@
+import org.yaml.snakeyaml.Yaml
+
 buildscript {
     repositories {
         mavenCentral()
@@ -18,7 +20,7 @@ repositories {
 group "com.rln"
 version "2"
 
-def damlYaml = new org.yaml.snakeyaml.Yaml().load( new File("${projectDir}/daml.yaml").newInputStream() )
+def damlYaml = new Yaml().load( new File("${projectDir}/daml.yaml").newInputStream() )
 def damlOutput = "${buildDir}/daml/rln-triggers-${damlYaml.version}.dar"
 
 tasks.register('compileDaml', Exec) {
