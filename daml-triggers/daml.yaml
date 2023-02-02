@@ -8,4 +8,4 @@ dependencies:
   - daml-script
   - daml-trigger
 data-dependencies:
-  - ../daml-model/.daml/dist/rln-2.0.0.dar
+  - ../daml-model/build/daml/rln-2.0.0.dar

@@ -37,5 +37,5 @@ clean {
 }
 
 build {
-    dependsOn compileDaml
+    dependsOn ":daml-model:build", compileDaml
 }
