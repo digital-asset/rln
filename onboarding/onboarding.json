@@ -4,7 +4,7 @@
     "name": "Cello Bank",
     "bic": "CITIUS33",
     "participantName": "rlnLedger",
-    "baseUrl": "http://cello-participant:8080/api/",
+    "baseUrl": "https://test-bankny.setllabs.io/api/",
     "clients": []
   },
   {
@@ -12,7 +12,7 @@
     "name": "Bank of America",
     "bic": "BOFAUS3N",
     "participantName": "rlnLedger",
-    "baseUrl": "http://bankofamerica-participant:8080/api/",
+    "baseUrl": "https://test-bankofamerica.setllabs.io/api/",
     "clients": []
   },
   {
@@ -20,7 +20,7 @@
     "name": "HSBC, New York",
     "bic": "MRMDUS33",
     "participantName": "rlnLedger",
-    "baseUrl": "http://hsbcny-participant:8080/api/",
+    "baseUrl": "https://test-hsbcny.setllabs.io/api/",
     "clients": []
   },
   {
@@ -28,7 +28,7 @@
     "name": "Bank of New York",
     "bic": "IRVTUS3N",
     "participantName": "rlnLedger",
-    "baseUrl": "http://bankofnewyork-participant:8080/api/",
+    "baseUrl": "https://test-bankofnewyork.setllabs.io/api/",
     "clients": []
   },
   {
@@ -36,7 +36,7 @@
     "name": "Wells Fargo",
     "bic": "WFBIUS6WCLS",
     "participantName": "rlnLedger",
-    "baseUrl": "http://wellsfargo-participant:8080/api/",
+    "baseUrl": "https://test-wellsfargo.setllabs.io/api/",
     "clients": []
   },
   {
@@ -44,7 +44,7 @@
     "name": "US Bank",
     "bic": "USBKUS01XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "http://usbank-participant:8080/api/",
+    "baseUrl": "https://test-usbank.setllabs.io/api/",
     "clients": []
   },
   {
@@ -52,7 +52,7 @@
     "name": "TD Bank",
     "bic": "NRTHUS33XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "http://tdbank-participant:8080/api/",
+    "baseUrl": "https://test-tdbank.setllabs.io/api/",
     "clients": []
   },
   {
@@ -60,7 +60,7 @@
     "name": "SWIFT",
     "bic": "SWHQUS3NEDU",
     "participantName": "rlnLedger",
-    "baseUrl": "http://swift-participant:8080/api/",
+    "baseUrl": "https://test-swift.setllabs.io/api/",
     "clients": []
   },
   {
@@ -68,7 +68,7 @@
     "name": "Mastercard",
     "bic": "MXBSUS33XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "http://mastercard-participant:8080/api/",
+    "baseUrl": "https://test-mastercard.setllabs.io/api/",
     "clients": []
   },
   {
@@ -76,7 +76,7 @@
     "name": "Truist",
     "bic": "SNTRUS3AXXX",
     "participantName": "rlnLedger",
-    "baseUrl": "http://truist-participant:8080/api/",
+    "baseUrl": "https://test-truist.setllabs.io/api/",
     "clients": []
   },
   {
@@ -84,7 +84,7 @@
     "name": "PNC Bank",
     "bic": "PNCCUS33XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "http://pncbank-participant:8080/api/",
+    "baseUrl": "https://test-pncbank.setllabs.io/api/",
     "clients": []
   },
   {
@@ -92,15 +92,44 @@
     "name": "Federal Reserve NY",
     "bic": "FRNYUS3A",
     "participantName": "rlnLedger",
-    "baseUrl": "http://nyic-participant:8080/api/",
+    "baseUrl": "https://test-nyic.setllabs.io/api/",
     "clients": []
+  },
+  {
+    "id": 17,
+    "name": "Daml Demo 3",
+    "bic": "DEMOUS05XXX",
+    "participantName": "rlnLedger",
+    "baseUrl": "https://test-damldemo3.setllabs.io/api/",
+    "accounts": [
+      {
+        "provider": "Daml Demo 3",
+        "iban": "US13DEMOUS019891103465",
+        "bearerToken": "token-US13DEMOUS019891103465",
+        "clientId": 0
+      }
+    ],
+    "clients": [
+      {
+        "name": "Client 1",
+        "iban": "US01DEMOUS050000000001",
+        "bearerToken": "token-US01DEMOUS050000000001",
+        "clientId": 1
+      },
+      {
+        "name": "Client 2",
+        "iban": "US01DEMOUS050000000002",
+        "bearerToken": "token-US01DEMOUS050000000002",
+        "clientId": 2
+      }
+    ]
   },
   {
     "id": 18,
     "name": "Rln Demo",
     "bic": "DEMOUS01XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "http://rlndemo-participant:8080/api/",
+    "baseUrl": "https://test-rlndemo.setllabs.io/api/",
     "clients": []
   },
   {
@@ -108,7 +137,7 @@
     "name": "Daml Demo 1",
     "bic": "DEMOUS03XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "http://damldemo1-participant:8080/api/",
+    "baseUrl": "https://test-damldemo1.setllabs.io/api/",
     "accounts": [
       {
         "provider": "Daml Demo 1",
@@ -126,7 +155,7 @@
       },
       {
         "name": "Client 2",
-        "iban": "US02DEMOUS030000000002 ",
+        "iban": "US02DEMOUS030000000002",
         "bearerToken": "token-US02DEMOUS030000000002",
         "clientId": 2
       }
@@ -137,18 +166,18 @@
     "name": "Daml Demo 2",
     "bic": "DEMOUS04XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "http://damldemo2-participant:8080/api/",
+    "baseUrl": "https://test-damldemo2.setllabs.io/api/",
     "accounts": [
       {
         "provider": "Daml Demo 1",
-        "iban": "BE71096123456769",
-        "bearerToken": "token-BE71096123456769",
+        "iban": "US10DEM110016547488963",
+        "bearerToken": "token-US10DEM110016547488963",
         "clientId": 3
       },
       {
         "provider": "Daml Demo 2",
-        "iban": "DE75512108001245126199",
-        "bearerToken": "token-DE75512108001245126199",
+        "iban": "US12DEMOUS040445666199",
+        "bearerToken": "token-US12DEMOUS040445666199",
         "clientId": 0
       }
     ],
@@ -168,40 +197,11 @@
     ]
   },
   {
-    "id": 17,
-    "name": "Daml Demo 3",
-    "bic": "COR5US01X05",
-    "participantName": "rlnLedger",
-    "baseUrl": "http://damldemo3-participant:8080/api/",
-    "accounts": [
-      {
-        "provider": "Daml Demo 3",
-        "iban": "GR9608100010000001234567890",
-        "bearerToken": "token-GR9608100010000001234567890",
-        "clientId": 0
-      }
-    ],
-    "clients": [
-      {
-        "name": "Client 1",
-        "iban": "HU93116000060000000012345676",
-        "bearerToken": "token-HU93116000060000000012345676",
-        "clientId": 1
-      },
-      {
-        "name": "Client 2",
-        "iban": "IE64IRCE92050112345678",
-        "bearerToken": "token-IE64IRCE92050112345678",
-        "clientId": 2
-      }
-    ]
-  },
-  {
     "id": 21,
     "name": "Rln Branch",
     "bic": "DEMOUS01BR1",
     "participantName": "rlnLedger",
-    "baseUrl": "http://rlnbranch-participant:8080/api/",
+    "baseUrl": "https://test-rlnbranch.setllabs.io/api/",
     "clients": []
   },
   {
@@ -209,7 +209,7 @@
     "name": "Cello HK",
     "bic": "CITIHKAX",
     "participantName": "rlnLedger",
-    "baseUrl": "http://cellohk-participant:8080/api/",
+    "baseUrl": "https://test-cello-hk1.setllabs.io/api/",
     "clients": []
   },
   {
@@ -217,12 +217,12 @@
     "name": "BoNY, SG",
     "bic": "IRVTSGSX",
     "participantName": "rlnLedger",
-    "baseUrl": "http://bonysg-participant:8080/api/",
+    "baseUrl": "https://test-bankofnewyork-sg.setllabs.io/api/",
     "clients": []
   },
   {
     "id": 24,
-    "baseUrl": "http://deloitte-participant:8080/api/",
+    "baseUrl": "https://test-deloitte.setllabs.io/api/",
     "bic": "DELOITTEXXX",
     "participantName": "rlnLedger",
     "name": "Deloitte",
@@ -230,7 +230,7 @@
   },
   {
     "id": 25,
-    "baseUrl": "http://boabranch-participant:8080/api/",
+    "baseUrl": "https://test-boabranch.setllabs.io/api/",
     "bic": "BOFAUS3NBR1",
     "participantName": "rlnLedger",
     "name": "Bank of America Branch",
@@ -238,7 +238,7 @@
   },
   {
     "id": 26,
-    "baseUrl": "http://wfbranch-participant:8080/api/",
+    "baseUrl": "https://test-wfbranch.setllabs.io/api/",
     "bic": "WFBIUS6WBR1",
     "participantName": "rlnLedger",
     "name": "Wells Fargo Branch",
@@ -246,7 +246,7 @@
   },
   {
     "id": 27,
-    "baseUrl": "http://usbankbranch-participant:8080/api/",
+    "baseUrl": "https://test-usbankbranch.setllabs.io/api/",
     "bic": "USBKUS01BR1",
     "participantName": "rlnLedger",
     "name": "US Bank Branch",
@@ -254,7 +254,7 @@
   },
   {
     "id": 28,
-    "baseUrl": "http://tdbankbranch-participant:8080/api/",
+    "baseUrl": "https://test-tdbankbranch.setllabs.io/api/",
     "bic": "NRTHUS33BR1",
     "participantName": "rlnLedger",
     "name": "TD Bank Branch",
@@ -262,7 +262,7 @@
   },
   {
     "id": 29,
-    "baseUrl": "http://swiftbranch-participant:8080/api/",
+    "baseUrl": "https://test-swiftbranch.setllabs.io/api/",
     "bic": "SWHQUS3NBR1",
     "participantName": "rlnLedger",
     "name": "SWIFT Branch",
@@ -270,7 +270,7 @@
   },
   {
     "id": 30,
-    "baseUrl": "http://mcbranch-participant:8080/api/",
+    "baseUrl": "https://test-mcbranch.setllabs.io/api/",
     "bic": "MXBSUS33BR1",
     "participantName": "rlnLedger",
     "name": "Mastercard Branch",
@@ -278,7 +278,7 @@
   },
   {
     "id": 31,
-    "baseUrl": "http://truistbranch-participant:8080/api/",
+    "baseUrl": "https://test-truistbranch.setllabs.io/api/",
     "bic": "SNTRUS3ABR1",
     "participantName": "rlnLedger",
     "name": "Truist Branch",
@@ -286,7 +286,7 @@
   },
   {
     "id": 32,
-    "baseUrl": "http://pncbranch-participant:8080/api/",
+    "baseUrl": "https://test-pncbranch.setllabs.io/api/",
     "bic": "PNCCUS33BR1",
     "participantName": "rlnLedger",
     "name": "PNC Bank Branch",
@@ -294,7 +294,7 @@
   },
   {
     "id": 33,
-    "baseUrl": "http://deloittebranch-participant:8080/api/",
+    "baseUrl": "https://test-deloittebranch.setllabs.io/api/",
     "bic": "DELOITTEBR1",
     "participantName": "rlnLedger",
     "name": "Deloitte Branch",
@@ -302,7 +302,7 @@
   },
   {
     "id": 34,
-    "baseUrl": "http://hsbcbranch-participant:8080/api/",
+    "baseUrl": "https://test-hsbcbranch.setllabs.io/api/",
     "bic": "MRMDUS33BR1",
     "participantName": "rlnLedger",
     "name": "HSBC Branch",
