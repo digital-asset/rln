@@ -52,7 +52,7 @@ class BalancesApiImplTest extends LedgerBaseTest {
 
     @BeforeEach
     public void beforeEach() {
-        when(setlPartySupplier.getSetlParty(anyString())).thenReturn(SetlParty.builder().name("Name").build());
+        when(setlPartySupplier.getSetlPartyByDamlParty(anyString())).thenReturn(SetlParty.builder().name("Name").build());
     }
 
     @Test

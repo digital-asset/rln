@@ -72,9 +72,10 @@ public class MethodsProducer {
             LockedBalanceCache lockedBalanceCache,
             AccountCache accountCache,
             RLNClient rlnClient,
-            SetlPartySupplier setlPartySupplier) {
+            SetlPartySupplier setlPartySupplier,
+            RemoteOwnedAddressSupplier remoteOwnedAddressSupplier) {
         return new BalancesApiImpl(guiBackendConfiguration, liquidBalanceCache, incomingBalanceCache,
-                lockedBalanceCache, accountCache, rlnClient, setlPartySupplier);
+                lockedBalanceCache, accountCache, rlnClient, setlPartySupplier, remoteOwnedAddressSupplier);
     }
 
     @Singleton

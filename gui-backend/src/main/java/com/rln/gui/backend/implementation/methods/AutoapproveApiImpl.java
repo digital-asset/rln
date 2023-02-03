@@ -68,7 +68,7 @@ public class AutoapproveApiImpl {
 
     for (var account : accounts) {
       var autoApproval = autoApproveCache.getMarker(account.getIban());
-      var provider = setlPartySupplier.getSetlParty(account.getProviderParty());
+      var provider = setlPartySupplier.getSetlPartyByDamlParty(account.getProviderParty());
       var client = provider.getSetlClient(account.getOwnerName());
 
       result.add(LedgerAddressDTO.builder()
@@ -92,7 +92,7 @@ public class AutoapproveApiImpl {
 
     result.addAll(remoteOwnedAddresses);
     for (var account : accounts) {
-      var setlPartyId = setlPartySupplier.getSetlPartyId(account.getProviderParty());
+      var setlPartyId = setlPartySupplier.getSetlPartyIdByDamlParty(account.getProviderParty());
       result.add(WalletAddressDTO.builder()
           .address(account.getIban())
           .partyId(setlPartyId)
