@@ -168,9 +168,9 @@ public class BalancesApiImpl {
           .stream();
   }
 
-  private URI getRemoteBalanceUri(String baseUrl, String address) {
+  static URI getRemoteBalanceUri(String baseUrl, String address) {
     return URI.create(String
-        .format("%s%s?%s=%s",
+        .format("http://%s%s?%s=%s",
             baseUrl,
             API_GETLOCALBALANCE_ENDPOINT,
             ADDRESS_PARAMETER,
