@@ -1,0 +1,311 @@
+[
+  {
+    "id": 1,
+    "name": "Cello Bank",
+    "bic": "CITIUS33",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://cello-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 2,
+    "name": "Bank of America",
+    "bic": "BOFAUS3N",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://bankofamerica-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 3,
+    "name": "HSBC, New York",
+    "bic": "MRMDUS33",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://hsbcny-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 4,
+    "name": "Bank of New York",
+    "bic": "IRVTUS3N",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://bankofnewyork-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 5,
+    "name": "Wells Fargo",
+    "bic": "WFBIUS6WCLS",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://wellsfargo-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 6,
+    "name": "US Bank",
+    "bic": "USBKUS01XXX",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://usbank-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 7,
+    "name": "TD Bank",
+    "bic": "NRTHUS33XXX",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://tdbank-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 8,
+    "name": "SWIFT",
+    "bic": "SWHQUS3NEDU",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://swift-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 9,
+    "name": "Mastercard",
+    "bic": "MXBSUS33XXX",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://mastercard-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 10,
+    "name": "Truist",
+    "bic": "SNTRUS3AXXX",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://truist-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 11,
+    "name": "PNC Bank",
+    "bic": "PNCCUS33XXX",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://pncbank-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 12,
+    "name": "Federal Reserve NY",
+    "bic": "FRNYUS3A",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://nyic-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 18,
+    "name": "Rln Demo",
+    "bic": "DEMOUS01XXX",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://rlndemo-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 19,
+    "name": "Daml Demo 1",
+    "bic": "DEMOUS03XXX",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://damldemo1-participant:8080/api/",
+    "accounts": [
+      {
+        "provider": "Daml Demo 1",
+        "iban": "US15DEM320032683377878",
+        "bearerToken": "token-US15DEM320032683377878",
+        "clientId": 0
+      }
+    ],
+    "clients": [
+      {
+        "name": "Client 1",
+        "iban": "US01DEMOUS030000000001",
+        "bearerToken": "token-US01DEMOUS030000000001",
+        "clientId": 1
+      },
+      {
+        "name": "Client 2",
+        "iban": "US02DEMOUS030000000002 ",
+        "bearerToken": "token-US02DEMOUS030000000002",
+        "clientId": 2
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "name": "Daml Demo 2",
+    "bic": "DEMOUS04XXX",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://damldemo2-participant:8080/api/",
+    "accounts": [
+      {
+        "provider": "Daml Demo 1",
+        "iban": "BE71096123456769",
+        "bearerToken": "token-BE71096123456769",
+        "clientId": 3
+      },
+      {
+        "provider": "Daml Demo 2",
+        "iban": "DE75512108001245126199",
+        "bearerToken": "token-DE75512108001245126199",
+        "clientId": 0
+      }
+    ],
+    "clients": [
+      {
+        "name": "Client 1",
+        "iban": "US01DEMOUS040000000001",
+        "bearerToken": "token-US01DEMOUS040000000001",
+        "clientId": 1
+      },
+      {
+        "name": "Client 2",
+        "iban": "US01DEMOUS040000000002",
+        "bearerToken": "token-US01DEMOUS040000000002",
+        "clientId": 2
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "name": "Daml Demo 3",
+    "bic": "COR5US01X05",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://damldemo3-participant:8080/api/",
+    "accounts": [
+      {
+        "provider": "Daml Demo 3",
+        "iban": "GR9608100010000001234567890",
+        "bearerToken": "token-GR9608100010000001234567890",
+        "clientId": 0
+      }
+    ],
+    "clients": [
+      {
+        "name": "Client 1",
+        "iban": "HU93116000060000000012345676",
+        "bearerToken": "token-HU93116000060000000012345676",
+        "clientId": 1
+      },
+      {
+        "name": "Client 2",
+        "iban": "IE64IRCE92050112345678",
+        "bearerToken": "token-IE64IRCE92050112345678",
+        "clientId": 2
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "name": "Rln Branch",
+    "bic": "DEMOUS01BR1",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://rlnbranch-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 22,
+    "name": "Cello HK",
+    "bic": "CITIHKAX",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://cellohk-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 23,
+    "name": "BoNY, SG",
+    "bic": "IRVTSGSX",
+    "participantName": "rlnLedger",
+    "baseUrl": "http://bonysg-participant:8080/api/",
+    "clients": []
+  },
+  {
+    "id": 24,
+    "baseUrl": "http://deloitte-participant:8080/api/",
+    "bic": "DELOITTEXXX",
+    "participantName": "rlnLedger",
+    "name": "Deloitte",
+    "clients": []
+  },
+  {
+    "id": 25,
+    "baseUrl": "http://boabranch-participant:8080/api/",
+    "bic": "BOFAUS3NBR1",
+    "participantName": "rlnLedger",
+    "name": "Bank of America Branch",
+    "clients": []
+  },
+  {
+    "id": 26,
+    "baseUrl": "http://wfbranch-participant:8080/api/",
+    "bic": "WFBIUS6WBR1",
+    "participantName": "rlnLedger",
+    "name": "Wells Fargo Branch",
+    "clients": []
+  },
+  {
+    "id": 27,
+    "baseUrl": "http://usbankbranch-participant:8080/api/",
+    "bic": "USBKUS01BR1",
+    "participantName": "rlnLedger",
+    "name": "US Bank Branch",
+    "clients": []
+  },
+  {
+    "id": 28,
+    "baseUrl": "http://tdbankbranch-participant:8080/api/",
+    "bic": "NRTHUS33BR1",
+    "participantName": "rlnLedger",
+    "name": "TD Bank Branch",
+    "clients": []
+  },
+  {
+    "id": 29,
+    "baseUrl": "http://swiftbranch-participant:8080/api/",
+    "bic": "SWHQUS3NBR1",
+    "participantName": "rlnLedger",
+    "name": "SWIFT Branch",
+    "clients": []
+  },
+  {
+    "id": 30,
+    "baseUrl": "http://mcbranch-participant:8080/api/",
+    "bic": "MXBSUS33BR1",
+    "participantName": "rlnLedger",
+    "name": "Mastercard Branch",
+    "clients": []
+  },
+  {
+    "id": 31,
+    "baseUrl": "http://truistbranch-participant:8080/api/",
+    "bic": "SNTRUS3ABR1",
+    "participantName": "rlnLedger",
+    "name": "Truist Branch",
+    "clients": []
+  },
+  {
+    "id": 32,
+    "baseUrl": "http://pncbranch-participant:8080/api/",
+    "bic": "PNCCUS33BR1",
+    "participantName": "rlnLedger",
+    "name": "PNC Bank Branch",
+    "clients": []
+  },
+  {
+    "id": 33,
+    "baseUrl": "http://deloittebranch-participant:8080/api/",
+    "bic": "DELOITTEBR1",
+    "participantName": "rlnLedger",
+    "name": "Deloitte Branch",
+    "clients": []
+  },
+  {
+    "id": 34,
+    "baseUrl": "http://hsbcbranch-participant:8080/api/",
+    "bic": "MRMDUS33BR1",
+    "participantName": "rlnLedger",
+    "name": "HSBC Branch",
+    "clients": []
+  }
+]
