@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.*;
+import org.mockito.BDDMockito;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -48,11 +49,15 @@ class BalancesApiImplTest extends LedgerBaseTest {
     BalanceEventListener balanceEventListener;
 
     @InjectMock
+    RemoteOwnedAddressSupplier remoteOwnedAddressSupplier;
+
+    @InjectMock
     SetlPartySupplier setlPartySupplier;
 
     @BeforeEach
     public void beforeEach() {
         when(setlPartySupplier.getSetlPartyByDamlParty(anyString())).thenReturn(SetlParty.builder().name("Name").build());
+        BDDMockito.given(remoteOwnedAddressSupplier.getRemoteOwnedAddresses()).willReturn(List.of());
     }
 
     @Test
