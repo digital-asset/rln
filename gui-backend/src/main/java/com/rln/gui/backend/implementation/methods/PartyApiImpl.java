@@ -50,7 +50,7 @@ public class PartyApiImpl {
 
   public List<ClientDTO> getClients() {
     return setlPartySupplier
-        .getSetlParty(guiBackendConfiguration.partyDamlId())
+        .getSetlPartyByDamlParty(guiBackendConfiguration.partyDamlId())
         .getClients().stream()
         .map(setlClient ->
             ClientDTO.builder()

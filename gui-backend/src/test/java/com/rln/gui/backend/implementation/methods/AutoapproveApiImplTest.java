@@ -33,9 +33,7 @@ import io.restassured.http.ContentType;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import javax.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -125,7 +123,7 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetAddressSettingsListWhenLimit() throws InvalidProtocolBufferException {
-    BDDMockito.given(setlPartySupplier.getSetlParty(getCurrentBankPartyId().getValue()))
+    BDDMockito.given(setlPartySupplier.getSetlPartyByDamlParty(getCurrentBankPartyId().getValue()))
         .willReturn(PROVIDER.apply(getCurrentBankPartyId()));
     var liquidAmount = 500;
     var balance = BalanceTestUtil
@@ -158,7 +156,7 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetAddressSettingsListWhenManual() throws InvalidProtocolBufferException {
-    BDDMockito.given(setlPartySupplier.getSetlParty(getCurrentBankPartyId().getValue()))
+    BDDMockito.given(setlPartySupplier.getSetlPartyByDamlParty(getCurrentBankPartyId().getValue()))
         .willReturn(PROVIDER.apply(getCurrentBankPartyId()));
     var liquidAmount = 500;
     var balance = BalanceTestUtil
@@ -186,7 +184,7 @@ class AutoapproveApiImplTest extends LedgerBaseTest {
 
   @Test
   void apiGetWalletAddresses() throws InvalidProtocolBufferException {
-    BDDMockito.given(setlPartySupplier.getSetlPartyId(getCurrentBankPartyId().getValue()))
+    BDDMockito.given(setlPartySupplier.getSetlPartyIdByDamlParty(getCurrentBankPartyId().getValue()))
         .willReturn(PARTY_ID);
     BDDMockito.given(remoteOwnedAddressSupplier.getRemoteOwnedAddresses())
         .willReturn(List.of());

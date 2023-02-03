@@ -39,16 +39,16 @@ class SetlPartySupplierUnitTest {
     @Test
     void getSetlParty() {
         MatcherAssert
-                .assertThat(setlPartySupplier.getSetlParty(celloDamlParty), Matchers.is(celloSetlParty));
+                .assertThat(setlPartySupplier.getSetlPartyByDamlParty(celloDamlParty), Matchers.is(celloSetlParty));
         MatcherAssert
-                .assertThat(setlPartySupplier.getSetlParty("SomeOtherDamlParty"), Matchers.nullValue());
+                .assertThat(setlPartySupplier.getSetlPartyByDamlParty("SomeOtherDamlParty"), Matchers.nullValue());
     }
 
     @Test
     void getSetlPartyId() {
         MatcherAssert
-                .assertThat(setlPartySupplier.getSetlPartyId(celloDamlParty), Matchers.is(celloId));
+                .assertThat(setlPartySupplier.getSetlPartyIdByDamlParty(celloDamlParty), Matchers.is(celloId));
         MatcherAssert
-                .assertThat(setlPartySupplier.getSetlPartyId("SomeOtherDamlParty"), Matchers.nullValue());
+                .assertThat(setlPartySupplier.getSetlPartyIdByDamlParty("SomeOtherDamlParty"), Matchers.nullValue());
     }
 }

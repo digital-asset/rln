@@ -7,21 +7,40 @@ import com.rln.gui.backend.implementation.balanceManagement.data.BalanceType;
 import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFoundException;
 import com.rln.gui.backend.implementation.balanceManagement.exception.NonZeroBalanceException;
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
-import com.rln.gui.backend.implementation.methods.*;
-import com.rln.gui.backend.model.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.rln.gui.backend.implementation.methods.AutoapproveApiImpl;
+import com.rln.gui.backend.implementation.methods.BalancesApiImpl;
+import com.rln.gui.backend.implementation.methods.InternalServerError;
+import com.rln.gui.backend.implementation.methods.PartyApiImpl;
+import com.rln.gui.backend.implementation.methods.TransactionsApiImpl;
+import com.rln.gui.backend.model.Approval;
+import com.rln.gui.backend.model.ApprovalProperties;
+import com.rln.gui.backend.model.Balance;
+import com.rln.gui.backend.model.BalanceChange;
+import com.rln.gui.backend.model.ClientDTO;
+import com.rln.gui.backend.model.Finalised;
+import com.rln.gui.backend.model.LedgerAddressDTO;
+import com.rln.gui.backend.model.MessageGroup;
+import com.rln.gui.backend.model.PartyDTO;
+import com.rln.gui.backend.model.Transaction;
+import com.rln.gui.backend.model.TransactionStatusUpdate;
+import com.rln.gui.backend.model.TransferProposal;
+import com.rln.gui.backend.model.WalletAddressDTO;
+import com.rln.gui.backend.model.WalletAddressTestDTO;
+import com.rln.gui.backend.model.WalletDTO;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GuiBackendApiImplementation implements DefaultApi {
 
-    public static final long ONLY_SUPPORTED_WALLET_ID = 1L;
+    public static final Long ONLY_SUPPORTED_WALLET_ID = 1L;
     public static final WalletDTO ONLY_SUPPORTED_WALLET = WalletDTO.builder()
             .data("Wallet 1")
             .id(ONLY_SUPPORTED_WALLET_ID)
@@ -158,21 +177,24 @@ public class GuiBackendApiImplementation implements DefaultApi {
     // Get all the balances for all addresses in a wallet
     @Override
     public List<Balance> getBalances(Long walletId) {
-        if (!walletId.equals(ONLY_SUPPORTED_WALLET.getId()))
+        if (!ONLY_SUPPORTED_WALLET_ID.equals(walletId)) {
             throw notFound();
-
-        return balancesApi
+        }
+        List<Balance> result = new LinkedList<>();
+        result.addAll(balancesApi.getRemoteBalances());
+        result.addAll(balancesApi
                 .getBalances(walletId)
                 .stream()
                 .map(this::accountBalanceToBalances)
                 .flatMap(List::stream)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
+        return result;
     }
 
     // Get all the wallet addresses in the specified wallet
     @Override
     public List<WalletAddressDTO> get3(Long walletId) {
-        if (walletId != ONLY_SUPPORTED_WALLET_ID) {
+        if (!ONLY_SUPPORTED_WALLET_ID.equals(walletId)) {
             throw notFound();
         }
         return autoApproveApi.getWalletAddresses();
