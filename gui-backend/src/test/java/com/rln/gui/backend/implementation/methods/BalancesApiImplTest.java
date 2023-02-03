@@ -311,12 +311,6 @@ class BalancesApiImplTest extends LedgerBaseTest {
         }
     }
 
-    @Test
-    void test_getRemoteBalanceUri() {
-        var uri = BalancesApiImpl.getRemoteBalanceUri(BASEURL, SENDER_IBAN);
-        Assertions.assertEquals("http://baseurl/api/getlocalbalance?address=SENDER_IBAN", uri.toString());
-    }
-
     private Map<String, Object> createBalanceChangeRequest(String assetId, String assetName, double change) {
         Map<String, Object> transferProposalRequest = new HashMap<>();
         transferProposalRequest.put("assetId", assetId);

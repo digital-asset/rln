@@ -13,6 +13,7 @@ import com.rln.gui.backend.implementation.converter.TransferProposalToApiTypeCon
 import com.rln.gui.backend.implementation.methods.AutoapproveApiImpl;
 import com.rln.gui.backend.implementation.methods.BalancesApiImpl;
 import com.rln.gui.backend.implementation.methods.PartyApiImpl;
+import com.rln.gui.backend.implementation.methods.RemoteBalanceClient;
 import com.rln.gui.backend.implementation.methods.RemoteOwnedAddressSupplier;
 import com.rln.gui.backend.implementation.methods.SetlPartySupplier;
 import com.rln.gui.backend.implementation.methods.TransactionsApiImpl;
@@ -39,6 +40,12 @@ public class MethodsProducer {
     @Produces
     public SetlPartySupplier getSetlPartySupplier(GuiBackendConfiguration guiBackendConfiguration) {
         return new SetlPartySupplier(guiBackendConfiguration.partiesConfig());
+    }
+
+    @ApplicationScoped
+    @Produces
+    public RemoteBalanceClient getRemoteBalanceClient() {
+        return new RemoteBalanceClient();
     }
 
     @Singleton
@@ -73,9 +80,11 @@ public class MethodsProducer {
             AccountCache accountCache,
             RLNClient rlnClient,
             SetlPartySupplier setlPartySupplier,
-            RemoteOwnedAddressSupplier remoteOwnedAddressSupplier) {
+            RemoteOwnedAddressSupplier remoteOwnedAddressSupplier,
+            RemoteBalanceClient remoteBalanceClient) {
         return new BalancesApiImpl(guiBackendConfiguration, liquidBalanceCache, incomingBalanceCache,
-                lockedBalanceCache, accountCache, rlnClient, setlPartySupplier, remoteOwnedAddressSupplier);
+                lockedBalanceCache, accountCache, rlnClient, setlPartySupplier, remoteOwnedAddressSupplier,
+            remoteBalanceClient);
     }
 
     @Singleton

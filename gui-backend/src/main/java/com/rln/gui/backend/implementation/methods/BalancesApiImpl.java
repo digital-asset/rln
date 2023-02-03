@@ -4,8 +4,6 @@
  */
 package com.rln.gui.backend.implementation.methods;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rln.client.damlClient.ArchiveBalanceParameters;
 import com.rln.client.damlClient.ChangeBalanceParameters;
 import com.rln.client.damlClient.RLNClient;
@@ -21,12 +19,7 @@ import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.model.Balance;
 import com.rln.gui.backend.model.BalanceChange;
 import com.rln.gui.backend.model.WalletAddressDTO;
-import java.io.InputStream;
 import java.math.BigDecimal;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
@@ -34,17 +27,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
 import lombok.SneakyThrows;
 
 public class BalancesApiImpl {
-
-  private static final String ADDRESS_PARAMETER = "address";
-  private static final String API_GETLOCALBALANCE_ENDPOINT = "/api/getlocalbalance";
-
   private final GuiBackendConfiguration guiBackendConfiguration;
   private final LiquidBalanceCache liquidBalanceCache;
   private final IncomingBalanceCache incomingBalanceCache;
@@ -53,6 +38,7 @@ public class BalancesApiImpl {
   private final RLNClient rlnClient;
   private final SetlPartySupplier setlPartySupplier;
   private final RemoteOwnedAddressSupplier remoteOwnedAddressSupplier;
+  private final RemoteBalanceClient remoteBalanceClient;
 
   public BalancesApiImpl(
       GuiBackendConfiguration guiBackendConfiguration,
@@ -62,7 +48,8 @@ public class BalancesApiImpl {
       AccountCache accountCache,
       RLNClient rlnClient,
       SetlPartySupplier setlPartySupplier,
-      RemoteOwnedAddressSupplier remoteOwnedAddressSupplier) {
+      RemoteOwnedAddressSupplier remoteOwnedAddressSupplier,
+      RemoteBalanceClient remoteBalanceClient) {
     this.guiBackendConfiguration = guiBackendConfiguration;
     this.liquidBalanceCache = liquidBalanceCache;
     this.incomingBalanceCache = incomingBalanceCache;
@@ -71,6 +58,7 @@ public class BalancesApiImpl {
     this.rlnClient = rlnClient;
     this.setlPartySupplier = setlPartySupplier;
     this.remoteOwnedAddressSupplier = remoteOwnedAddressSupplier;
+    this.remoteBalanceClient = remoteBalanceClient;
   }
 
   /**
@@ -156,24 +144,6 @@ public class BalancesApiImpl {
   @SneakyThrows
   private Stream<Balance> getRemoteBalance(WalletAddressDTO walletAddressDTO) {
       var setlParty = setlPartySupplier.getSetlPartyBySetlPartyId(walletAddressDTO.getPartyId());
-      HttpRequest request = HttpRequest.newBuilder()
-        .uri(getRemoteBalanceUri(setlParty.getBaseUrl(), walletAddressDTO.getAddress()))
-        .GET()
-        .build();
-      HttpResponse<InputStream> response = HttpClient
-          .newHttpClient()
-          .send(request, HttpResponse.BodyHandlers.ofInputStream());
-      return new ObjectMapper()
-          .readValue(response.body(), new TypeReference<List<Balance>>() {})
-          .stream();
-  }
-
-  static URI getRemoteBalanceUri(String baseUrl, String address) {
-    return URI.create(String
-        .format("http://%s%s?%s=%s",
-            baseUrl,
-            API_GETLOCALBALANCE_ENDPOINT,
-            ADDRESS_PARAMETER,
-            address));
+      return remoteBalanceClient.getRemoteBalance(setlParty.getBaseUrl(), walletAddressDTO);
   }
 }
