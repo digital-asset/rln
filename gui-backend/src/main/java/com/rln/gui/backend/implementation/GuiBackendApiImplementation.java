@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 
 public class GuiBackendApiImplementation implements DefaultApi {
 
-    public static final long ONLY_SUPPORTED_WALLET_ID = 1L;
+    public static final Long ONLY_SUPPORTED_WALLET_ID = 1L;
     public static final WalletDTO ONLY_SUPPORTED_WALLET = WalletDTO.builder()
             .data("Wallet 1")
             .id(ONLY_SUPPORTED_WALLET_ID)
@@ -177,7 +177,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
     // Get all the balances for all addresses in a wallet
     @Override
     public List<Balance> getBalances(Long walletId) {
-        if (ONLY_SUPPORTED_WALLET_ID != walletId) {
+        if (!ONLY_SUPPORTED_WALLET_ID.equals(walletId)) {
             throw notFound();
         }
         List<Balance> result = new LinkedList<>();
@@ -194,7 +194,7 @@ public class GuiBackendApiImplementation implements DefaultApi {
     // Get all the wallet addresses in the specified wallet
     @Override
     public List<WalletAddressDTO> get3(Long walletId) {
-        if (ONLY_SUPPORTED_WALLET_ID != walletId) {
+        if (!ONLY_SUPPORTED_WALLET_ID.equals(walletId)) {
             throw notFound();
         }
         return autoApproveApi.getWalletAddresses();
