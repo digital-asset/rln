@@ -42,14 +42,14 @@ data ClientInfo = ClientInfo with
     bearerToken : Text
   deriving (Eq, Show)
 
-data Output = Output with
-    guiBackendConfig : GuiBackendConfig
+data BackendConfig = BackendConfig with
+    assembler : Party
+    scheduler : Party
+    banks : [BankEntry]
     parties : [Party]
   deriving (Eq, Show)
 
-type GuiBackendConfig = [GuiBackendConfigEntry]
-
-data GuiBackendConfigEntry = GuiBackendConfigEntry with
+data BankEntry = BankEntry with
     id : Int
     baseUrl : Text
     damlPartyId : Party
@@ -58,17 +58,21 @@ data GuiBackendConfigEntry = GuiBackendConfigEntry with
   deriving (Eq, Show)
 
 
-onboarding : [PartyInfo] -> Script Output
+onboarding : [PartyInfo] -> Script BackendConfig
 onboarding partyInfo = do
   scheduler <- allocatePartyOn "Scheduler" (ParticipantName "schedulerParticipant")
   assembler <- allocatePartyOn "Assembler" (ParticipantName "assemblerParticipant")
   parties <- setupParties partyInfo
   mapA_ (setupBic  scheduler assembler parties) partyInfo
-  entries <- mapA (setupBalances parties) partyInfo
-  pure $ createOutput entries
+  entries <- mapA (setupBank parties) partyInfo
+  pure $ BackendConfig { 
+      assembler = assembler
+    , scheduler = scheduler
+    , banks = entries
+    , parties = map damlPartyId entries 
+    }
 
-
-extractConfig : [PartyInfo] -> Script Output
+extractConfig : [PartyInfo] -> Script [BankEntry]
 extractConfig partyInfo = do
   let participantNames = fmap (\info -> ParticipantName info.participantName) partyInfo
   knownParties <- fmap (.party) <$> listKnownParties
@@ -85,7 +89,7 @@ extractConfig partyInfo = do
     knownParties
   let entries = mapOptional
         (\info -> (\party ->
-          GuiBackendConfigEntry
+          BankEntry
             with
               id = info.id
               baseUrl = info.baseUrl
@@ -95,12 +99,7 @@ extractConfig partyInfo = do
           )
           <$> TextMap.lookup info.bic bics)
         partyInfo
-  pure $ createOutput entries
-
-
-createOutput : [GuiBackendConfigEntry] -> Output
-createOutput entries = Output { guiBackendConfig = entries, parties = map damlPartyId entries }
-
+  pure entries
 
 setupParties : [PartyInfo] -> Script (TextMap Party)
 setupParties partyInfo = do
@@ -126,8 +125,8 @@ setupBic scheduler assembler parties partyInfo = do
       assemblerShards = Set.singleton assembler
       otherBanks = Set.fromList . textMapValues $ TextMap.filter (/= party) parties
 
-setupBalances : TextMap Party -> PartyInfo -> Script GuiBackendConfigEntry
-setupBalances parties partyInfo = do
+setupBank : TextMap Party -> PartyInfo -> Script BankEntry
+setupBank parties partyInfo = do
   let party = fromSomeNote
         ("No party found for: " <> partyInfo.name)
         (TextMap.lookup partyInfo.name parties)
@@ -162,7 +161,7 @@ setupBalances parties partyInfo = do
         currency = "USD"
         amount = 0.0
 
-  pure GuiBackendConfigEntry
+  pure BankEntry
     with
       id = partyInfo.id
       baseUrl = partyInfo.baseUrl
