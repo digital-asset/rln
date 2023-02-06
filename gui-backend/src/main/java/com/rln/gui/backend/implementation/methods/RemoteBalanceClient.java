@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 
+import javax.ws.rs.core.UriBuilder;
+
 public class RemoteBalanceClient {
   private static final String ADDRESS_PARAMETER = "address";
   private static final String API_GETLOCALBALANCE_ENDPOINT = "/api/getlocalbalance";
@@ -32,11 +34,10 @@ public class RemoteBalanceClient {
   }
 
   static URI getRemoteBalanceUri(String baseUrl, String address) {
-    return URI.create(String
-        .format("http://%s%s?%s=%s",
-            baseUrl,
-            API_GETLOCALBALANCE_ENDPOINT,
-            ADDRESS_PARAMETER,
-            address));
+    return UriBuilder
+      .fromUri(baseUrl)
+      .path(API_GETLOCALBALANCE_ENDPOINT)
+      .queryParam(ADDRESS_PARAMETER, address)
+      .build();
   }
 }
