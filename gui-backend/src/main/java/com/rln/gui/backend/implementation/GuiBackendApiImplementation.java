@@ -272,8 +272,8 @@ public class GuiBackendApiImplementation implements DefaultApi {
     private List<Balance> accountBalanceToBalances(AccountBalance accountBalance) {
         var balance = Balance.builder()
                 .address(accountBalance.getAddress())
-                .assetId(AccountBalance.ASSET_ID) // default to 0 now, as we don't have assetId in the system yet
-                .assetName(accountBalance.getAssetName())
+                .assetId(AccountBalance.ASSET_ID) // hardcoded, as we don't have assetId in the system yet
+                .assetName(AccountBalance.ASSET_NAME) // hardcoded US Dollars (we do not care about the assetName in Daml)
                 .assetOrLiability(getAssetOrLiabilityEnum(accountBalance.getAccountInfo()))
                 .party(accountBalance.getProviderName())
                 .client(accountBalance.getOwnerName());

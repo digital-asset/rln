@@ -7,7 +7,8 @@ import java.util.Objects;
 
 @Getter
 public class AccountBalance {
-    public static final Long ASSET_ID = 0L;
+    public static final Long ASSET_ID = 1L;
+    public static final String ASSET_NAME = "US Dollars";
     private final AccountInfo accountInfo;
     private final String assetName;
     private final String address;
