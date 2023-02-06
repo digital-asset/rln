@@ -21,16 +21,21 @@ public class RemoteBalanceClient {
 
   @SneakyThrows
   public Stream<Balance> getRemoteBalance(String baseUrl, WalletAddressDTO walletAddressDTO) {
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(getRemoteBalanceUri(baseUrl, walletAddressDTO.getAddress()))
-        .GET()
-        .build();
+    HttpRequest request = getBalanceRequest(baseUrl, walletAddressDTO);
     HttpResponse<InputStream> response = HttpClient
         .newHttpClient()
         .send(request, HttpResponse.BodyHandlers.ofInputStream());
     return new ObjectMapper()
         .readValue(response.body(), new TypeReference<List<Balance>>() {})
         .stream();
+  }
+
+  static HttpRequest getBalanceRequest(String baseUrl, WalletAddressDTO walletAddressDTO) {
+    return HttpRequest.newBuilder()
+      .uri(getRemoteBalanceUri(baseUrl, walletAddressDTO.getAddress()))
+      .header("Authorization", "Bearer " + walletAddressDTO.getBearerToken())
+      .GET()
+      .build();
   }
 
   static URI getRemoteBalanceUri(String baseUrl, String address) {
