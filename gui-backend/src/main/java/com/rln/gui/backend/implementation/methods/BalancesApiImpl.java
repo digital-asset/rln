@@ -17,6 +17,7 @@ import com.rln.gui.backend.implementation.balanceManagement.exception.IbanNotFou
 import com.rln.gui.backend.implementation.balanceManagement.exception.NonZeroBalanceException;
 import com.rln.gui.backend.implementation.config.GuiBackendConfiguration;
 import com.rln.gui.backend.model.Balance;
+import com.rln.gui.backend.model.Balance.AssetOrLiabilityEnum;
 import com.rln.gui.backend.model.BalanceChange;
 import com.rln.gui.backend.model.WalletAddressDTO;
 import java.math.BigDecimal;
@@ -144,6 +145,8 @@ public class BalancesApiImpl {
   @SneakyThrows
   private Stream<Balance> getRemoteBalance(WalletAddressDTO walletAddressDTO) {
       var setlParty = setlPartySupplier.getSetlPartyBySetlPartyId(walletAddressDTO.getPartyId());
-      return remoteBalanceClient.getRemoteBalance(setlParty.getBaseUrl(), walletAddressDTO);
+      return remoteBalanceClient
+          .getRemoteBalance(setlParty.getBaseUrl(), walletAddressDTO)
+          .peek(balance -> balance.setAssetOrLiability(AssetOrLiabilityEnum.ASSET));
   }
 }
