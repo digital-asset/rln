@@ -17,7 +17,7 @@ import javax.ws.rs.core.UriBuilder;
 
 public class RemoteBalanceClient {
   private static final String ADDRESS_PARAMETER = "address";
-  private static final String API_GETLOCALBALANCE_ENDPOINT = "/api/getlocalbalance";
+  private static final String API_GET_LOCAL_BALANCE_ENDPOINT = "/api/getlocalbalance";
 
   @SneakyThrows
   public Stream<Balance> getRemoteBalance(String baseUrl, WalletAddressDTO walletAddressDTO) {
@@ -36,7 +36,7 @@ public class RemoteBalanceClient {
   static URI getRemoteBalanceUri(String baseUrl, String address) {
     return UriBuilder
       .fromUri(baseUrl)
-      .path(API_GETLOCALBALANCE_ENDPOINT)
+      .path(API_GET_LOCAL_BALANCE_ENDPOINT)
       .queryParam(ADDRESS_PARAMETER, address)
       .build();
   }
