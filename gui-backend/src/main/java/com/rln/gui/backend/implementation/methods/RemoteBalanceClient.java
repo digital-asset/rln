@@ -13,16 +13,15 @@ import java.util.List;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 
+import javax.ws.rs.core.UriBuilder;
+
 public class RemoteBalanceClient {
   private static final String ADDRESS_PARAMETER = "address";
-  private static final String API_GETLOCALBALANCE_ENDPOINT = "/api/getlocalbalance";
+  private static final String API_GET_LOCAL_BALANCE_ENDPOINT = "/api/getlocalbalance";
 
   @SneakyThrows
   public Stream<Balance> getRemoteBalance(String baseUrl, WalletAddressDTO walletAddressDTO) {
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(getRemoteBalanceUri(baseUrl, walletAddressDTO.getAddress()))
-        .GET()
-        .build();
+    HttpRequest request = getBalanceRequest(baseUrl, walletAddressDTO);
     HttpResponse<InputStream> response = HttpClient
         .newHttpClient()
         .send(request, HttpResponse.BodyHandlers.ofInputStream());
@@ -31,12 +30,19 @@ public class RemoteBalanceClient {
         .stream();
   }
 
+  static HttpRequest getBalanceRequest(String baseUrl, WalletAddressDTO walletAddressDTO) {
+    return HttpRequest.newBuilder()
+      .uri(getRemoteBalanceUri(baseUrl, walletAddressDTO.getAddress()))
+      .header("Authorization", "Bearer " + walletAddressDTO.getBearerToken())
+      .GET()
+      .build();
+  }
+
   static URI getRemoteBalanceUri(String baseUrl, String address) {
-    return URI.create(String
-        .format("http://%s%s?%s=%s",
-            baseUrl,
-            API_GETLOCALBALANCE_ENDPOINT,
-            ADDRESS_PARAMETER,
-            address));
+    return UriBuilder
+      .fromUri(baseUrl)
+      .path(API_GET_LOCAL_BALANCE_ENDPOINT)
+      .queryParam(ADDRESS_PARAMETER, address)
+      .build();
   }
 }
