@@ -11,16 +11,16 @@ class RemoteBalanceClientTest {
   @Test
   void test_getRemoteBalanceUri() {
     var uri = RemoteBalanceClient.getRemoteBalanceUri("http://" + LedgerBaseTest.BASEURL, LedgerBaseTest.SENDER_IBAN);
-    Assertions.assertEquals("http://baseurl/api/getlocalbalance?address=SENDER_IBAN", uri.toString());
+    Assertions.assertEquals("http://baseurl/api/getLocalBalance?address=SENDER_IBAN", uri.toString());
 
     uri = RemoteBalanceClient.getRemoteBalanceUri("http://" + LedgerBaseTest.BASEURL + "/", LedgerBaseTest.SENDER_IBAN);
-    Assertions.assertEquals("http://baseurl/api/getlocalbalance?address=SENDER_IBAN", uri.toString());
+    Assertions.assertEquals("http://baseurl/api/getLocalBalance?address=SENDER_IBAN", uri.toString());
 
     uri = RemoteBalanceClient.getRemoteBalanceUri("https://" + LedgerBaseTest.BASEURL + "/", LedgerBaseTest.SENDER_IBAN);
-    Assertions.assertEquals("https://baseurl/api/getlocalbalance?address=SENDER_IBAN", uri.toString());
+    Assertions.assertEquals("https://baseurl/api/getLocalBalance?address=SENDER_IBAN", uri.toString());
 
     uri = RemoteBalanceClient.getRemoteBalanceUri("https://" + LedgerBaseTest.BASEURL + "/", LedgerBaseTest.SENDER_IBAN);
-    Assertions.assertEquals("https://baseurl/api/getlocalbalance?address=SENDER_IBAN", uri.toString());
+    Assertions.assertEquals("https://baseurl/api/getLocalBalance?address=SENDER_IBAN", uri.toString());
   }
 
   @Test
