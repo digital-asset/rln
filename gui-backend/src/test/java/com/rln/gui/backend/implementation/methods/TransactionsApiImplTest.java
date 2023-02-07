@@ -146,7 +146,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
     TransactionsTestUtils
         .checkListedTransactionsForSenderReceiver(approvedCid, GROUP_ID, MESSAGE_ID, SENDER_IBAN,
             RECEIVER_IBAN, BANK_BIC,
-            USD, TRANSACTION_AMOUNT, GuiBackendConstants.SUCCESS_STATUS);
+            USD, TRANSACTION_AMOUNT, GuiBackendConstants.APPROVE_STATUS);
 
     cleanupContract(getCurrentBankPartyId(), ApprovedTransferProposal.TEMPLATE_ID, approvedCid);
   }

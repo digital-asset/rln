@@ -5,6 +5,7 @@
 package com.rln.gui.backend.ods;
 
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Named;
@@ -17,6 +18,21 @@ import java.util.stream.Collectors;
 @Named("in-memory")
 public class InMemoryTransferProposalRepository implements TransferProposalRepository {
   private final Collection<TransferProposal> proposals = new ConcurrentLinkedQueue<>();
+
+  @Override
+  public void update(Predicate<TransferProposal> filter,
+      Function<TransferProposal, TransferProposal> remap) {
+    var affectedProposals = proposals
+        .stream()
+        .filter(filter)
+        .collect(Collectors.toList());
+    var newProposals = affectedProposals
+        .stream()
+        .map(remap)
+        .collect(Collectors.toList());
+    proposals.removeAll(affectedProposals);
+    proposals.addAll(newProposals);
+  }
 
   @Override
   public void save(TransferProposal proposal) {
