@@ -20,4 +20,6 @@ public interface GuiBackendConfiguration {
 
   Path partiesConfig();
   Path remoteOwnedAddressesConfig();
+
+  boolean remoteBalancesActive();
 }
