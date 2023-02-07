@@ -10,7 +10,7 @@ import Model.BankBIC
 import Model.Balance
 import DA.Set qualified as Set
 import DA.Foldable (mapA_, forA_)
-import DA.Optional (mapOptional, fromSomeNote, whenSome)
+import DA.Optional (mapOptional, fromSomeNote, whenSome, fromOptional)
 import qualified DA.TextMap as TextMap
 import DA.TextMap (TextMap)
 import DA.Action (foldlA, void)
@@ -29,9 +29,11 @@ data PartyInfo = PartyInfo with
   clients : [ClientInfo]
 
 data Account = Account with
-  provider : Text
-  iban : Iban
-  bearerToken : Text
+    clientId : Int
+    provider : Text
+    iban : Iban
+    bearerToken : Text
+  deriving (Eq, Show)
 
 type Iban = Text
 
@@ -54,6 +56,7 @@ data BankEntry = BankEntry with
     baseUrl : Text
     damlPartyId : Party
     name : Text
+    treasuryAccounts : [Account]
     clients : [ClientInfo]
   deriving (Eq, Show)
 
@@ -95,6 +98,7 @@ extractConfig partyInfo = do
               baseUrl = info.baseUrl
               damlPartyId = party
               name = info.name
+              treasuryAccounts = fromOptional [] info.accounts
               clients = info.clients
           )
           <$> TextMap.lookup info.bic bics)
@@ -166,6 +170,7 @@ setupBank parties partyInfo = do
       baseUrl = partyInfo.baseUrl
       damlPartyId = party
       name = partyInfo.name
+      treasuryAccounts = fromOptional [] partyInfo.accounts
       clients = partyInfo.clients
 
 -- Helper
