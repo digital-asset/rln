@@ -25,7 +25,7 @@ public class InMemoryTransferProposalRepository implements TransferProposalRepos
     var affectedProposals = proposals
         .stream()
         .filter(filter)
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
     var newProposals = affectedProposals
         .stream()
         .map(remap)
