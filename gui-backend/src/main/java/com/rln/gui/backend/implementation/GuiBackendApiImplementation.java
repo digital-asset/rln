@@ -181,7 +181,9 @@ public class GuiBackendApiImplementation implements DefaultApi {
             throw notFound();
         }
         List<Balance> result = new LinkedList<>();
-        result.addAll(balancesApi.getRemoteBalances());
+        if (configuration.remoteBalancesActive()) {
+            result.addAll(balancesApi.getRemoteBalances());
+        }
         result.addAll(balancesApi
                 .getBalances(walletId)
                 .stream()

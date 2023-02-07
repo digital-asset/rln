@@ -156,6 +156,11 @@ public class LedgerBaseTest {
 
     @Override
     public Path remoteOwnedAddressesConfig() { return Path.of("some-addresses.config"); }
+
+    @Override
+    public boolean remoteBalancesActive() {
+      return true;
+    }
   }
 
   @BeforeAll
