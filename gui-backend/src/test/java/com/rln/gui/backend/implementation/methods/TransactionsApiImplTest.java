@@ -9,6 +9,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.rln.client.damlClient.TestUtils;
 import com.rln.client.damlClient.partyManagement.RandomShardPartyPicker;
 import com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer;
+import com.rln.damlCodegen.workflow.transactionmanifest.SettlementFinalized;
+import com.rln.damlCodegen.workflow.transactionmanifest.TransactionManifest;
 import com.rln.damlCodegen.workflow.transferproposal.ApprovedTransferProposal;
 import com.rln.damlCodegen.workflow.transferproposal.RejectedTransferProposal;
 import com.rln.damlCodegen.workflow.transferproposal.TransferProposal;
@@ -24,15 +26,20 @@ import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mockito;
 
 @TestProfile(GuiBackendTestProfile.class)
@@ -181,6 +188,66 @@ class TransactionsApiImplTest extends LedgerBaseTest {
             USD, TRANSACTION_AMOUNT, GuiBackendConstants.REJECTED_STATUS);
 
     cleanupContract(getCurrentBankPartyId(), RejectedTransferProposal.TEMPLATE_ID, rejectedCid);
+  }
+
+  @Test
+  void apiTransactions() throws InvalidProtocolBufferException {
+    var transferProposalCid = publishTransferProposalToLedger(
+      getCurrentBankPartyId(),
+      getSchedulerPartyId(),
+      getAssemblerPartyId(),
+      GROUP_ID,
+      MESSAGE_ID,
+      USD_INSTRUMENT_SETTLEMENT_STEP
+    ).getValue();
+
+    TransactionsTestUtils.checkListedTransactionsForSenderReceiver(transferProposalCid,
+      GROUP_ID,
+      MESSAGE_ID,
+      SENDER_IBAN,
+      RECEIVER_IBAN,
+      BANK_BIC,
+      USD,
+      TRANSACTION_AMOUNT,
+      GuiBackendConstants.WAITING_STATUS
+    );
+
+    SANDBOX
+      .getLedgerAdapter()
+      .createContract(
+        getAssemblerPartyId(),
+        SettlementFinalized.TEMPLATE_ID,
+        new SettlementFinalized(
+          getAssemblerPartyId().getValue(),
+          GROUP_ID,
+          List.of(getCurrentBankPartyId().getValue())
+        ).toValue()
+      );
+    var settlementFinalized = SANDBOX
+      .getLedgerAdapter()
+      .getCreatedContractId(
+        getAssemblerPartyId(),
+        SettlementFinalized.TEMPLATE_ID,
+        SettlementFinalized.ContractId::new
+      );
+
+    Eventually.eventually(() -> {
+      var transactions = RestAssured
+        .get("/api/transactions")
+        .then()
+        .extract().body().as(new TypeRef<List<Transaction>>() {
+        });
+      MatcherAssert.assertThat(
+        transactions,
+        Matchers.contains(
+          Matchers.hasProperty("status", Matchers.equalTo("SUCCESS")),
+          Matchers.hasProperty("status", Matchers.equalTo("SUCCESS"))
+        )
+      );
+    });
+
+    cleanupContract(getSchedulerPartyId(), TransferProposal.TEMPLATE_ID, transferProposalCid);
+    cleanupContract(getAssemblerPartyId(), SettlementFinalized.TEMPLATE_ID, settlementFinalized.contractId);
   }
 
 }
