@@ -87,7 +87,7 @@ extractConfig partyInfo = do
       pure $ TextMap.union result partyBicMapping)
     TextMap.empty
     knownParties
-  let entries = mapOptional
+  pure $ mapOptional
         (\info -> (\party ->
           BankEntry
             with
@@ -99,7 +99,6 @@ extractConfig partyInfo = do
           )
           <$> TextMap.lookup info.bic bics)
         partyInfo
-  pure entries
 
 setupParties : [PartyInfo] -> Script (TextMap Party)
 setupParties partyInfo = do
