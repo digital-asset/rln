@@ -19,6 +19,10 @@ public interface TransferProposalRepository {
     return findAll(TransferProposal::isWaiting, null, null);
   }
 
+  default Collection<TransferProposal> findAll() {
+    return findAll(x -> true, null, null);
+  }
+
   Collection<TransferProposal> findAll(Predicate<TransferProposal> filter, Long limit, Long offset);
 
   void deleteAllByContractId(Collection<String> contractIds);
