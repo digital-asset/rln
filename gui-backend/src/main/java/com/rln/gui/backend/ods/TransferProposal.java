@@ -76,7 +76,7 @@ public class TransferProposal {
             .contractId(createdEvent.getContractId())
             .groupId(groupId)
             .messageId(messageId)
-            .transactionId("")
+            .transactionId(groupId)
             .partyCode(owner)
             .status(status)
             .assetCode(label);
