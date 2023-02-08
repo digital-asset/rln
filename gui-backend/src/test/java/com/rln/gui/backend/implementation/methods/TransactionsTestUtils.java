@@ -84,7 +84,7 @@ public class TransactionsTestUtils {
   public static void checkListedApprovalResult(String contractId, Transaction listedItem, String groupId, String messageId,
                                                String iban, Subject subject, String bic, BigDecimal transactionAmount) {
     Assertions.assertEquals(CompoundUniqueIdUtil.getCompoundUniqueId(subject, contractId), listedItem.getId());
-    Assertions.assertTrue(listedItem.getTransactionId().isEmpty());
+    Assertions.assertEquals(groupId, listedItem.getTransactionId());
     Assertions.assertEquals(groupId, listedItem.getGroupId());
     Assertions.assertEquals(messageId, listedItem.getMessageId());
     Assertions.assertEquals(iban, listedItem.getAddress());
