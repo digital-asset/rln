@@ -129,7 +129,7 @@ public class TransferProposal {
       return GuiBackendConstants.WAITING_STATUS;
     } else if (ApprovedTransferProposal.TEMPLATE_ID.equals(createdEvent.getTemplateId())) {
       return GuiBackendConstants.APPROVE_STATUS;
-    } else { // RejectedTransferProposal
+    } else {
       return GuiBackendConstants.REJECTED_STATUS;
     }
   }
