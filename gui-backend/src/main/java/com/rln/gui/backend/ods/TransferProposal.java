@@ -9,24 +9,21 @@ import com.daml.ledger.javaapi.data.DamlOptional;
 import com.daml.ledger.javaapi.data.DamlRecord;
 import com.daml.ledger.javaapi.data.Text;
 import com.daml.ledger.javaapi.data.Value;
-import com.daml.ledger.javaapi.data.Variant;
-import com.rln.damlCodegen.da.types.Tuple2;
-import com.rln.damlCodegen.workflow.data.ibans.SenderAndReceiver;
 import com.rln.damlCodegen.workflow.transferproposal.ApprovedTransferProposal;
 import com.rln.gui.backend.implementation.common.CompoundUniqueIdUtil;
 import com.rln.gui.backend.implementation.common.GuiBackendConstants;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
 
-@Builder(access = AccessLevel.PRIVATE)
+@Builder(access = AccessLevel.PACKAGE, toBuilder = true)
 @Getter
 public class TransferProposal {
+
   private String id;
   private String contractId;
   private String transactionId;
@@ -53,6 +50,16 @@ public class TransferProposal {
   private static final String AMOUNT = "amount";
   private static final String LABEL = "label";
 
+  public TransferProposal finalizeSettlement() {
+    return new TransferProposal(id, contractId, transactionId, groupId, messageId, address,
+        partyCode, assetCode, amount, GuiBackendConstants.SUCCESS_STATUS);
+  }
+
+  public TransferProposal rejectSettlement() {
+    return new TransferProposal(id, contractId, transactionId, groupId, messageId, address,
+        partyCode, assetCode, amount, GuiBackendConstants.REJECTED_STATUS);
+  }
+
   public static Stream<TransferProposal> createFrom(CreatedEvent createdEvent) {
     var result = Stream.<TransferProposal>builder();
     var status = getTransactionProposalStatus(createdEvent);
@@ -65,26 +72,28 @@ public class TransferProposal {
     var amount = getField(delivery, AMOUNT, Value::asNumeric).getValue();
     var label = getField(delivery, LABEL, Value::asText).getValue();
     var proposal =
-      TransferProposal.builder()
-        .contractId(createdEvent.getContractId())
-        .groupId(groupId)
-        .messageId(messageId)
-        .transactionId("")
-        .partyCode(owner)
-        .status(status)
-        .assetCode(label);
+        TransferProposal.builder()
+            .contractId(createdEvent.getContractId())
+            .groupId(groupId)
+            .messageId(messageId)
+            .transactionId("")
+            .partyCode(owner)
+            .status(status)
+            .assetCode(label);
     senderOf(stepRecord).ifPresent(senderIBAN ->
-      result.add(proposal
-        .id(CompoundUniqueIdUtil.getCompoundUniqueId(CompoundUniqueIdUtil.Subject.SENDER, createdEvent.getContractId()))
-        .address(senderIBAN)
-        .amount(amount.negate())
-        .build()));
+        result.add(proposal
+            .id(CompoundUniqueIdUtil.getCompoundUniqueId(CompoundUniqueIdUtil.Subject.SENDER,
+                createdEvent.getContractId()))
+            .address(senderIBAN)
+            .amount(amount.negate())
+            .build()));
     receiverOf(stepRecord).ifPresent(receiverIBAN ->
-      result.add(proposal
-        .id(CompoundUniqueIdUtil.getCompoundUniqueId(CompoundUniqueIdUtil.Subject.RECEIVER, createdEvent.getContractId()))
-        .address(receiverIBAN)
-        .amount(amount)
-        .build()));
+        result.add(proposal
+            .id(CompoundUniqueIdUtil.getCompoundUniqueId(CompoundUniqueIdUtil.Subject.RECEIVER,
+                createdEvent.getContractId()))
+            .address(receiverIBAN)
+            .amount(amount)
+            .build()));
     return result.build();
   }
 
@@ -115,10 +124,11 @@ public class TransferProposal {
   }
 
   private static String getTransactionProposalStatus(CreatedEvent createdEvent) {
-    if (com.rln.damlCodegen.workflow.transferproposal.TransferProposal.TEMPLATE_ID.equals(createdEvent.getTemplateId())) {
+    if (com.rln.damlCodegen.workflow.transferproposal.TransferProposal.TEMPLATE_ID
+        .equals(createdEvent.getTemplateId())) {
       return GuiBackendConstants.WAITING_STATUS;
     } else if (ApprovedTransferProposal.TEMPLATE_ID.equals(createdEvent.getTemplateId())) {
-      return GuiBackendConstants.SUCCESS_STATUS;
+      return GuiBackendConstants.APPROVE_STATUS;
     } else {
       return GuiBackendConstants.REJECTED_STATUS;
     }
@@ -126,15 +136,17 @@ public class TransferProposal {
 
   private static Optional<String> toOptionalString(DamlOptional optional) {
     return optional
-      .toOptional(v ->
-        v.asText()
-          .orElseThrow(() -> new RuntimeException("There is no text in the Daml optional value."))
-          .getValue());
+        .toOptional(v ->
+            v.asText()
+                .orElseThrow(
+                    () -> new RuntimeException("There is no text in the Daml optional value."))
+                .getValue());
   }
 
-  private static <T> T getField(DamlRecord arguments, String name, Function<Value, Optional<T>> asDamlType) {
+  private static <T> T getField(DamlRecord arguments, String name,
+      Function<Value, Optional<T>> asDamlType) {
     return asDamlType
-      .apply(arguments.getFieldsMap().get(name))
-      .orElseThrow(() -> new RuntimeException("Missing field: " + name));
+        .apply(arguments.getFieldsMap().get(name))
+        .orElseThrow(() -> new RuntimeException("Missing field: " + name));
   }
 }

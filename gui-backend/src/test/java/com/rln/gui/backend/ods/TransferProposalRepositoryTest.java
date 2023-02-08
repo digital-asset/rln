@@ -10,6 +10,8 @@ import com.daml.ledger.javaapi.data.Template;
 import com.rln.damlCodegen.workflow.data.Instrument;
 import com.rln.damlCodegen.workflow.data.SettlementStep;
 import com.rln.damlCodegen.workflow.data.ibans.SenderAndReceiver;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,6 +19,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -78,6 +81,33 @@ class TransferProposalRepositoryTest {
     Assertions.assertIterableEquals(
       List.of(proposal1, proposal2),
       proposals
+    );
+  }
+
+  @Test
+  void update_replaces_all_proposals_where_predicate_applies() {
+    var proposal = TransferProposal.builder();
+    transferProposals.save(proposal.assetCode("HUF").build());
+    transferProposals.save(proposal.assetCode("USD").build());
+    transferProposals.save(proposal.assetCode("USD").build());
+    transferProposals.save(proposal.assetCode("HUF").build());
+    transferProposals.save(proposal.assetCode("HUF").build());
+
+    transferProposals.update(
+      x -> "USD".equals(x.getAssetCode()),
+      x -> x.toBuilder().assetCode("EUR").build()
+    );
+    var proposals = transferProposals.findAll();
+
+    MatcherAssert.assertThat(
+      proposals,
+      Matchers.contains(
+        Matchers.hasProperty("assetCode", Matchers.equalTo("HUF")),
+        Matchers.hasProperty("assetCode", Matchers.equalTo("HUF")),
+        Matchers.hasProperty("assetCode", Matchers.equalTo("HUF")),
+        Matchers.hasProperty("assetCode", Matchers.equalTo("EUR")),
+        Matchers.hasProperty("assetCode", Matchers.equalTo("EUR"))
+      )
     );
   }
 
