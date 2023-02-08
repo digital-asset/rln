@@ -71,7 +71,7 @@ public class TransactionsTestUtils {
                                                   String iban, Subject subject, String status, String bic, String assetCode,
                                                   BigDecimal transactionAmount) {
     Assertions.assertEquals(CompoundUniqueIdUtil.getCompoundUniqueId(subject, contractId), listedItem.getId());
-    Assertions.assertTrue(listedItem.getTransactionId().isEmpty());
+    Assertions.assertEquals(groupId, listedItem.getTransactionId());
     Assertions.assertEquals(groupId, listedItem.getGroupId());
     Assertions.assertEquals(messageId, listedItem.getMessageId());
     Assertions.assertEquals(iban, listedItem.getAddress());
