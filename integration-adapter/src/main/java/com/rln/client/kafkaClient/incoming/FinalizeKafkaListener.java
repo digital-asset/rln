@@ -5,8 +5,11 @@
 package com.rln.client.kafkaClient.incoming;
 
 import com.rln.client.kafkaClient.message.FinalizeRejectSettlement;
+import com.rln.client.kafkaClient.message.InitiateTransfer;
 import com.rln.messageprocessing.MessageProcessor;
+import io.smallrye.mutiny.Uni;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
 
 public class FinalizeKafkaListener {
   MessageProcessor<FinalizeRejectSettlement>  processor;
@@ -16,7 +19,9 @@ public class FinalizeKafkaListener {
   }
 
   @Incoming("finalize-reject-settlement-message-in")
-  public void acceptFinalizeMessage(FinalizeRejectSettlement message) {
-    processor.accept(message);
+  public Uni<Void> acceptFinalizeMessage(Message<String> message) {
+    var payload = MessageExtractor.extractPayloadAs(message, FinalizeRejectSettlement.class);
+    payload.ifPresent(processor);
+    return Uni.createFrom().voidItem();
   }
 }

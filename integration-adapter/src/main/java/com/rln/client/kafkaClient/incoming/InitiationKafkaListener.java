@@ -7,9 +7,13 @@ package com.rln.client.kafkaClient.incoming;
 import com.rln.client.kafkaClient.message.InitiateTransfer;
 import com.rln.messageprocessing.MessageProcessor;
 import com.rln.messageprocessing.kafka.KafkaInitiationMessageProcessor;
+import io.smallrye.mutiny.Uni;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 
 public class InitiationKafkaListener {
@@ -23,7 +27,7 @@ public class InitiationKafkaListener {
     }
 
     @Incoming("initiation-message-in")
-    public void acceptInitiationMessage(InitiateTransfer message) {
+    public Uni<Void> acceptInitiationMessage(Message<String> message) {
         // To disable this, see:
         // https://github.com/quarkusio/quarkus/issues/19318
         // https://quarkus.io/guides/kafka#kafka-configuration
@@ -33,6 +37,8 @@ public class InitiationKafkaListener {
         // https://smallrye.io/smallrye-reactive-messaging/3.16.0/kafka/transactions/#exactly-once-processing
         // https://smallrye.io/smallrye-reactive-messaging/smallrye-reactive-messaging/3.1/kafka/kafka.html#_receiving_kafka_records_in_batches
         // https://smallrye.io/smallrye-reactive-messaging/smallrye-reactive-messaging/3.3/acknowledgement/acknowledgement.html#_acknowledgment_when_using_messages
-        processor.accept(message);
+      var payload = MessageExtractor.extractPayloadAs(message, InitiateTransfer.class);
+      payload.ifPresent(processor);
+      return Uni.createFrom().voidItem();
     }
 }
