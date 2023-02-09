@@ -21,6 +21,8 @@ import com.rln.gui.backend.model.TransactionStatusUpdate;
 import com.rln.gui.backend.model.TransactionStatusUpdate.StatusEnum;
 import com.rln.gui.backend.model.TransferProposal;
 import com.rln.gui.backend.ods.TransferProposalRepository;
+import io.vertx.core.impl.ConcurrentHashSet;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -37,6 +39,8 @@ public class TransactionsApiImpl {
   private final RLNClient rlnClient;
   private final TransferProposalToApiTypeConverter converter;
 
+  private final ConcurrentHashSet<String> alreadyApprovedTransferProposals = new ConcurrentHashSet<String>();
+
   public TransactionsApiImpl(RandomShardPartyPicker schedulerRandomShardPartyPicker,
                              GuiBackendConfiguration guiBackendConfiguration,
                              TransferProposalToApiTypeConverter converter,
@@ -51,16 +55,19 @@ public class TransactionsApiImpl {
 
   public Object updateTransactionApprovalStatus(
       @Valid TransactionStatusUpdate transactionStatusUpdate) {
-    var approved = transactionStatusUpdate.getStatus().equals(StatusEnum.APPROVE);
     var contractId = CompoundUniqueIdUtil.parseSubjectAndContractId(transactionStatusUpdate.getId())._2;
-    ApproveRejectProposalChoiceParameters parameters =
-        new ApproveRejectProposalChoiceParameters(
-            guiBackendConfiguration.partyDamlId(),
-            new ContractId(contractId),
-            approved,
-            GuiBackendConstants.DEFAULT_GUI_BACKEND_REASON,
-            GUI_BACKEND_SETTLES_ON_LEDGER);
-    rlnClient.exerciseApproveRejectProposalChoice(transactionStatusUpdate.getId(), parameters);
+    if (!alreadyApprovedTransferProposals.contains(contractId)) {
+      var approved = transactionStatusUpdate.getStatus().equals(StatusEnum.APPROVE);
+      ApproveRejectProposalChoiceParameters parameters =
+              new ApproveRejectProposalChoiceParameters(
+                      guiBackendConfiguration.partyDamlId(),
+                      new ContractId(contractId),
+                      approved,
+                      GuiBackendConstants.DEFAULT_GUI_BACKEND_REASON,
+                      GUI_BACKEND_SETTLES_ON_LEDGER);
+      rlnClient.exerciseApproveRejectProposalChoice(transactionStatusUpdate.getId(), parameters);
+      alreadyApprovedTransferProposals.add(contractId);
+    }
     return Collections.emptyMap();
   }
 
