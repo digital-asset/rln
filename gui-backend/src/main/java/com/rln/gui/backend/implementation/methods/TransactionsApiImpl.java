@@ -38,7 +38,7 @@ public class TransactionsApiImpl {
   private final TransferProposalRepository transferProposals;
   private final RLNClient rlnClient;
   private final TransferProposalToApiTypeConverter converter;
-
+  
   private final ConcurrentHashSet<String> alreadyApprovedTransferProposals = new ConcurrentHashSet<String>();
 
   public TransactionsApiImpl(RandomShardPartyPicker schedulerRandomShardPartyPicker,

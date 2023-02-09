@@ -43,9 +43,9 @@ public class TransactionsTestUtils {
     return updateApprovalRequest;
   }
 
-  public static Map<String, Object> createApprovalRequest(String contractId) {
+  public static Map<String, Object> createApprovalRequest(Subject subject, String contractId) {
     Map<String, Object> updateApprovalRequest = new HashMap<>();
-    updateApprovalRequest.put("id", CompoundUniqueIdUtil.getCompoundUniqueId(Subject.SENDER, contractId));
+    updateApprovalRequest.put("id", CompoundUniqueIdUtil.getCompoundUniqueId(subject, contractId));
     updateApprovalRequest.put("status", StatusEnum.APPROVE);
     return updateApprovalRequest;
   }
