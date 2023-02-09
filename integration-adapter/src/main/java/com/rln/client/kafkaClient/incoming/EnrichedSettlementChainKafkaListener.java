@@ -6,9 +6,7 @@ package com.rln.client.kafkaClient.incoming;
 
 import com.rln.client.kafkaClient.message.EnrichedPacs008;
 import com.rln.messageprocessing.MessageProcessor;
-import io.smallrye.mutiny.Uni;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
 
 public class EnrichedSettlementChainKafkaListener {
   MessageProcessor<EnrichedPacs008> processor;
@@ -18,9 +16,8 @@ public class EnrichedSettlementChainKafkaListener {
   }
 
   @Incoming("enriched-message-in")
-  public Uni<Void> acceptEnrichedSettlementChainMessage(Message<String> message) {
-    var payload = MessageExtractor.extractPayloadAs(message, EnrichedPacs008.class);
+  public void acceptEnrichedSettlementChainMessage(String message) {
+    var payload = MessageExtractor.extractAs(message, EnrichedPacs008.class);
     payload.ifPresent(processor);
-    return Uni.createFrom().voidItem();
   }
 }
