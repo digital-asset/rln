@@ -8,7 +8,6 @@ import com.rln.client.kafkaClient.message.InitiateTransfer;
 import com.rln.messageprocessing.MessageProcessor;
 import com.rln.messageprocessing.kafka.KafkaInitiationMessageProcessor;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
