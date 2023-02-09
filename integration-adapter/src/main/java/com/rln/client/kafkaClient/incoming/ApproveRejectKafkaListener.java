@@ -16,7 +16,8 @@ public class ApproveRejectKafkaListener {
   }
 
   @Incoming("approve-reject-message-in")
-  public void acceptRejectMessage(ApproveRejectProposal message) {
-    processor.accept(message);
+  public void acceptRejectMessage(String message) {
+    var payload = MessageExtractor.extractAs(message, ApproveRejectProposal.class);
+    payload.ifPresent(processor);
   }
 }

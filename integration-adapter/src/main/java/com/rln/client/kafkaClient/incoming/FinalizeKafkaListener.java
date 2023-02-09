@@ -9,14 +9,15 @@ import com.rln.messageprocessing.MessageProcessor;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 public class FinalizeKafkaListener {
-  MessageProcessor<FinalizeRejectSettlement>  processor;
+  MessageProcessor<FinalizeRejectSettlement> processor;
 
   public FinalizeKafkaListener(MessageProcessor<FinalizeRejectSettlement> processor) {
     this.processor = processor;
   }
 
   @Incoming("finalize-reject-settlement-message-in")
-  public void acceptFinalizeMessage(FinalizeRejectSettlement message) {
-    processor.accept(message);
+  public void acceptFinalizeMessage(String message) {
+    var payload = MessageExtractor.extractAs(message, FinalizeRejectSettlement.class);
+    payload.ifPresent(processor);
   }
 }

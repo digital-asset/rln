@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+
 public class InitiationKafkaListener {
 
     private static final Logger logger = LoggerFactory.getLogger(InitiationKafkaListener.class);
@@ -23,7 +24,7 @@ public class InitiationKafkaListener {
     }
 
     @Incoming("initiation-message-in")
-    public void acceptInitiationMessage(InitiateTransfer message) {
+    public void acceptInitiationMessage(String message) {
         // To disable this, see:
         // https://github.com/quarkusio/quarkus/issues/19318
         // https://quarkus.io/guides/kafka#kafka-configuration
@@ -33,6 +34,7 @@ public class InitiationKafkaListener {
         // https://smallrye.io/smallrye-reactive-messaging/3.16.0/kafka/transactions/#exactly-once-processing
         // https://smallrye.io/smallrye-reactive-messaging/smallrye-reactive-messaging/3.1/kafka/kafka.html#_receiving_kafka_records_in_batches
         // https://smallrye.io/smallrye-reactive-messaging/smallrye-reactive-messaging/3.3/acknowledgement/acknowledgement.html#_acknowledgment_when_using_messages
-        processor.accept(message);
+      var payload = MessageExtractor.extractAs(message, InitiateTransfer.class);
+      payload.ifPresent(processor);
     }
 }
