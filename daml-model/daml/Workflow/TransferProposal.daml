@@ -68,6 +68,14 @@ template ApprovedTransferProposal
   where
     signatory owner
 
+    choice RejectApprovedProposal : ContractId RejectedTransferProposal
+      with
+        reason: Optional Text
+      controller owner
+        do
+          now <- getTime
+          create RejectedTransferProposal with rejectionTime = now, ..
+
 template RejectedTransferProposal
   with
     owner: Party
