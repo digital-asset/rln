@@ -116,8 +116,10 @@ class TransferProposalRepositoryTest {
       com.rln.damlCodegen.workflow.transferproposal.RejectedTransferProposal.TEMPLATE_ID,
       new com.rln.damlCodegen.workflow.transferproposal.RejectedTransferProposal(
         "Owner",
+        "Assembler",
         Instant.now(),
         Instant.now(),
+        Optional.empty(),
         new SettlementStep(
           new SenderAndReceiver("Alice", "Bob"),
           new Instrument(BigDecimal.TEN, "EUR")
@@ -136,8 +138,10 @@ class TransferProposalRepositoryTest {
       com.rln.damlCodegen.workflow.transferproposal.ApprovedTransferProposal.TEMPLATE_ID,
       new com.rln.damlCodegen.workflow.transferproposal.ApprovedTransferProposal(
         "Owner",
+              "Assembler",
         Instant.now(),
         Instant.now(),
+        Optional.empty(),
         new SettlementStep(
             new SenderAndReceiver("Alice", "Bob"),
           new Instrument(BigDecimal.TEN, "EUR")

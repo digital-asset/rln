@@ -30,13 +30,13 @@ public class ApproveRejectProposalToDamlTranslation implements Function<ApproveR
     }
 
     @Override
-    public ApproveRejectProposalChoiceParameters apply(ApproveRejectProposal initiateTransfer) {
-        TransferProposalKey transferProposalKey = new TransferProposalKey(initiateTransfer.getGroupId(),
-                initiateTransfer.getMessageId(), initiateTransfer.getBankBic());
+    public ApproveRejectProposalChoiceParameters apply(ApproveRejectProposal approveRejectProposal) {
+        TransferProposalKey transferProposalKey = new TransferProposalKey(approveRejectProposal.getGroupId(),
+                approveRejectProposal.getMessageId(), approveRejectProposal.getBankBic());
         var bankPartyId = bankPartyCache.read(transferProposalKey);
         var contractId = transferProposalCache.readFromKeyToValue(transferProposalKey);
-        var approved = Status.APPROVE.equals(initiateTransfer.getStatus());
+        var approved = Status.APPROVE.equals(approveRejectProposal.getStatus());
         logger.info("Translation result bankPartyId {}, contractId {}, approved {}", bankPartyId, contractId, approved);
-        return new ApproveRejectProposalChoiceParameters(bankPartyId, contractId, approved, initiateTransfer.getReason(), IA_DOES_NOT_SETTLE_ON_LEDGER);
+        return new ApproveRejectProposalChoiceParameters(bankPartyId, contractId, approved, approveRejectProposal.getReason(), IA_DOES_NOT_SETTLE_ON_LEDGER);
     }
 }

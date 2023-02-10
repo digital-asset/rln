@@ -55,7 +55,7 @@ rejectionAfterApproval = script do
     .. <- initAndCreateProposals
 
   (approved, _) <- bank21 `submit` exerciseCmd proposal21Cid ApproveProposal with reason = None; settleOnLedger = True
-  _ : ContractId RejectedTransferProposal <- bank21 `submit` exerciseCmd approved RejectApprovedProposal with reason = None
+  _ : ContractId RejectedTransferProposal <- bank21 `submit` exerciseCmd approved RejectApprovedProposal with rejectionReason = None
 
   pure ()
 
