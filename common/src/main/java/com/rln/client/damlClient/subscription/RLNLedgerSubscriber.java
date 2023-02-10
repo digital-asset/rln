@@ -23,7 +23,7 @@ public class RLNLedgerSubscriber implements LedgerSubscriber<Disposable> {
     }
 
     @Override
-    public Disposable subscribe(String subscribeParty, Identifier templateId, Consumer<TransactionTree> consumer) {
+    public Disposable subscribe(String subscribeParty, Consumer<TransactionTree> consumer) {
         var transactions = ledger.getTransactionTrees(
                 subscribeParty, LedgerOffset.LedgerEnd.getInstance());
 

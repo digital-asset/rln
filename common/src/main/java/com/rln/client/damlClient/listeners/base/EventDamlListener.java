@@ -43,7 +43,7 @@ public abstract class EventDamlListener<E extends TreeEvent> {
 
     public void subscribe() {
         for (String shardPartyId : shardPartyIds) {
-            subscriber.subscribe(shardPartyId, templateId, new TransactionConsumer());
+            subscriber.subscribe(shardPartyId, new TransactionConsumer());
         }
     }
 

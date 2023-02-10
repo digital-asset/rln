@@ -43,7 +43,7 @@ class RLNLedgerSubscriberTest {
                 // makes the test fail (spy does not like it)
             }
         }));
-        subscriber.subscribe(INITIATOR_PARTY_ID, DUMMY_IDENTIFIER, consumer);
+        subscriber.subscribe(INITIATOR_PARTY_ID, consumer);
 
         Mockito.verify(consumer, Mockito.times(2)).accept(transactionTree);
     }

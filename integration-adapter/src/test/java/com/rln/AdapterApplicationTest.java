@@ -27,7 +27,7 @@ class AdapterApplicationTest {
     @BeforeAll
     static void setup() {
         RLNLedgerSubscriber mock = Mockito.mock(RLNLedgerSubscriber.class);
-        Mockito.when(mock.subscribe(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(null);
+        Mockito.when(mock.subscribe(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(null);
         QuarkusMock.installMockForType(mock, RLNLedgerSubscriber.class);
     }
 
