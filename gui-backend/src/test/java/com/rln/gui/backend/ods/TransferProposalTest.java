@@ -37,11 +37,11 @@ class TransferProposalTest {
     );
     Assertions.assertEquals(
       Optional.empty(),
-      TransferProposal.receiverOf(settlementStepWithIbans(new SenderOnly("XYZ")).toValue())
+      TransferProposal.receiverOf(settlementStepWithIbans(new ReceiverOnly("XYZ")).toValue())
     );
     Assertions.assertEquals(
       Optional.of("XYZ"),
-      TransferProposal.receiverOf(settlementStepWithIbans(new ReceiverOnly("XYZ")).toValue())
+      TransferProposal.receiverOf(settlementStepWithIbans(new SenderOnly("XYZ")).toValue())
     );
   }
 
