@@ -134,15 +134,6 @@ public class TransferProposal {
     }
   }
 
-  private static Optional<String> toOptionalString(DamlOptional optional) {
-    return optional
-        .toOptional(v ->
-            v.asText()
-                .orElseThrow(
-                    () -> new RuntimeException("There is no text in the Daml optional value."))
-                .getValue());
-  }
-
   private static <T> T getField(DamlRecord arguments, String name,
       Function<Value, Optional<T>> asDamlType) {
     return asDamlType
