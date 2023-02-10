@@ -97,27 +97,27 @@ public class TransferProposal {
     return result.build();
   }
 
-  private static Optional<String> senderOf(DamlRecord settlementStep) {
+  static Optional<String> senderOf(DamlRecord settlementStep) {
     var ibans = getField(settlementStep, IBANS, Value::asVariant);
     switch (ibans.getConstructor()) {
       case "SenderAndReceiver":
         var record = ibans.getValue().asRecord().get();
         return Optional.of(getField(record, SENDER, Value::asText).getValue());
       case "SenderOnly":
-        return ibans.asText().map(Text::getValue);
+        return ibans.getValue().asText().map(Text::getValue);
       default:
         return Optional.empty();
     }
   }
 
-  private static Optional<String> receiverOf(DamlRecord settlementStep) {
+  static Optional<String> receiverOf(DamlRecord settlementStep) {
     var ibans = getField(settlementStep, IBANS, Value::asVariant);
     switch (ibans.getConstructor()) {
       case "SenderAndReceiver":
         var record = ibans.getValue().asRecord().get();
         return Optional.of(getField(record, RECEIVER, Value::asText).getValue());
       case "SenderOnly":
-        return ibans.asText().map(Text::getValue);
+        return ibans.getValue().asText().map(Text::getValue);
       default:
         return Optional.empty();
     }
@@ -132,15 +132,6 @@ public class TransferProposal {
     } else {
       return GuiBackendConstants.REJECTED_STATUS;
     }
-  }
-
-  private static Optional<String> toOptionalString(DamlOptional optional) {
-    return optional
-        .toOptional(v ->
-            v.asText()
-                .orElseThrow(
-                    () -> new RuntimeException("There is no text in the Daml optional value."))
-                .getValue());
   }
 
   private static <T> T getField(DamlRecord arguments, String name,
