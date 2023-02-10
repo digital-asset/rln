@@ -119,20 +119,20 @@ public class TransactionsApiImpl {
         return new InitiateTransfer(groupId, initiator, scheduler, payload);
     }
 
-  public void create(MessageGroup messageGroup) {
-    var initiateTransfer = createInitiateTransfer(messageGroup);
-    rlnClient.createInitiateTransferContract(initiateTransfer);
-  }
+    public void create(MessageGroup messageGroup) {
+      var initiateTransfer = createInitiateTransfer(messageGroup);
+      rlnClient.createInitiateTransferContract(initiateTransfer);
+    }
 
-  private InitiateTransfer createInitiateTransfer(MessageGroup messageGroup) {
-    var payload = createInitiateTransferPayload(messageGroup);
-    var initiator = guiBackendConfiguration.partyDamlId();
-    var groupId = messageGroup.getId();
-    var scheduler = schedulerRandomShardPartyPicker.pickRandomShardParty();
-    return new InitiateTransfer(groupId, initiator, scheduler, payload);
-  }
+    private InitiateTransfer createInitiateTransfer(MessageGroup messageGroup) {
+      var payload = createInitiateTransferPayload(messageGroup);
+      var initiator = guiBackendConfiguration.partyDamlId();
+      var groupId = messageGroup.getId();
+      var scheduler = schedulerRandomShardPartyPicker.pickRandomShardParty();
+      return new InitiateTransfer(groupId, initiator, scheduler, payload);
+    }
 
-  private String createInitiateTransferPayload(MessageGroup messageGroup) {
-    throw new UnsupportedOperationException();
-  }
+    private String createInitiateTransferPayload(MessageGroup messageGroup) {
+      throw new UnsupportedOperationException();
+    }
 }
