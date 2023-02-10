@@ -58,6 +58,7 @@ template ApprovedTransferProposal
     assembler: Party
     proposalTime: Time
     approvalTime: Time
+    reason: Optional Text
 
     step: SettlementStep
     approvers: [Party]
@@ -72,11 +73,11 @@ template ApprovedTransferProposal
 
     choice RejectApprovedProposal : ContractId RejectedTransferProposal
       with
-        reason: Optional Text
+        rejectionReason: Optional Text
       controller owner
         do
           now <- getTime
-          create RejectedTransferProposal with rejectionTime = now, ..
+          create RejectedTransferProposal with rejectionTime = now, reason = rejectionReason, ..
 
 template RejectedTransferProposal
   with
@@ -84,6 +85,7 @@ template RejectedTransferProposal
     assembler: Party
     proposalTime: Time
     rejectionTime: Time
+    reason: Optional Text
 
     step: SettlementStep
     approvers: [Party]
