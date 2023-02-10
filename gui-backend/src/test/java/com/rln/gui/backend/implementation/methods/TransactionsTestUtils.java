@@ -23,6 +23,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 
@@ -100,16 +102,16 @@ public class TransactionsTestUtils {
     Assert.assertFalse(initiateTransfer.payload.isBlank());
   }
 
-  public static DamlRecord createApprovedTransferProposalMatcher(String bank, SettlementStep step, String messageId,
+  public static DamlRecord createApprovedTransferProposalMatcher(String bank, String assembler, SettlementStep step, String messageId,
                                                                  String groupId) {
-    return new ApprovedTransferProposal(bank, Instant.EPOCH, Instant.EPOCH, step,
+    return new ApprovedTransferProposal(bank, assembler, Instant.EPOCH, Instant.EPOCH, Optional.empty(), step,
             List.of(bank), LedgerBaseTest.PAYLOAD, messageId, groupId).toValue();
 
   }
 
-  public static DamlRecord createRejectedTransferProposalMatcher(String bank, SettlementStep step, String messageId,
+  public static DamlRecord createRejectedTransferProposalMatcher(String bank, String assembler, SettlementStep step, String messageId,
                                                                  String groupId) {
-    return new RejectedTransferProposal(bank, Instant.EPOCH, Instant.EPOCH, step, List.of(bank), LedgerBaseTest.PAYLOAD,
-            messageId, groupId).toValue();
+    return new RejectedTransferProposal(bank, assembler, Instant.EPOCH, Instant.EPOCH, Optional.empty(), step,
+            List.of(bank), LedgerBaseTest.PAYLOAD, messageId, groupId).toValue();
   }
 }

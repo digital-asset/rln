@@ -94,7 +94,9 @@ class TransactionsApiImplTest extends LedgerBaseTest {
                 getCurrentBankPartyId(),
                 ApprovedTransferProposal.TEMPLATE_ID,
                 TransactionsTestUtils
-                        .createApprovedTransferProposalMatcher(getCurrentBankPartyId().getValue(),
+                        .createApprovedTransferProposalMatcher(
+                                getCurrentBankPartyId().getValue(),
+                                getAssemblerPartyId().getValue(),
                                 USD_INSTRUMENT_SETTLEMENT_STEP,
                                 MESSAGE_ID, GROUP_ID),
                 ContractId::new);
@@ -146,7 +148,9 @@ class TransactionsApiImplTest extends LedgerBaseTest {
                 getCurrentBankPartyId(),
                 ApprovedTransferProposal.TEMPLATE_ID,
                 TransactionsTestUtils
-                        .createApprovedTransferProposalMatcher(getCurrentBankPartyId().getValue(),
+                        .createApprovedTransferProposalMatcher(
+                                getCurrentBankPartyId().getValue(),
+                                getAssemblerPartyId().getValue(),
                                 USD_INSTRUMENT_SETTLEMENT_STEP,
                                 MESSAGE_ID, GROUP_ID),
                 ContractId::new).getValue();
@@ -178,7 +182,9 @@ class TransactionsApiImplTest extends LedgerBaseTest {
                 getCurrentBankPartyId(),
                 RejectedTransferProposal.TEMPLATE_ID,
                 TransactionsTestUtils
-                        .createRejectedTransferProposalMatcher(getCurrentBankPartyId().getValue(),
+                        .createRejectedTransferProposalMatcher(
+                                getCurrentBankPartyId().getValue(),
+                                getAssemblerPartyId().getValue(),
                                 USD_INSTRUMENT_SETTLEMENT_STEP,
                                 MESSAGE_ID, GROUP_ID),
                 ContractId::new).getValue();
