@@ -32,7 +32,7 @@ public class BalanceEventProcessor extends MessageProcessor<Event> {
     }
 
     @Override
-    protected void updateCache(Event allTypeBalanceEvent) {
+    public void updateCache(Event allTypeBalanceEvent) {
         boolean isArchived = allTypeBalanceEvent instanceof ArchivedEvent;
         if (isArchived) {
             updateCache((ArchivedEvent) allTypeBalanceEvent);

@@ -37,7 +37,7 @@ public class AssemblerDamlTransactionManifestContractCreationProcessor extends M
   }
 
   @Override
-  protected void updateCache(CreatedEvent input) {
+  public void updateCache(CreatedEvent input) {
     var transactionManifest = com.rln.damlCodegen.workflow.transactionmanifest.TransactionManifest.fromValue(input.getArguments());
     var contractId = new ContractId(input.getContractId());
     logger.info("Updating cache (Assembler party Cache, Transaction Manifest Cache) with {}", transactionManifest.groupId);

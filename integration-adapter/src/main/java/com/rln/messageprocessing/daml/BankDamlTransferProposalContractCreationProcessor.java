@@ -41,7 +41,7 @@ public class BankDamlTransferProposalContractCreationProcessor extends MessagePr
     }
 
     @Override
-    protected void updateCache(CreatedEvent input) {
+    public void updateCache(CreatedEvent input) {
         var transferProposal = com.rln.damlCodegen.workflow.transferproposal.TransferProposal.fromValue(input.getArguments());
         String ownerPartyId = transferProposal.owner;
 

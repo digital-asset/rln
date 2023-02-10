@@ -39,7 +39,7 @@ public class DamlInitiationContractCreationProcessor extends MessageProcessor<Cr
   }
 
   @Override
-  protected void updateCache(CreatedEvent input) {
+  public void updateCache(CreatedEvent input) {
     var initiateTransfer = com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer.fromValue(input.getArguments());
     var contractId = new ContractId(input.getContractId());
     logger.info("Updating cache with Daml InitiateTransfer contract {}", initiateTransfer);
