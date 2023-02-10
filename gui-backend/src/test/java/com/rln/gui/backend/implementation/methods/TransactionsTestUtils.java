@@ -102,16 +102,18 @@ public class TransactionsTestUtils {
     Assert.assertFalse(initiateTransfer.payload.isBlank());
   }
 
-  public static DamlRecord createApprovedTransferProposalMatcher(String bank, String assembler, SettlementStep step, String messageId,
+  public static DamlRecord createApprovedTransferProposalMatcher(String bank, String assembler, String reason,
+                                                                 SettlementStep step, String messageId,
                                                                  String groupId) {
-    return new ApprovedTransferProposal(bank, assembler, Instant.EPOCH, Instant.EPOCH, Optional.empty(), step,
+    return new ApprovedTransferProposal(bank, assembler, Instant.EPOCH, Instant.EPOCH, Optional.ofNullable(reason), step,
             List.of(bank), LedgerBaseTest.PAYLOAD, messageId, groupId).toValue();
 
   }
 
-  public static DamlRecord createRejectedTransferProposalMatcher(String bank, String assembler, SettlementStep step, String messageId,
+  public static DamlRecord createRejectedTransferProposalMatcher(String bank, String assembler, String reason,
+                                                                 SettlementStep step, String messageId,
                                                                  String groupId) {
-    return new RejectedTransferProposal(bank, assembler, Instant.EPOCH, Instant.EPOCH, Optional.empty(), step,
+    return new RejectedTransferProposal(bank, assembler, Instant.EPOCH, Instant.EPOCH, Optional.ofNullable(reason), step,
             List.of(bank), LedgerBaseTest.PAYLOAD, messageId, groupId).toValue();
   }
 }

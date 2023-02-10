@@ -36,6 +36,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import static com.rln.gui.backend.implementation.common.GuiBackendConstants.DEFAULT_GUI_BACKEND_REASON;
+
 @TestProfile(GuiBackendTestProfile.class)
 @QuarkusTest
 class TransactionsApiImplTest extends LedgerBaseTest {
@@ -97,6 +99,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
                         .createApprovedTransferProposalMatcher(
                                 getCurrentBankPartyId().getValue(),
                                 getAssemblerPartyId().getValue(),
+                                DEFAULT_GUI_BACKEND_REASON,
                                 USD_INSTRUMENT_SETTLEMENT_STEP,
                                 MESSAGE_ID, GROUP_ID),
                 ContractId::new);
@@ -151,6 +154,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
                         .createApprovedTransferProposalMatcher(
                                 getCurrentBankPartyId().getValue(),
                                 getAssemblerPartyId().getValue(),
+                                null,
                                 USD_INSTRUMENT_SETTLEMENT_STEP,
                                 MESSAGE_ID, GROUP_ID),
                 ContractId::new).getValue();
@@ -185,6 +189,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
                         .createRejectedTransferProposalMatcher(
                                 getCurrentBankPartyId().getValue(),
                                 getAssemblerPartyId().getValue(),
+                                null,
                                 USD_INSTRUMENT_SETTLEMENT_STEP,
                                 MESSAGE_ID, GROUP_ID),
                 ContractId::new).getValue();
