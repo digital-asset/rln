@@ -5,18 +5,11 @@
 package com.rln.conversion.daml2kafka;
 
 import com.daml.ledger.javaapi.data.CreatedEvent;
-import com.daml.ledger.javaapi.data.Identifier;
-import com.daml.ledger.javaapi.data.Value;
-import com.rln.cache.ContractCache.TransferProposalCache;
-import com.rln.cache.key.TransferProposalKey;
-import com.rln.client.damlClient.partyManagement.BicPartyIdMapper;
 import com.rln.client.damlClient.partyManagement.PartyManager;
 import com.rln.client.kafkaClient.message.ApproveRejectProposal;
 import com.rln.client.kafkaClient.message.fields.Status;
-import com.rln.common.Constants;
 import com.rln.common.IAConstants;
 import com.rln.damlCodegen.workflow.transferproposal.*;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class ApproveRejectProposalChoiceExerciseToKafka implements CreatedEventConverter<ApproveRejectProposal> {
 

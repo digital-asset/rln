@@ -5,7 +5,6 @@
 package com.rln.messageprocessing.daml;
 
 import com.daml.ledger.javaapi.data.CreatedEvent;
-import com.daml.ledger.javaapi.data.ExercisedEvent;
 import com.rln.client.kafkaClient.message.ApproveRejectProposal;
 import com.rln.client.kafkaClient.outgoing.KafkaSubmitter;
 import com.rln.conversion.daml2kafka.ApproveRejectProposalChoiceExerciseToKafka;
