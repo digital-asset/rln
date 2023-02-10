@@ -17,6 +17,7 @@ import com.rln.gui.backend.implementation.common.CompoundUniqueIdUtil.Subject;
 import com.rln.gui.backend.implementation.common.GuiBackendConstants;
 import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import com.rln.gui.backend.model.Transaction;
+import com.rln.gui.backend.model.TransactionStatusUpdate;
 import com.rln.gui.backend.ods.TransferProposalManager;
 import com.rln.gui.backend.test.util.Eventually;
 import io.quarkus.test.junit.QuarkusTest;
@@ -36,7 +37,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import static com.rln.gui.backend.implementation.common.GuiBackendConstants.DEFAULT_GUI_BACKEND_REASON;
+import static com.rln.gui.backend.implementation.common.GuiBackendConstants.*;
 
 @TestProfile(GuiBackendTestProfile.class)
 @QuarkusTest
@@ -63,7 +64,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
                 getCurrentBankPartyId(),
                 InitiateTransfer.TEMPLATE_ID,
                 ContractId::new);
-        var initiateTransfer = InitiateTransfer.fromValue(initiateTransferContractWithId.record);
+        var initiateTransfer = InitiateTransfer.valueDecoder().decode(initiateTransferContractWithId.record);
         TransactionsTestUtils.checkInitiateTransfer(initiateTransfer, GROUP_ID, getCurrentBankPartyId(),
                 getSchedulerPartyId());
 
@@ -72,7 +73,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
     }
 
     @Test
-    void apiApprovalStatusPost() throws InvalidProtocolBufferException {
+    void apiApprovalStatusPost_approval_works() throws InvalidProtocolBufferException {
         var transferProposalCid = publishTransferProposalToLedger(
                 getCurrentBankPartyId(), getSchedulerPartyId(), getAssemblerPartyId(),
                 GROUP_ID, MESSAGE_ID, USD_INSTRUMENT_SETTLEMENT_STEP).getValue();
@@ -80,14 +81,22 @@ class TransactionsApiImplTest extends LedgerBaseTest {
         RestAssured.given()
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
-                .body(TransactionsTestUtils.createApprovalRequest(Subject.SENDER, transferProposalCid))
+                .body(TransactionsTestUtils.createApprovalRequest(
+                        Subject.SENDER,
+                        WAITING_STATUS,
+                        transferProposalCid,
+                        TransactionStatusUpdate.StatusEnum.APPROVE))
                 .when().post("/api/approval/status")
                 .then()
                 .statusCode(200);
         RestAssured.given()
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
-                .body(TransactionsTestUtils.createApprovalRequest(Subject.RECEIVER, transferProposalCid))
+                .body(TransactionsTestUtils.createApprovalRequest(
+                        Subject.RECEIVER,
+                        WAITING_STATUS,
+                        transferProposalCid,
+                        TransactionStatusUpdate.StatusEnum.APPROVE))
                 .when().post("/api/approval/status")
                 .then()
                 .statusCode(200);
@@ -105,6 +114,85 @@ class TransactionsApiImplTest extends LedgerBaseTest {
                 ContractId::new);
 
         cleanupContract(getCurrentBankPartyId(), ApprovedTransferProposal.TEMPLATE_ID, approvedCid.getValue());
+    }
+
+    @Test
+    void apiApprovalStatusPost_rejection_after_approval_works() throws InvalidProtocolBufferException {
+        var transferProposalCid = publishTransferProposalToLedger(
+                getCurrentBankPartyId(), getSchedulerPartyId(), getAssemblerPartyId(),
+                GROUP_ID, MESSAGE_ID, USD_INSTRUMENT_SETTLEMENT_STEP).getValue();
+
+        RestAssured.given()
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .body(TransactionsTestUtils.createApprovalRequest(
+                        Subject.SENDER,
+                        WAITING_STATUS,
+                        transferProposalCid,
+                        TransactionStatusUpdate.StatusEnum.APPROVE))
+                .when().post("/api/approval/status")
+                .then()
+                .statusCode(200);
+        RestAssured.given()
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .body(TransactionsTestUtils.createApprovalRequest(
+                        Subject.RECEIVER,
+                        WAITING_STATUS,
+                        transferProposalCid,
+                        TransactionStatusUpdate.StatusEnum.APPROVE))
+                .when().post("/api/approval/status")
+                .then()
+                .statusCode(200);
+
+        var approvedCid = SANDBOX.getLedgerAdapter().getCreatedContractId(
+                getCurrentBankPartyId(),
+                ApprovedTransferProposal.TEMPLATE_ID,
+                TransactionsTestUtils
+                        .createApprovedTransferProposalMatcher(
+                                getCurrentBankPartyId().getValue(),
+                                getAssemblerPartyId().getValue(),
+                                DEFAULT_GUI_BACKEND_REASON,
+                                USD_INSTRUMENT_SETTLEMENT_STEP,
+                                MESSAGE_ID, GROUP_ID),
+                ContractId::new).getValue();
+
+        // Rejection after the previous approval
+        RestAssured.given()
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .body(TransactionsTestUtils.createApprovalRequest(
+                        Subject.SENDER,
+                        APPROVED_STATUS,
+                        approvedCid,
+                        TransactionStatusUpdate.StatusEnum.REJECT))
+                .when().post("/api/approval/status")
+                .then()
+                .statusCode(200);
+        RestAssured.given()
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .body(TransactionsTestUtils.createApprovalRequest(
+                        Subject.RECEIVER,
+                        APPROVED_STATUS,
+                        approvedCid,
+                        TransactionStatusUpdate.StatusEnum.REJECT))
+                .when().post("/api/approval/status")
+                .then()
+                .statusCode(200);
+
+        var rejectedCid = SANDBOX.getLedgerAdapter().getCreatedContractId(
+                getCurrentBankPartyId(),
+                RejectedTransferProposal.TEMPLATE_ID,
+                TransactionsTestUtils
+                        .createRejectedTransferProposalMatcher(
+                                getCurrentBankPartyId().getValue(),
+                                getAssemblerPartyId().getValue(),
+                                DEFAULT_GUI_BACKEND_REASON,
+                                USD_INSTRUMENT_SETTLEMENT_STEP,
+                                MESSAGE_ID, GROUP_ID),
+                ContractId::new).getValue();
+        cleanupContract(getCurrentBankPartyId(), RejectedTransferProposal.TEMPLATE_ID, rejectedCid);
     }
 
     @Test
@@ -162,7 +250,7 @@ class TransactionsApiImplTest extends LedgerBaseTest {
         TransactionsTestUtils
                 .checkListedTransactionsForSenderReceiver(approvedCid, GROUP_ID, MESSAGE_ID, SENDER_IBAN,
                         RECEIVER_IBAN, BANK_BIC,
-                        USD, TRANSACTION_AMOUNT, GuiBackendConstants.APPROVE_STATUS);
+                        USD, TRANSACTION_AMOUNT, GuiBackendConstants.APPROVED_STATUS);
 
         cleanupContract(getCurrentBankPartyId(), ApprovedTransferProposal.TEMPLATE_ID, approvedCid);
     }

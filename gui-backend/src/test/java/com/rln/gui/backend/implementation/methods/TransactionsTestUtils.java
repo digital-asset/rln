@@ -45,10 +45,11 @@ public class TransactionsTestUtils {
     return updateApprovalRequest;
   }
 
-  public static Map<String, Object> createApprovalRequest(Subject subject, String contractId) {
+  public static Map<String, Object> createApprovalRequest(Subject subject, String currentStatus , String contractId, StatusEnum status) {
     Map<String, Object> updateApprovalRequest = new HashMap<>();
-    updateApprovalRequest.put("id", CompoundUniqueIdUtil.getCompoundUniqueId(subject, contractId));
-    updateApprovalRequest.put("status", StatusEnum.APPROVE);
+    var id = CompoundUniqueIdUtil.getCompoundUniqueId(subject, currentStatus, contractId);
+    updateApprovalRequest.put("id", id);
+    updateApprovalRequest.put("status", status);
     return updateApprovalRequest;
   }
 
@@ -72,7 +73,9 @@ public class TransactionsTestUtils {
   public static void checkListedTransactionResult(String contractId, Transaction listedItem, String groupId, String messageId,
                                                   String iban, Subject subject, String status, String bic, String assetCode,
                                                   BigDecimal transactionAmount) {
-    Assertions.assertEquals(CompoundUniqueIdUtil.getCompoundUniqueId(subject, contractId), listedItem.getId());
+    Assertions.assertEquals(
+            CompoundUniqueIdUtil.getCompoundUniqueId(subject, status, contractId),
+            listedItem.getId());
     Assertions.assertEquals(groupId, listedItem.getTransactionId());
     Assertions.assertEquals(groupId, listedItem.getGroupId());
     Assertions.assertEquals(messageId, listedItem.getMessageId());
@@ -85,7 +88,9 @@ public class TransactionsTestUtils {
 
   public static void checkListedApprovalResult(String contractId, Transaction listedItem, String groupId, String messageId,
                                                String iban, Subject subject, String bic, BigDecimal transactionAmount) {
-    Assertions.assertEquals(CompoundUniqueIdUtil.getCompoundUniqueId(subject, contractId), listedItem.getId());
+    Assertions.assertEquals(
+            CompoundUniqueIdUtil.getCompoundUniqueId(subject, CompoundUniqueIdUtil.Type.WAITING.name(), contractId),
+            listedItem.getId());
     Assertions.assertEquals(groupId, listedItem.getTransactionId());
     Assertions.assertEquals(groupId, listedItem.getGroupId());
     Assertions.assertEquals(messageId, listedItem.getMessageId());

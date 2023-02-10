@@ -55,19 +55,20 @@ public class TransactionsApiImpl {
 
     public Object updateTransactionApprovalStatus(
             @Valid TransactionStatusUpdate transactionStatusUpdate) {
-        var contractId = CompoundUniqueIdUtil.parseSubjectAndContractId(transactionStatusUpdate.getId())._2;
+        var compoundIdParts = CompoundUniqueIdUtil.parseCompoundIdParts(transactionStatusUpdate.getId());
         synchronized (alreadyApprovedTransferProposals) {
-            if (!alreadyApprovedTransferProposals.contains(contractId)) {
+            if (!alreadyApprovedTransferProposals.contains(compoundIdParts.contractId)) {
                 var approved = transactionStatusUpdate.getStatus().equals(StatusEnum.APPROVE);
                 ApproveRejectProposalChoiceParameters parameters =
                         new ApproveRejectProposalChoiceParameters(
                                 guiBackendConfiguration.partyDamlId(),
-                                new ContractId(contractId),
+                                compoundIdParts.contractId,
+                                CompoundUniqueIdUtil.Type.APPROVED.equals(compoundIdParts.contractIdType),
                                 approved,
                                 GuiBackendConstants.DEFAULT_GUI_BACKEND_REASON,
                                 GUI_BACKEND_SETTLES_ON_LEDGER);
                 rlnClient.exerciseApproveRejectProposalChoice(transactionStatusUpdate.getId(), parameters);
-                alreadyApprovedTransferProposals.add(contractId);
+                alreadyApprovedTransferProposals.add(compoundIdParts.contractId);
             }
         }
         return Collections.emptyMap();

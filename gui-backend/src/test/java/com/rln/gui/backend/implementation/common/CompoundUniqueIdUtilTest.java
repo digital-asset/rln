@@ -14,43 +14,60 @@ class CompoundUniqueIdUtilTest {
 
   @Test
   void getCompoundUniqueIdWorksWithSender() {
-    var result = CompoundUniqueIdUtil.getCompoundUniqueId(Subject.SENDER, SOME_CONTRACTID);
-    Assertions.assertEquals("SENDER-4xyz-de123-b$6%#", result);
+    var result = CompoundUniqueIdUtil.getCompoundUniqueId(Subject.SENDER, "WAITING", SOME_CONTRACTID);
+    Assertions.assertEquals("SENDER-WAITING-4xyz-de123-b$6%#", result);
   }
 
   @Test
   void getCompoundUniqueIdWorksWithReceiver() {
-    var result = CompoundUniqueIdUtil.getCompoundUniqueId(Subject.RECEIVER, SOME_CONTRACTID);
-    Assertions.assertEquals("RECEIVER-4xyz-de123-b$6%#", result);
+    var result = CompoundUniqueIdUtil.getCompoundUniqueId(Subject.RECEIVER, "SOMETHING", SOME_CONTRACTID);
+    Assertions.assertEquals("RECEIVER-OTHER-4xyz-de123-b$6%#", result);
   }
 
   @Test
   void parseSenderAndContractId() {
-    var result = CompoundUniqueIdUtil.parseSubjectAndContractId("SENDER-" + SOME_CONTRACTID);
-    Assertions.assertEquals(Subject.SENDER, result._1);
-    Assertions.assertEquals(SOME_CONTRACTID, result._2);
+    var result = CompoundUniqueIdUtil.parseCompoundIdParts("SENDER-APPROVED-" + SOME_CONTRACTID);
+    Assertions.assertEquals(Subject.SENDER, result.subject);
+    Assertions.assertEquals(CompoundUniqueIdUtil.Type.APPROVED, result.contractIdType);
+    Assertions.assertEquals(SOME_CONTRACTID, result.contractId);
   }
 
   @Test
   void parseReceiverAndContractId() {
-    var result = CompoundUniqueIdUtil.parseSubjectAndContractId("RECEIVER-" + SOME_CONTRACTID);
-    Assertions.assertEquals(Subject.RECEIVER, result._1);
-    Assertions.assertEquals(SOME_CONTRACTID, result._2);
+    var result = CompoundUniqueIdUtil.parseCompoundIdParts("RECEIVER-WAITING-" + SOME_CONTRACTID);
+    Assertions.assertEquals(Subject.RECEIVER, result.subject);
+    Assertions.assertEquals(CompoundUniqueIdUtil.Type.WAITING, result.contractIdType);
+    Assertions.assertEquals(SOME_CONTRACTID, result.contractId);
   }
 
   @Test
   void parseNonExistingSubject() {
     IllegalArgumentException thrown = Assertions.assertThrows(IllegalArgumentException.class,
-        () -> CompoundUniqueIdUtil.parseSubjectAndContractId("BLAHBLAHBLAH-" + SOME_CONTRACTID));
+        () -> CompoundUniqueIdUtil.parseCompoundIdParts("BLAHBLAHBLAH-" + SOME_CONTRACTID));
     Assertions.assertEquals("No enum constant com.rln.gui.backend.implementation.common.CompoundUniqueIdUtil.Subject.BLAHBLAHBLAH",
         thrown.getMessage());
   }
 
   @Test
+  void parseNonExistingType() {
+    IllegalArgumentException thrown = Assertions.assertThrows(IllegalArgumentException.class,
+            () -> CompoundUniqueIdUtil.parseCompoundIdParts("SENDER-BLAHBLAHBLAH-" + SOME_CONTRACTID));
+    Assertions.assertEquals("No enum constant com.rln.gui.backend.implementation.common.CompoundUniqueIdUtil.Type.BLAHBLAHBLAH",
+            thrown.getMessage());
+  }
+
+  @Test
   void parseNonCompoundUIdInput() {
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class,
-        () -> CompoundUniqueIdUtil.parseSubjectAndContractId("non_compound_uid_input"));
+        () -> CompoundUniqueIdUtil.parseCompoundIdParts("non_compound_uid_input"));
     Assertions.assertEquals("Not a compoundUID: non_compound_uid_input",
         thrown.getMessage());
+  }
+
+  @Test
+  void statusToType() {
+    Assertions.assertEquals(CompoundUniqueIdUtil.Type.WAITING, CompoundUniqueIdUtil.statusToType("WAITING"));
+    Assertions.assertEquals(CompoundUniqueIdUtil.Type.APPROVED, CompoundUniqueIdUtil.statusToType("APPROVED"));
+    Assertions.assertEquals(CompoundUniqueIdUtil.Type.OTHER, CompoundUniqueIdUtil.statusToType("BLAHBLAHBLAH"));
   }
 }

@@ -20,6 +20,7 @@ public class ApproveRejectProposalToDamlTranslation implements Function<ApproveR
     private static final Logger logger = LoggerFactory.getLogger(ApproveRejectProposalToDamlTranslation.class);
     // Integration Adapter always settles off-ledger as it connects non-Daml participants to the network.
     private static final boolean IA_DOES_NOT_SETTLE_ON_LEDGER = false;
+    private static final boolean NOT_YET_APPROVED = false;
 
     private final BankPartyCache bankPartyCache;
     private final TransferProposalCache transferProposalCache;
@@ -35,8 +36,10 @@ public class ApproveRejectProposalToDamlTranslation implements Function<ApproveR
                 approveRejectProposal.getMessageId(), approveRejectProposal.getBankBic());
         var bankPartyId = bankPartyCache.read(transferProposalKey);
         var contractId = transferProposalCache.readFromKeyToValue(transferProposalKey);
-        var approved = Status.APPROVE.equals(approveRejectProposal.getStatus());
-        logger.info("Translation result bankPartyId {}, contractId {}, approved {}", bankPartyId, contractId, approved);
-        return new ApproveRejectProposalChoiceParameters(bankPartyId, contractId, approved, approveRejectProposal.getReason(), IA_DOES_NOT_SETTLE_ON_LEDGER);
+        var isApproveOperation = Status.APPROVE.equals(approveRejectProposal.getStatus());
+        logger.info("Translation result bankPartyId {}, contractId {}, approve operation {}", bankPartyId, contractId, isApproveOperation);
+        return new ApproveRejectProposalChoiceParameters(
+                bankPartyId, contractId.contractId, NOT_YET_APPROVED, isApproveOperation,
+                approveRejectProposal.getReason(), IA_DOES_NOT_SETTLE_ON_LEDGER);
     }
 }

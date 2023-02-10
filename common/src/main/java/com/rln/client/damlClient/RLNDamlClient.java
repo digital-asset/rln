@@ -27,6 +27,7 @@ import com.rln.damlCodegen.model.balance.Balance.ByKey;
 import com.rln.damlCodegen.model.balance.BalanceKey;
 import com.rln.damlCodegen.workflow.initiatetransfer.InitiateTransfer;
 import com.rln.damlCodegen.workflow.transactionmanifest.TransactionManifest;
+import com.rln.damlCodegen.workflow.transferproposal.ApprovedTransferProposal;
 import com.rln.damlCodegen.workflow.transferproposal.TransferProposal;
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
@@ -36,12 +37,7 @@ import io.reactivex.internal.functions.Functions;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -124,12 +120,18 @@ public class RLNDamlClient implements RLNClient {
     @Override
     public void exerciseApproveRejectProposalChoice(String groupId, ApproveRejectProposalChoiceParameters acceptRejectChoiceParameters) {
         var event = String.format("Exercise Approve Reject Proposal (%s, %s)", groupId, acceptRejectChoiceParameters.getContractId());
-        TransferProposal.ContractId contractId = acceptRejectChoiceParameters.getContractId();
         final Update<?> exerciseUpdate;
-        if (acceptRejectChoiceParameters.isApproved()) {
+        if (acceptRejectChoiceParameters.isApproveOperation()) {
+            var contractId = new TransferProposal.ContractId(acceptRejectChoiceParameters.getContractId());
             exerciseUpdate = contractId.exerciseApproveProposal(Optional.ofNullable(acceptRejectChoiceParameters.getReason()), acceptRejectChoiceParameters.isSettleOnLedger());
         } else {
-            exerciseUpdate = contractId.exerciseRejectProposal(Optional.ofNullable(acceptRejectChoiceParameters.getReason()));
+            if (acceptRejectChoiceParameters.isAlreadyApproved()) {
+                var contractId = new ApprovedTransferProposal.ContractId(acceptRejectChoiceParameters.getContractId());
+                exerciseUpdate = contractId.exerciseRejectApprovedProposal(Optional.ofNullable(acceptRejectChoiceParameters.getReason()));
+            } else {
+                var contractId = new TransferProposal.ContractId(acceptRejectChoiceParameters.getContractId());
+                exerciseUpdate = contractId.exerciseRejectProposal(Optional.ofNullable(acceptRejectChoiceParameters.getReason()));
+            }
         }
         commandPublisher.onNext(new ClientCommand(event, exerciseUpdate, acceptRejectChoiceParameters.getBankPartyId(), acceptRejectChoiceParameters));
     }

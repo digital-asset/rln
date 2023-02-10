@@ -10,8 +10,9 @@ import lombok.Data;
 @Data
 public class ApproveRejectProposalChoiceParameters implements Parameters {
   private final String bankPartyId;
-  private final TransferProposal.ContractId contractId;
-  private final boolean approved;
+  private final String contractId;
+  private final boolean isAlreadyApproved;
+  private final boolean isApproveOperation;
   private final String reason;
   private final boolean settleOnLedger;
 }
