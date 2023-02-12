@@ -38,7 +38,7 @@ given_balance_below_threshold_then_create_loan = do
     loanConfigCid <- submit bank11 $ do createCmd
         LoanConfig with
             provider = bank11
-            accountHolder = users.alice
+            accountHolder = Some users.alice
             account = "CH123"
             activeLoan = 0.0
             balanceLoanThreshold = 1000.0
@@ -63,7 +63,7 @@ given_balance_above_threshold_then_create_payback = do
     loanConfigCid <- submit bank11 $ do createCmd
         LoanConfig with
             provider = bank11
-            accountHolder = users.alice
+            accountHolder = Some users.alice
             account = "CH123"
             activeLoan = 0.0
             balanceLoanThreshold = 1000.0
@@ -88,7 +88,7 @@ given_balance_at_threshold_then_create_no_loan_and_no_payback = do
     loanConfigCid <- submit bank11 $ do createCmd
         LoanConfig with
             provider = bank11
-            accountHolder = users.alice
+            accountHolder = Some users.alice
             account = "CH123"
             activeLoan = 0.0
             balanceLoanThreshold = 1000.0

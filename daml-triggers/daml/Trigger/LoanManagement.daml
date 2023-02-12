@@ -25,12 +25,14 @@ loanManagementTrigger = Trigger
     }
 
 run : Party -> TriggerA () ()
-run sender = do
+run actor = do
     loanConfigs <- query @LoanConfig
     balances <- query @Balance
-    let balanceMap = Map.fromList $ map ((\x -> ((x.provider, x.iban), x)) . snd) balances
-    forA_ loanConfigs \(loanCid, loanConfig) -> do
-        let maybeBalance = Map.lookup (loanConfig.provider, loanConfig.account) balanceMap
+    let myLoanConfigs = filter ((\l -> l.provider == actor) . snd) loanConfigs -- loan configs where the trigger actor is responsible
+        myBalances = filter ((\x -> x.provider == actor) . snd) balances -- balances where the trigger actor is responsible
+        myBalanceMap = Map.fromList $ map ((\x -> ((x.provider, x.iban), x)) . snd) $ myBalances
+    forA_ myLoanConfigs \(loanCid, loanConfig) -> do
+        let maybeBalance = Map.lookup (loanConfig.provider, loanConfig.account) myBalanceMap
         case maybeBalance of
             Some balance -> do
                 createLoanWhenBelowThreshold loanCid loanConfig balance
@@ -40,7 +42,7 @@ run sender = do
 createLoanWhenBelowThreshold : ContractId LoanConfig -> LoanConfig -> Balance -> TriggerA () ()
 createLoanWhenBelowThreshold loanCid loanConfig balance
     | balance.amount < loanConfig.balanceLoanThreshold = createLoan balance.provider balance.iban None loanCid
-    | otherwise = traceA $ "Maximum loan reached for " <> loanConfig.account
+    | otherwise = traceA $ "No loan required for account " <> loanConfig.account
     where createLoan provider account loanAmount loanConfigCid = do
             let cmd = exerciseCmd loanConfigCid (CreateLoan with loanAmount = loanAmount)
             void $ emitCommands [cmd] []
@@ -48,7 +50,7 @@ createLoanWhenBelowThreshold loanCid loanConfig balance
 createPaybackWhenAboveThreshold : ContractId LoanConfig -> LoanConfig -> Balance -> TriggerA () ()
 createPaybackWhenAboveThreshold loanCid loanConfig balance
     | balance.amount > loanConfig.balancePaybackThreshold = createPayback balance.provider balance.iban None loanCid
-    | otherwise = traceA $ "Insufficient amount for payback " <> loanConfig.account
+    | otherwise = traceA $ "Insufficient balance for autopayback in account " <> loanConfig.account
     where createPayback provider account paybackAmount loanConfigCid = do
             let cmd = exerciseCmd loanConfigCid (PaybackLoan with paybackAmount = paybackAmount)
             void $ emitCommands [cmd] []

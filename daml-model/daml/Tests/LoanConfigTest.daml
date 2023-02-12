@@ -30,7 +30,7 @@ create_loan_should_increase_balance = do
 
     loanConfigCid <- submit bank11 $ createCmd LoanConfig with
         provider = bank11
-        accountHolder = users.alice
+        accountHolder = Some users.alice
         account = "CH123"
         activeLoan = 0.0
         balanceLoanThreshold = 1000.0
@@ -60,7 +60,7 @@ create_loan_should_increase_balance_partially = do
 
     loanConfigCid <- submit bank11 $ createCmd LoanConfig with
         provider = bank11
-        accountHolder = users.alice
+        accountHolder = Some users.alice
         account = "CH123"
         activeLoan = 0.0
         balanceLoanThreshold = 1000.0
@@ -89,7 +89,7 @@ create_loan_should_fail_on_balance_above_loan_threshold = do
         amount = 1000.0
     loanConfigCid <- submit bank11 $ createCmd LoanConfig with
         provider = bank11
-        accountHolder = users.alice
+        accountHolder = Some users.alice
         account = "CH123"
         activeLoan = 0.0
         balanceLoanThreshold = 1000.0
@@ -109,7 +109,7 @@ create_loan_should_fail_on_exceeded_max_threshold = do
         amount = 0.0
     loanConfigCid <- submit bank11 $ createCmd LoanConfig with
         provider = bank11
-        accountHolder = users.alice
+        accountHolder = Some users.alice
         account = "CH123"
         activeLoan = 10000.0
         balanceLoanThreshold = 1000.0
@@ -129,7 +129,7 @@ create_loan_should_fail_on_partially_exceeded_max_threshold = do
         amount = 0.0
     loanConfigCid <- submit bank11 $ createCmd LoanConfig with
         provider = bank11
-        accountHolder = users.alice
+        accountHolder = Some users.alice
         account = "CH123"
         activeLoan = 9500.0
         balanceLoanThreshold = 1000.0
@@ -150,7 +150,7 @@ create_payback_should_decrease_on_sufficient_balance = do
 
     loanConfigCid <- submit bank11 $ createCmd LoanConfig with
         provider = bank11
-        accountHolder = users.alice
+        accountHolder = Some users.alice
         account = "CH123"
         activeLoan = 1000.0
         balanceLoanThreshold = 1000.0
@@ -180,7 +180,7 @@ create_payback_should_decrease_on_sufficient_balance_partially = do
 
     loanConfigCid <- submit bank11 $ createCmd LoanConfig with
         provider = bank11
-        accountHolder = users.alice
+        accountHolder = Some users.alice
         account = "CH123"
         activeLoan = 1000.0
         balanceLoanThreshold = 1000.0
@@ -209,7 +209,7 @@ create_payback_should_fail_on_insufficient_balance = do
         amount = 0.0
     loanConfigCid <- submit bank11 $ createCmd LoanConfig with
         provider = bank11
-        accountHolder = users.alice
+        accountHolder = Some users.alice
         account = "CH123"
         activeLoan = 1000.0
         balanceLoanThreshold = 1000.0
@@ -230,7 +230,7 @@ create_payback_should_fail_on_partially_insufficient_balance = do
     loanConfigCid <- submit bank11 $ createCmd
         LoanConfig with
             provider = bank11
-            accountHolder = users.alice
+            accountHolder = Some users.alice
             account = "CH123"
             activeLoan = 1000.0
             balanceLoanThreshold = 1000.0
@@ -251,7 +251,7 @@ create_loan_and_payback_loan_should_reduce_loan = do
 
     loanConfigCid <- submit bank11 $ createCmd LoanConfig with
         provider = bank11
-        accountHolder = users.alice
+        accountHolder = Some users.alice
         account = "CH123"
         activeLoan = 0.0
         balanceLoanThreshold = 1000.0

@@ -13,20 +13,23 @@ type IBAN = Text
 
 {-
 Loan configuration on account (e.g. Provider/IBAN) level
-The idea is to provide the {accountHolder} with individual loans
-up until {balanceLoanThreshold} is reached and as long as {maxLoanSize}
-has not been reached (as tracked by {activeLoan}).
+The idea is to provide the {accountHolder} with individual loans.
+A loan is given as soon as the account balance falls below the
+{balanceLoanThreshold}. The size of the loan is such that the balance reaches
+{balanceLoanThreshold} again.
+However, the maximum amount of all summed up loans (as tracked by (activeLoan)
+is {maxLoanSize}.
 -}
 template LoanConfig
     with
         provider: Party
         -- ^ Account provider
-        accountHolder: Party
+        accountHolder: Optional Party
         -- ^ Account holder
         account: IBAN
         -- ^ Account number
         balanceLoanThreshold: Amount
-        -- ^ Defines the balance up until which loans will be provided
+        -- ^ Defines the balance below which the account will be propped up with a loan
         maxLoanSize: Amount
         -- ^ Defines the limit of all loans given to this account
         activeLoan: Amount
@@ -36,18 +39,20 @@ template LoanConfig
 
     where
         signatory provider
-        observer accountHolder
+        observer getObserver accountHolder
         key (BalanceKey with iban = account, provider = provider) : BalanceKey
         maintainer key.provider
 
         ensure activeLoan >= 0.0
             && activeLoan <= maxLoanSize
             && balanceLoanThreshold >= 0.0
-            && balanceLoanThreshold <= maxLoanSize
-            && balancePaybackThreshold > maxLoanSize
 
-        let currentMaxLoanAmount balance = min (max (balanceLoanThreshold - balance) 0.0) (maxLoanSize - activeLoan)
-            currentMaxPaybackAmount balance = min (max (balance - balancePaybackThreshold) 0.0) activeLoan
+        let getObserver : Optional Party -> [Party]
+            getObserver (Some party) = [party]
+            getObserver None = []
+
+            loanSize balance = min (max (balanceLoanThreshold - balance) 0.0) (maxLoanSize - activeLoan)
+            paybackSize balance = min (max (balance - balancePaybackThreshold) 0.0) activeLoan
             balanceKey = BalanceKey provider account
             getBalance = do
                 visible <- visibleByKey @Balance balanceKey
@@ -74,9 +79,10 @@ template LoanConfig
             controller provider
                 do
                     (balanceCid, balance) <- getBalance
-                    let maxAmount = currentMaxLoanAmount balance.amount
-                        amount = fromOptional maxAmount loanAmount
-                    assertMsg ("Maximum available loan is: " <> show maxAmount) $ amount > 0.0 && amount <= maxAmount
+                    let targetLoan = loanSize balance.amount
+                        amount = fromOptional targetLoan loanAmount
+                    assertMsg ("loan size is <= 0. Loan Size = " <> show amount) $ amount > 0.0
+                    assertMsg ("loan size is higher than the available loan. Loan size = " <> show amount) $ amount <= (maxLoanSize - activeLoan)
                     balanceNewCid <- exercise balanceCid Increase with increment = amount
                     loanConfigCid <- create this with activeLoan = activeLoan + amount
                     pure (loanConfigCid, balanceNewCid)
@@ -97,9 +103,10 @@ template LoanConfig
             controller provider
                 do
                     (balanceCid, balance) <- getBalance
-                    let maxAmount = currentMaxPaybackAmount balance.amount
-                        amount = fromOptional maxAmount paybackAmount
-                    assertMsg ("Maximum available payback is: " <> show maxAmount) $ amount > 0.0 && amount <= maxAmount
+                    let targetPayback = paybackSize balance.amount
+                        amount = fromOptional targetPayback paybackAmount
+                    assertMsg ("payback amount is <= 0. payback amount = " <> show amount) $ amount > 0.0
+                    assertMsg ("payback amount is higher than the remaining loan. Loan size = " <> show amount) $ amount <= activeLoan
                     balanceNewCid <- exercise balanceCid Decrease with decrement = amount
                     loanConfigCid <- create this with activeLoan = activeLoan - amount
                     pure (loanConfigCid, balanceNewCid)
