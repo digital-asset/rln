@@ -46,6 +46,7 @@ template LoanConfig
         ensure activeLoan >= 0.0
             && activeLoan <= maxLoanSize
             && balanceLoanThreshold >= 0.0
+            && balancePaybackThreshold >= balanceLoanThreshold
 
         let getObserver : Optional Party -> [Party]
             getObserver (Some party) = [party]
