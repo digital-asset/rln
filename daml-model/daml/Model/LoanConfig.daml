@@ -39,7 +39,7 @@ template LoanConfig
 
     where
         signatory provider
-        observer getObserver accountHolder
+        observer optionalToList accountHolder
         key (BalanceKey with iban = account, provider = provider) : BalanceKey
         maintainer key.provider
 
@@ -48,11 +48,7 @@ template LoanConfig
             && balanceLoanThreshold >= 0.0
             && balancePaybackThreshold >= balanceLoanThreshold
 
-        let getObserver : Optional Party -> [Party]
-            getObserver (Some party) = [party]
-            getObserver None = []
-
-            loanSize balance = min (max (balanceLoanThreshold - balance) 0.0) (maxLoanSize - activeLoan)
+        let loanSize balance = min (max (balanceLoanThreshold - balance) 0.0) (maxLoanSize - activeLoan)
             paybackSize balance = min (max (balance - balancePaybackThreshold) 0.0) activeLoan
             balanceKey = BalanceKey provider account
             getBalance = do
