@@ -11,6 +11,7 @@ import com.rln.gui.backend.model.ClientDTO;
 import com.rln.gui.backend.model.PartyDTO;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PartyApiImpl {
 
@@ -49,14 +50,23 @@ public class PartyApiImpl {
   }
 
   public List<ClientDTO> getClients() {
-    return setlPartySupplier
+    var clients = setlPartySupplier
         .getSetlPartyByDamlParty(guiBackendConfiguration.partyDamlId())
         .getClients().stream()
         .map(setlClient ->
             ClientDTO.builder()
              .id(setlClient.getClientId())
              .name(setlClient.getName())
-            .build())
-        .collect(Collectors.toList());
+            .build());
+
+    var treasuries = setlPartySupplier
+            .getTreasuryAccountsByProviderParty(guiBackendConfiguration.partyDamlId())
+            .stream().map(treasuryAccount ->
+                    ClientDTO.builder()
+                            .id(treasuryAccount.getClientId())
+                            .name(treasuryAccount.getIban())
+                            .build());
+
+    return Stream.concat(clients, treasuries).collect(Collectors.toList());
   }
 }
