@@ -24,7 +24,7 @@ template TransferProposal
     groupId: Text
   where
     signatory scheduler
-    observer owner, assembler
+    observer owner
 
     let identifier: Text
         identifier = toIdentifier this
