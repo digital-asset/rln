@@ -218,8 +218,8 @@ create_payback_should_fail_on_insufficient_balance = do
     submitMustFail bank11 $
         exerciseCmd loanConfigCid PaybackLoan with paybackAmount = None
 
-create_payback_should_allow_manually_triggered_payload_crossing_payback_threshold : Script ()
-create_payback_should_allow_manually_triggered_payload_crossing_payback_threshold = do
+create_payback_should_allow_payback_crossing_payback_threshold : Script ()
+create_payback_should_allow_payback_crossing_payback_threshold = do
     (Banks{..}, users@UserParties{..}) <- setup
     submit bank11 $ createCmd Balance with
         provider = bank11
