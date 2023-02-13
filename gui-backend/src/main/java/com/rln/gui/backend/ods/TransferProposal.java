@@ -120,7 +120,7 @@ public class TransferProposal {
       case "SenderAndReceiver":
         var record = ibans.getValue().asRecord().get();
         return Optional.of(getField(record, RECEIVER, Value::asText).getValue());
-      case "SenderOnly":
+      case "ReceiverOnly":
         return ibans.getValue().asText().map(Text::getValue);
       default:
         return Optional.empty();
