@@ -2,6 +2,7 @@ package com.rln.gui.backend.implementation.methods;
 
 import com.rln.gui.backend.implementation.config.SetlClient;
 import com.rln.gui.backend.implementation.config.SetlParty;
+import com.rln.gui.backend.implementation.config.SetlTreasuryAccount;
 import com.rln.gui.backend.implementation.profiles.GuiBackendTestProfile;
 import com.rln.gui.backend.model.ClientDTO;
 import com.rln.gui.backend.model.PartyDTO;
@@ -10,14 +11,13 @@ import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
-
-import java.util.List;
-import javax.inject.Inject;
-
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
+
+import javax.inject.Inject;
+import java.util.List;
 
 @TestProfile(GuiBackendTestProfile.class)
 @QuarkusTest
@@ -67,17 +67,30 @@ class PartyApiImplTest extends LedgerBaseTest {
 
     @Test
     void getClients() {
-        List<SetlClient> clients = List.of(new SetlClient(CLIENT_ID, CLIENT_NAME, SENDER_IBAN, "token-" + SENDER_IBAN));
-        ClientDTO expected = new ClientDTO(CLIENT_ID, CLIENT_NAME);
+        var client = new SetlClient(
+                CLIENT_ID,
+                CLIENT_NAME,
+                SENDER_IBAN,
+                "token-" + SENDER_IBAN
+        );
+        var treasury = new SetlTreasuryAccount(
+                2,
+                PARTY_NAME,
+                SENDER_IBAN,
+                "token-" + SENDER_IBAN
+        );
         BDDMockito.given(setlPartySupplier.getSetlPartyByDamlParty(getCurrentBankPartyId().getValue()))
                 .willReturn(new SetlParty(
                         BASEURL,
                         PARTY_ID,
                         getCurrentBankPartyId().getValue(),
                         PARTY_NAME,
-                        clients,
-                        List.of())
-                );
+                        List.of(client),
+                        List.of()
+                ));
+
+        BDDMockito.given(setlPartySupplier.getTreasuryAccountsByProviderParty(getCurrentBankPartyId().getValue()))
+                .willReturn(List.of(treasury));
 
         List<ClientDTO> result = RestAssured
                 .get("/api/ledger/clients")
@@ -86,6 +99,9 @@ class PartyApiImplTest extends LedgerBaseTest {
                 .extract().body().as(new TypeRef<>() {
                 });
 
-        MatcherAssert.assertThat(result, Matchers.hasItem(expected));
+        ClientDTO expectedClient = new ClientDTO(client.getClientId(), client.getName());
+        ClientDTO expectedTreasury = new ClientDTO(treasury.getClientId(), treasury.getIban());
+        MatcherAssert.assertThat(result, Matchers.hasItem(expectedClient));
+        MatcherAssert.assertThat(result, Matchers.hasItem(expectedTreasury));
     }
 }
