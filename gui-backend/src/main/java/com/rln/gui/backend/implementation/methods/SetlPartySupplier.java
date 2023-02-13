@@ -45,12 +45,18 @@ public class SetlPartySupplier {
                 .orElse(null);
     }
 
-    public Optional<SetlTreasuryAccount> getTreasuryAccountByProviderPartyIdAndIBAN(String providerPartyId, String iban) {
+    public List<SetlTreasuryAccount> getTreasuryAccountsByProviderParty(String providerPartyId) {
         var providerName = getSetlPartyByDamlParty(providerPartyId).getName();
         return getParties().stream()
                 .map(SetlParty::getTreasuryAccounts)
                 .flatMap(List::stream)
                 .filter(treasury -> treasury.getProvider().equals(providerName))
+                .collect(Collectors.toList());
+    }
+
+    public Optional<SetlTreasuryAccount> getTreasuryAccountByProviderPartyIdAndIBAN(String providerPartyId, String iban) {
+        return getTreasuryAccountsByProviderParty(providerPartyId)
+                .stream()
                 .filter(treasury -> treasury.getIban().equals(iban))
                 .findFirst();
     }
