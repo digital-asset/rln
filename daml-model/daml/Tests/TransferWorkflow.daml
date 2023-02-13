@@ -47,6 +47,18 @@ singleCashLegTransfer = script do
   assertBalance cb "Bank12" 1100.0
   assertBalance bank22 "Bob" 1100.0
 
+rejectionAfterApproval: Script ()
+rejectionAfterApproval = script do
+  SingleCashLegTransfer with
+    banks = Banks{..}
+    serviceParties = ServiceParties{assembler}
+    .. <- initAndCreateProposals
+
+  (approved, _) <- bank21 `submit` exerciseCmd proposal21Cid ApproveProposal with reason = None; settleOnLedger = True
+  _ : ContractId RejectedTransferProposal <- bank21 `submit` exerciseCmd approved RejectApprovedProposal with rejectionReason = None
+
+  pure ()
+
 cancelledCashLegTransfer: Script ()
 cancelledCashLegTransfer = script do
   SingleCashLegTransfer with

@@ -5,7 +5,6 @@
 package com.rln.conversion.daml2kafka;
 
 import com.rln.cache.ContractCache.TransactionManifestCache;
-import com.rln.cache.ContractCache.TransferProposalCache;
 import com.rln.client.damlClient.partyManagement.PartyManager;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -27,8 +26,8 @@ public class Daml2KafkaProducer {
 
     @ApplicationScoped
     @Produces
-    public ApproveRejectProposalChoiceExerciseToKafka getApproveRejectMessageToKafka(TransferProposalCache transferProposalCache) {
-        return new ApproveRejectProposalChoiceExerciseToKafka(transferProposalCache);
+    public ApproveRejectProposalChoiceExerciseToKafka getApproveRejectMessageToKafka(PartyManager partyManager) {
+        return new ApproveRejectProposalChoiceExerciseToKafka(partyManager);
     }
 
     @ApplicationScoped

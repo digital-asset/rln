@@ -24,7 +24,7 @@ template TransferProposal
     groupId: Text
   where
     signatory scheduler
-    observer owner, assembler
+    observer owner
 
     let identifier: Text
         identifier = toIdentifier this
@@ -55,8 +55,10 @@ template TransferProposal
 template ApprovedTransferProposal
   with
     owner: Party
+    assembler: Party
     proposalTime: Time
     approvalTime: Time
+    reason: Optional Text
 
     step: SettlementStep
     approvers: [Party]
@@ -67,12 +69,23 @@ template ApprovedTransferProposal
     groupId: Text
   where
     signatory owner
+    observer assembler
+
+    choice RejectApprovedProposal : ContractId RejectedTransferProposal
+      with
+        rejectionReason: Optional Text
+      controller owner
+        do
+          now <- getTime
+          create RejectedTransferProposal with rejectionTime = now, reason = rejectionReason, ..
 
 template RejectedTransferProposal
   with
     owner: Party
+    assembler: Party
     proposalTime: Time
     rejectionTime: Time
+    reason: Optional Text
 
     step: SettlementStep
     approvers: [Party]
@@ -83,6 +96,7 @@ template RejectedTransferProposal
     groupId: Text
   where
     signatory owner
+    observer assembler
 
 data AutoApproveType = FullAuto | LimitedMaxAmount Decimal
   deriving (Eq, Show)

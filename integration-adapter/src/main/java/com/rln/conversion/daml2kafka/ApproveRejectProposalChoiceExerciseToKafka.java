@@ -4,56 +4,43 @@
  */
 package com.rln.conversion.daml2kafka;
 
-import com.daml.ledger.javaapi.data.ExercisedEvent;
-import com.daml.ledger.javaapi.data.Value;
-import com.rln.cache.ContractCache.TransferProposalCache;
-import com.rln.cache.key.TransferProposalKey;
+import com.daml.ledger.javaapi.data.CreatedEvent;
+import com.rln.client.damlClient.partyManagement.PartyManager;
 import com.rln.client.kafkaClient.message.ApproveRejectProposal;
 import com.rln.client.kafkaClient.message.fields.Status;
-import com.rln.common.Constants;
 import com.rln.common.IAConstants;
-import com.rln.damlCodegen.workflow.transferproposal.ApproveProposal;
-import com.rln.damlCodegen.workflow.transferproposal.RejectProposal;
-import com.rln.damlCodegen.workflow.transferproposal.TransferProposal;
+import com.rln.damlCodegen.workflow.transferproposal.*;
 
-public class ApproveRejectProposalChoiceExerciseToKafka implements ExercisedEventConverter<ApproveRejectProposal> {
+public class ApproveRejectProposalChoiceExerciseToKafka implements CreatedEventConverter<ApproveRejectProposal> {
 
-    private final TransferProposalCache transferProposalCache;
+    private final PartyManager partyManager;
 
-    public ApproveRejectProposalChoiceExerciseToKafka(TransferProposalCache transferProposalCache) {
-        this.transferProposalCache = transferProposalCache;
+    public ApproveRejectProposalChoiceExerciseToKafka(PartyManager partyManager) {
+        this.partyManager = partyManager;
     }
 
     @Override
-    public ApproveRejectProposal exercisedEventToKafka(ExercisedEvent exercisedEvent) {
-        var contractId = new TransferProposal.ContractId(exercisedEvent.getContractId());
-        TransferProposalKey transferProposalKey = transferProposalCache.readFromValueToKey(contractId);
-        Status status = getStatusFromChoice(exercisedEvent.getChoice());
-        String reason = getReason(status, exercisedEvent.getChoiceArgument());
-
-        return new ApproveRejectProposal(transferProposalKey.getGroupId(),
-                transferProposalKey.getMessageId(), status, reason, transferProposalKey.getBankBic());
-    }
-
-    private String getReason(Status status, Value choiceArgs) {
-        switch (status) {
-            case APPROVE:
-                return ApproveProposal.fromValue(choiceArgs).reason.orElse(IAConstants.JSON_NULL_STRING);
-            case REJECT:
-                return RejectProposal.fromValue(choiceArgs).reason.orElse(IAConstants.JSON_NULL_STRING);
-            default:
-                throw new IllegalArgumentException("AcceptRejectProposalChoiceExerciseToKafka: Unexpected status '" + status + "'");
-        }
-    }
-
-    private Status getStatusFromChoice(String choice) {
-        switch (choice) {
-            case Constants.APPROVE_PROPOSAL_CHOICE:
-                return Status.APPROVE;
-            case Constants.REJECT_PROPOSAL_CHOICE:
-                return Status.REJECT;
-            default:
-                throw new IllegalArgumentException("AcceptRejectProposalChoiceExerciseToKafka: Unexpected choice '" + choice + "'");
+    public ApproveRejectProposal createdEventToKafka(CreatedEvent createdEvent) {
+        if (createdEvent.getTemplateId().equals(ApprovedTransferProposal.TEMPLATE_ID)) {
+            var contract = ApprovedTransferProposal.Contract.fromCreatedEvent(createdEvent);
+            return new ApproveRejectProposal(
+                    contract.data.groupId,
+                    contract.data.messageId,
+                    Status.APPROVE,
+                    contract.data.reason.orElse(IAConstants.JSON_NULL_STRING),
+                    partyManager.getBic(contract.data.owner)
+            );
+        } else if (createdEvent.getTemplateId().equals(RejectedTransferProposal.TEMPLATE_ID)) {
+            var contract = RejectedTransferProposal.Contract.fromCreatedEvent(createdEvent);
+            return new ApproveRejectProposal(
+                    contract.data.groupId,
+                    contract.data.messageId,
+                    Status.REJECT,
+                    contract.data.reason.orElse(IAConstants.JSON_NULL_STRING),
+                    partyManager.getBic(contract.data.owner)
+            );
+        } else {
+            throw new IllegalArgumentException("AcceptRejectProposalChoiceExerciseToKafka: Unexpected template '" + createdEvent.getTemplateId() + "'");
         }
     }
 }

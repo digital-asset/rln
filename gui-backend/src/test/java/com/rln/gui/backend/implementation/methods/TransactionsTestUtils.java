@@ -23,6 +23,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 
@@ -43,10 +45,11 @@ public class TransactionsTestUtils {
     return updateApprovalRequest;
   }
 
-  public static Map<String, Object> createApprovalRequest(Subject subject, String contractId) {
+  public static Map<String, Object> createApprovalRequest(Subject subject, String currentStatus , String contractId, StatusEnum status) {
     Map<String, Object> updateApprovalRequest = new HashMap<>();
-    updateApprovalRequest.put("id", CompoundUniqueIdUtil.getCompoundUniqueId(subject, contractId));
-    updateApprovalRequest.put("status", StatusEnum.APPROVE);
+    var id = CompoundUniqueIdUtil.getCompoundUniqueId(subject, currentStatus, contractId);
+    updateApprovalRequest.put("id", id);
+    updateApprovalRequest.put("status", status);
     return updateApprovalRequest;
   }
 
@@ -70,7 +73,9 @@ public class TransactionsTestUtils {
   public static void checkListedTransactionResult(String contractId, Transaction listedItem, String groupId, String messageId,
                                                   String iban, Subject subject, String status, String bic, String assetCode,
                                                   BigDecimal transactionAmount) {
-    Assertions.assertEquals(CompoundUniqueIdUtil.getCompoundUniqueId(subject, contractId), listedItem.getId());
+    Assertions.assertEquals(
+            CompoundUniqueIdUtil.getCompoundUniqueId(subject, status, contractId),
+            listedItem.getId());
     Assertions.assertEquals(groupId, listedItem.getTransactionId());
     Assertions.assertEquals(groupId, listedItem.getGroupId());
     Assertions.assertEquals(messageId, listedItem.getMessageId());
@@ -83,7 +88,9 @@ public class TransactionsTestUtils {
 
   public static void checkListedApprovalResult(String contractId, Transaction listedItem, String groupId, String messageId,
                                                String iban, Subject subject, String bic, BigDecimal transactionAmount) {
-    Assertions.assertEquals(CompoundUniqueIdUtil.getCompoundUniqueId(subject, contractId), listedItem.getId());
+    Assertions.assertEquals(
+            CompoundUniqueIdUtil.getCompoundUniqueId(subject, CompoundUniqueIdUtil.Type.WAITING.name(), contractId),
+            listedItem.getId());
     Assertions.assertEquals(groupId, listedItem.getTransactionId());
     Assertions.assertEquals(groupId, listedItem.getGroupId());
     Assertions.assertEquals(messageId, listedItem.getMessageId());
@@ -100,16 +107,18 @@ public class TransactionsTestUtils {
     Assert.assertFalse(initiateTransfer.payload.isBlank());
   }
 
-  public static DamlRecord createApprovedTransferProposalMatcher(String bank, SettlementStep step, String messageId,
+  public static DamlRecord createApprovedTransferProposalMatcher(String bank, String assembler, String reason,
+                                                                 SettlementStep step, String messageId,
                                                                  String groupId) {
-    return new ApprovedTransferProposal(bank, Instant.EPOCH, Instant.EPOCH, step,
+    return new ApprovedTransferProposal(bank, assembler, Instant.EPOCH, Instant.EPOCH, Optional.ofNullable(reason), step,
             List.of(bank), LedgerBaseTest.PAYLOAD, messageId, groupId).toValue();
 
   }
 
-  public static DamlRecord createRejectedTransferProposalMatcher(String bank, SettlementStep step, String messageId,
+  public static DamlRecord createRejectedTransferProposalMatcher(String bank, String assembler, String reason,
+                                                                 SettlementStep step, String messageId,
                                                                  String groupId) {
-    return new RejectedTransferProposal(bank, Instant.EPOCH, Instant.EPOCH, step, List.of(bank), LedgerBaseTest.PAYLOAD,
-            messageId, groupId).toValue();
+    return new RejectedTransferProposal(bank, assembler, Instant.EPOCH, Instant.EPOCH, Optional.ofNullable(reason), step,
+            List.of(bank), LedgerBaseTest.PAYLOAD, messageId, groupId).toValue();
   }
 }

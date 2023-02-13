@@ -10,10 +10,16 @@ import com.rln.client.damlClient.subscription.RLNLedgerSubscriber;
 import com.rln.messageprocessing.MessageProcessor;
 
 import java.util.List;
+import java.util.Set;
 
 public abstract class CreatedEventDamlListener extends EventDamlListener<CreatedEvent> {
     public CreatedEventDamlListener(List<String> shardPartyIds, RLNLedgerSubscriber subscriber,
                                     MessageProcessor<CreatedEvent> messageProcessor, Identifier templateId) {
-        super(shardPartyIds, subscriber, messageProcessor, templateId, CreatedEvent.class, anything -> true);
+        super(shardPartyIds, subscriber, messageProcessor, Set.of(templateId), CreatedEvent.class, anything -> true);
+    }
+
+    public CreatedEventDamlListener(List<String> shardPartyIds, RLNLedgerSubscriber subscriber,
+                                    MessageProcessor<CreatedEvent> messageProcessor, Set<Identifier> templateIds) {
+        super(shardPartyIds, subscriber, messageProcessor, templateIds, CreatedEvent.class, anything -> true);
     }
 }

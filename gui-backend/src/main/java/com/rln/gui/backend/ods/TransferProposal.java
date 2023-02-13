@@ -82,15 +82,19 @@ public class TransferProposal {
             .assetCode(label);
     senderOf(stepRecord).ifPresent(senderIBAN ->
         result.add(proposal
-            .id(CompoundUniqueIdUtil.getCompoundUniqueId(CompoundUniqueIdUtil.Subject.SENDER,
-                createdEvent.getContractId()))
+            .id(CompoundUniqueIdUtil.getCompoundUniqueId(
+                    CompoundUniqueIdUtil.Subject.SENDER,
+                    status,
+                    createdEvent.getContractId()))
             .address(senderIBAN)
             .amount(amount.negate())
             .build()));
     receiverOf(stepRecord).ifPresent(receiverIBAN ->
         result.add(proposal
-            .id(CompoundUniqueIdUtil.getCompoundUniqueId(CompoundUniqueIdUtil.Subject.RECEIVER,
-                createdEvent.getContractId()))
+            .id(CompoundUniqueIdUtil.getCompoundUniqueId(
+                    CompoundUniqueIdUtil.Subject.RECEIVER,
+                    status,
+                    createdEvent.getContractId()))
             .address(receiverIBAN)
             .amount(amount)
             .build()));
@@ -128,7 +132,7 @@ public class TransferProposal {
         .equals(createdEvent.getTemplateId())) {
       return GuiBackendConstants.WAITING_STATUS;
     } else if (ApprovedTransferProposal.TEMPLATE_ID.equals(createdEvent.getTemplateId())) {
-      return GuiBackendConstants.APPROVE_STATUS;
+      return GuiBackendConstants.APPROVED_STATUS;
     } else {
       return GuiBackendConstants.REJECTED_STATUS;
     }

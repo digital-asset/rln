@@ -4,7 +4,7 @@
  */
 package com.rln.messageprocessing.daml;
 
-import com.daml.ledger.javaapi.data.ExercisedEvent;
+import com.daml.ledger.javaapi.data.CreatedEvent;
 import com.rln.client.kafkaClient.message.ApproveRejectProposal;
 import com.rln.client.kafkaClient.outgoing.KafkaSubmitter;
 import com.rln.conversion.daml2kafka.ApproveRejectProposalChoiceExerciseToKafka;
@@ -12,7 +12,7 @@ import com.rln.messageprocessing.MessageProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DamlApproveRejectProposalChoiceExerciseProcessor extends MessageProcessor<ExercisedEvent> {
+public class DamlApproveRejectProposalChoiceExerciseProcessor extends MessageProcessor<CreatedEvent> {
 
     private static final Logger logger = LoggerFactory.getLogger(DamlApproveRejectProposalChoiceExerciseProcessor.class);
     private final KafkaSubmitter<ApproveRejectProposal> kafkaSubmitter;
@@ -27,10 +27,10 @@ public class DamlApproveRejectProposalChoiceExerciseProcessor extends MessagePro
     }
 
     @Override
-    public void accept(ExercisedEvent msg) {
+    public void accept(CreatedEvent msg) {
         logger.info("DamlApproveRejectProposalChoiceExerciseProcessor about to publish a message with EventId: {}", msg.getEventId());
         logger.debug("EventId: {} Message: {}", msg.getEventId(), msg);
-        var converted = conversion.exercisedEventToKafka(msg);
+        var converted = conversion.createdEventToKafka(msg);
         logger.info("Publishing to Kafka, GroupId: {}", converted.getGroupId());
         kafkaSubmitter.submit(converted);
         logger.debug("Published to Kafka, GroupId: {}, Message: {}", converted.getGroupId(), converted);
