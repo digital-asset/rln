@@ -39,7 +39,7 @@ template LoanConfig
 
     where
         signatory provider
-        observer optionalToList accountHolder
+        observer accountHolder
         key (BalanceKey with iban = account, provider = provider) : BalanceKey
         maintainer key.provider
 
