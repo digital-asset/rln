@@ -4,7 +4,7 @@
     "name": "Cello Bank",
     "bic": "CITIUS33",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-bankny.setllabs.io/api/",
+    "baseUrl": "https://test-bankny-api.setllabs.io",
     "clients": []
   },
   {
@@ -12,7 +12,7 @@
     "name": "Bank of America",
     "bic": "BOFAUS3N",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-bankofamerica.setllabs.io/api/",
+    "baseUrl": "https://test-bankofamerica-api.setllabs.io",
     "clients": []
   },
   {
@@ -20,7 +20,7 @@
     "name": "HSBC, New York",
     "bic": "MRMDUS33",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-hsbcny.setllabs.io/api/",
+    "baseUrl": "https://test-hsbcny-api.setllabs.io",
     "clients": []
   },
   {
@@ -28,7 +28,7 @@
     "name": "Bank of New York",
     "bic": "IRVTUS3N",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-bankofnewyork.setllabs.io/api/",
+    "baseUrl": "https://test-bankofnewyork-api.setllabs.io",
     "clients": []
   },
   {
@@ -36,7 +36,7 @@
     "name": "Wells Fargo",
     "bic": "WFBIUS6WCLS",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-wellsfargo.setllabs.io/api/",
+    "baseUrl": "https://test-wellsfargo-api.setllabs.io",
     "clients": []
   },
   {
@@ -44,7 +44,7 @@
     "name": "US Bank",
     "bic": "USBKUS01XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-usbank.setllabs.io/api/",
+    "baseUrl": "https://test-usbank-api.setllabs.io",
     "clients": []
   },
   {
@@ -52,7 +52,7 @@
     "name": "TD Bank",
     "bic": "NRTHUS33XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-tdbank.setllabs.io/api/",
+    "baseUrl": "https://test-tdbank-api.setllabs.io",
     "clients": []
   },
   {
@@ -60,7 +60,7 @@
     "name": "SWIFT",
     "bic": "SWHQUS3NEDU",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-swift.setllabs.io/api/",
+    "baseUrl": "https://test-swift-api.setllabs.io",
     "clients": []
   },
   {
@@ -68,7 +68,7 @@
     "name": "Mastercard",
     "bic": "MXBSUS33XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-mastercard.setllabs.io/api/",
+    "baseUrl": "https://test-mastercard-api.setllabs.io",
     "clients": []
   },
   {
@@ -76,7 +76,7 @@
     "name": "Truist",
     "bic": "SNTRUS3AXXX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-truist.setllabs.io/api/",
+    "baseUrl": "https://test-truist-api.setllabs.io",
     "clients": []
   },
   {
@@ -84,7 +84,7 @@
     "name": "PNC Bank",
     "bic": "PNCCUS33XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-pncbank.setllabs.io/api/",
+    "baseUrl": "https://test-pncbank-api.setllabs.io",
     "clients": []
   },
   {
@@ -92,7 +92,7 @@
     "name": "Federal Reserve NY",
     "bic": "FRNYUS3A",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-nyic.setllabs.io/api/",
+    "baseUrl": "https://test-nyic-api.setllabs.io",
     "clients": []
   },
   {
@@ -100,7 +100,7 @@
     "name": "Daml Demo 3",
     "bic": "DEMOUS05XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-damldemo3.setllabs.io/api/",
+    "baseUrl": "https://test-damldemo3.setllabs.io",
     "accounts": [
       {
         "provider": "Daml Demo 3",
@@ -129,7 +129,7 @@
     "name": "Rln Demo",
     "bic": "DEMOUS01XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-rlndemo.setllabs.io/api/",
+    "baseUrl": "https://test-rlndemo-api.setllabs.io",
     "clients": []
   },
   {
@@ -137,7 +137,7 @@
     "name": "Daml Demo 1",
     "bic": "DEMOUS03XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-damldemo1.setllabs.io/api/",
+    "baseUrl": "https://test-damldemo1.setllabs.io",
     "accounts": [
       {
         "provider": "Daml Demo 1",
@@ -166,7 +166,7 @@
     "name": "Daml Demo 2",
     "bic": "DEMOUS04XXX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-damldemo2.setllabs.io/api/",
+    "baseUrl": "https://test-damldemo2.setllabs.io",
     "accounts": [
       {
         "provider": "Daml Demo 1",
@@ -201,7 +201,7 @@
     "name": "Rln Branch",
     "bic": "DEMOUS01BR1",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-rlnbranch.setllabs.io/api/",
+    "baseUrl": "https://test-rlnbranch-api.setllabs.io",
     "clients": []
   },
   {
@@ -209,7 +209,7 @@
     "name": "Cello HK",
     "bic": "CITIHKAX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-cello-hk1.setllabs.io/api/",
+    "baseUrl": "https://test-cello-hk1-api.setllabs.io",
     "clients": []
   },
   {
@@ -217,12 +217,12 @@
     "name": "BoNY, SG",
     "bic": "IRVTSGSX",
     "participantName": "rlnLedger",
-    "baseUrl": "https://test-bankofnewyork-sg.setllabs.io/api/",
+    "baseUrl": "https://test-bankofnewyork-sg-api.setllabs.io",
     "clients": []
   },
   {
     "id": 24,
-    "baseUrl": "https://test-deloitte.setllabs.io/api/",
+    "baseUrl": "https://test-deloitte-api.setllabs.io",
     "bic": "DELOITTEXXX",
     "participantName": "rlnLedger",
     "name": "Deloitte",
@@ -230,7 +230,7 @@
   },
   {
     "id": 25,
-    "baseUrl": "https://test-boabranch.setllabs.io/api/",
+    "baseUrl": "https://test-boabranch-api.setllabs.io",
     "bic": "BOFAUS3NBR1",
     "participantName": "rlnLedger",
     "name": "Bank of America Branch",
@@ -238,7 +238,7 @@
   },
   {
     "id": 26,
-    "baseUrl": "https://test-wfbranch.setllabs.io/api/",
+    "baseUrl": "https://test-wfbranch-api.setllabs.io",
     "bic": "WFBIUS6WBR1",
     "participantName": "rlnLedger",
     "name": "Wells Fargo Branch",
@@ -246,7 +246,7 @@
   },
   {
     "id": 27,
-    "baseUrl": "https://test-usbankbranch.setllabs.io/api/",
+    "baseUrl": "https://test-usbankbranch-api.setllabs.io",
     "bic": "USBKUS01BR1",
     "participantName": "rlnLedger",
     "name": "US Bank Branch",
@@ -254,7 +254,7 @@
   },
   {
     "id": 28,
-    "baseUrl": "https://test-tdbankbranch.setllabs.io/api/",
+    "baseUrl": "https://test-tdbankbranch-api.setllabs.io",
     "bic": "NRTHUS33BR1",
     "participantName": "rlnLedger",
     "name": "TD Bank Branch",
@@ -262,7 +262,7 @@
   },
   {
     "id": 29,
-    "baseUrl": "https://test-swiftbranch.setllabs.io/api/",
+    "baseUrl": "https://test-swiftbranch-api.setllabs.io",
     "bic": "SWHQUS3NBR1",
     "participantName": "rlnLedger",
     "name": "SWIFT Branch",
@@ -270,7 +270,7 @@
   },
   {
     "id": 30,
-    "baseUrl": "https://test-mcbranch.setllabs.io/api/",
+    "baseUrl": "https://test-mcbranch-api.setllabs.io",
     "bic": "MXBSUS33BR1",
     "participantName": "rlnLedger",
     "name": "Mastercard Branch",
@@ -278,7 +278,7 @@
   },
   {
     "id": 31,
-    "baseUrl": "https://test-truistbranch.setllabs.io/api/",
+    "baseUrl": "https://test-truistbranch-api.setllabs.io",
     "bic": "SNTRUS3ABR1",
     "participantName": "rlnLedger",
     "name": "Truist Branch",
@@ -286,7 +286,7 @@
   },
   {
     "id": 32,
-    "baseUrl": "https://test-pncbranch.setllabs.io/api/",
+    "baseUrl": "https://test-pncbranch-api.setllabs.io",
     "bic": "PNCCUS33BR1",
     "participantName": "rlnLedger",
     "name": "PNC Bank Branch",
@@ -294,7 +294,7 @@
   },
   {
     "id": 33,
-    "baseUrl": "https://test-deloittebranch.setllabs.io/api/",
+    "baseUrl": "https://test-deloittebranch-api.setllabs.io",
     "bic": "DELOITTEBR1",
     "participantName": "rlnLedger",
     "name": "Deloitte Branch",
@@ -302,7 +302,7 @@
   },
   {
     "id": 34,
-    "baseUrl": "https://test-hsbcbranch.setllabs.io/api/",
+    "baseUrl": "https://test-hsbcbranch-api.setllabs.io",
     "bic": "MRMDUS33BR1",
     "participantName": "rlnLedger",
     "name": "HSBC Branch",
