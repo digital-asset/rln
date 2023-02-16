@@ -77,6 +77,7 @@ template LockedBalance
     -- ^ identifier is used to identify what the balance is locked for
   where
     signatory provider
+    observer balance.owner.party
 
     let
       balanceKey = key balance
@@ -103,6 +104,7 @@ template IncomingBalance
     -- ^ identifier is used to identify the reason of the incoming balance
   where
     signatory provider
+    observer balance.owner.party
 
     key PendingBalanceKey with .. : PendingBalanceKey
     maintainer key.balanceKey.provider
