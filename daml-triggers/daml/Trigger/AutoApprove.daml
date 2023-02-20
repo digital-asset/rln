@@ -9,7 +9,7 @@ module Trigger.AutoApprove where
 
 import DA.Action (void, when)
 import DA.Foldable (forA_)
-import DA.List (head)
+import DA.List.Total (head)
 import DA.Optional (optionalToList)
 import Daml.Trigger
 import Model.Blacklist
@@ -36,8 +36,7 @@ autoApprove : Party -> TriggerA () ()
 autoApprove sender = do
   blackLists <- query @Blacklist
 
-  when (1 /= length blackLists) $ error "There should be only one Blacklist"
-  let (_, blacklist) = head blackLists
+  let blacklist = snd <$> head blackLists
 
   transferProposals <- query @TransferProposal
   autoApproveMarkersWithCids <- query @AutoApproveTransferProposalMarker
@@ -105,18 +104,19 @@ findBalance transferProposal@TransferProposal{owner; step} iban = do
       else pure $ Some balance
     None -> pure $ trace ("No Balance exist for account" <> iban) None
 
-handleProposalForSender : TransferProposal -> Text -> Blacklist -> ContractId TransferProposal -> TriggerA () ()
+handleProposalForSender : TransferProposal -> Text -> Optional Blacklist -> ContractId TransferProposal -> TriggerA () ()
 handleProposalForSender transferProposal sender blacklist cid = do
   maybeBalance <- findBalance transferProposal sender
   case maybeBalance of
     Some (balanceCid, balance) | transferProposal.step.delivery.amount <= balance.amount ->
-        if involveBlackListParty transferProposal blacklist then
-          rejectProposal "Rejected due to blacklist" cid
-        else
-          approveProposal
-            "Approved Proposal as sender has enough balance and no banks/accounts are blacklisted"
-            cid
-            (Some balanceCid)
+        case blacklist of
+          Some list | involveBlackListParty transferProposal list ->
+              rejectProposal "Rejected due to blacklist" cid
+          _ ->
+              approveProposal
+                "Approved Proposal as sender has enough balance and no banks/accounts are blacklisted"
+                cid
+                (Some balanceCid)
     _ ->
       rejectProposal "Rejected due to not enough balance"  cid
 
