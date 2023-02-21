@@ -7,9 +7,8 @@
 
 module Trigger.AutoApprove where
 
-import DA.Action (void, when)
+import DA.Action (void)
 import DA.Foldable (forA_)
-import DA.List (head)
 import DA.Optional (optionalToList)
 import Daml.Trigger
 import Model.Blacklist
@@ -36,8 +35,10 @@ autoApprove : Party -> TriggerA () ()
 autoApprove sender = do
   blackLists <- query @Blacklist
 
-  when (1 /= length blackLists) $ error "There should be only one Blacklist"
-  let (_, blacklist) = head blackLists
+  let blacklist = foldl
+        (<>)
+        Blacklist with owner = sender, banks = [], accounts = []
+        (snd <$> blackLists)
 
   transferProposals <- query @TransferProposal
   autoApproveMarkersWithCids <- query @AutoApproveTransferProposalMarker
@@ -110,7 +111,10 @@ handleProposalForSender transferProposal sender blacklist cid = do
   maybeBalance <- findBalance transferProposal sender
   case maybeBalance of
     Some (balanceCid, balance) | transferProposal.step.delivery.amount <= balance.amount ->
-        if involveBlackListParty transferProposal blacklist then
+        if (not (null blacklist.banks)
+         && not (null blacklist.accounts)
+         && involveBlackListParty transferProposal blacklist)
+        then
           rejectProposal "Rejected due to blacklist" cid
         else
           approveProposal
@@ -134,3 +138,11 @@ getStrictMarker m1@AutoApproveTransferProposalMarker { autoApproveType = Limited
 getStrictMarker m@AutoApproveTransferProposalMarker { autoApproveType = LimitedMaxAmount maxAmount } _ = m
 getStrictMarker _ m@AutoApproveTransferProposalMarker { autoApproveType = LimitedMaxAmount maxAmount } = m
 getStrictMarker m _                                                                                    = m
+
+
+instance Semigroup Blacklist where
+  (<>) x y = Blacklist with owner, banks, accounts
+    where
+      owner = x.owner
+      banks = x.banks ++ y.banks
+      accounts = x.accounts ++ y.accounts
